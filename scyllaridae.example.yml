@@ -12,6 +12,6 @@ forward-auth: false
 allowed-mimetypes: [
   "text/plain"
 ]
-mimetypes:
+cmd-by-mimetype:
   default:
     cmd: "cat"

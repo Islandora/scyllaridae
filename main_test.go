@@ -50,7 +50,7 @@ forward-auth: false
 allowed-mimetypes: [
   "text/plain"
 ]
-mimetypes:
+cmd-by-mimetype:
   default:
     cmd: "cat"
 `)
@@ -142,7 +142,7 @@ forward-auth: false
 allowed-mimetypes: [
   "text/plain"
 ]
-mimetypes:
+cmd-by-mimetype:
   default:
     cmd: "cat"
 `, method))

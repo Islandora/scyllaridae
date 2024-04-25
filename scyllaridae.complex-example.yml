@@ -7,7 +7,7 @@ allowed-mimetypes: [
   "application/pdf",
   "image/*"
 ]
-mimetypes:
+cmd-by-mimetype:
   application/pdf:
     cmd: "pdftotext"
     args:
