@@ -1,0 +1,20 @@
+label: "OCR PDFs and Images"
+destination-http-method: "PUT"
+file-header: Apix-Ldp-Resource
+arg-header: X-Islandora-Args
+forward-auth: false
+allowed-formats: [
+  "application/pdf",
+  "image/*"
+]
+mimetypes:
+  application/pdf:
+    cmd: "pdftotext"
+    post-args:
+      - "-"
+      - "-"
+  default:
+    cmd: "tesseract"
+    pre-args:
+      - "stdin"
+      - "stdout"
