@@ -55,9 +55,8 @@ type Content struct {
 }
 
 type Cmd struct {
-	Command  string   `yaml:"cmd,omitempty"`
-	PreArgs  []string `yaml:"pre-args,omitempty"`
-	PostArgs []string `yaml:"post-args,omitempty"`
+	Command string   `yaml:"cmd,omitempty"`
+	Args    []string `yaml:"args,omitempty"`
 }
 
 type Config struct {
@@ -230,15 +229,14 @@ func buildExecCommand(mimetype, addtlArgs string, c *Config) (*exec.Cmd, error) 
 	}
 
 	args := []string{}
-	if len(cmdConfig.PreArgs) > 0 {
-		args = append(args, cmdConfig.PreArgs...)
+	for _, a := range cmdConfig.Args {
+		if a == "%s" && addtlArgs != "" {
+			args = append(args, addtlArgs)
+		} else {
+			args = append(args, a)
+		}
 	}
-	if addtlArgs != "" {
-		args = append(args, addtlArgs)
-	}
-	if len(cmdConfig.PostArgs) > 0 {
-		args = append(args, cmdConfig.PostArgs...)
-	}
+
 	cmd := exec.Command(cmdConfig.Command, args...)
 
 	return cmd, nil

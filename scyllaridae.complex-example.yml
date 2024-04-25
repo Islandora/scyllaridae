@@ -10,11 +10,13 @@ allowed-formats: [
 mimetypes:
   application/pdf:
     cmd: "pdftotext"
-    post-args:
+    args:
+      - "%s"
       - "-"
       - "-"
   default:
     cmd: "tesseract"
-    pre-args:
+    args:
       - "stdin"
       - "stdout"
+      - "%s"
