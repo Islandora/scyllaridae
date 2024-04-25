@@ -1,17 +1,10 @@
-# take the input from a source server
-# and print it to the output server
-#
-# Though since we're using destination-http-method: "GET"
-# the destination server isn't receiving anything
-# this example can be used to warm the cache with a properly formatted event
-label: "Warm cache"
-destination-http-method: "GET"
-file-header: Apix-Ldp-Resource
-arg-header: X-Islandora-Args
-forward-auth: false
-allowed-mimetypes: [
-  "text/plain"
+destinationHttpMethod: GET
+fileHeader: Apix-Ldp-Resource
+argHeader: X-Islandora-Args
+forwardAuth: false
+allowedMimeTypes: [
+  "text/html"
 ]
-cmd-by-mimetype:
+cmdByMimeType:
   default:
     cmd: "cat"

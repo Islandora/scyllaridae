@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -10,67 +9,14 @@ import (
 	"os/exec"
 	"strings"
 
+	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
+	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
+
 	"gopkg.in/yaml.v3"
 )
 
-type Data struct {
-	Actor      Actor      `json:"actor"`
-	Object     Object     `json:"object"`
-	Attachment Attachment `json:"attachment"`
-	Type       string     `json:"type"`
-	Summary    string     `json:"summary"`
-}
-
-type Actor struct {
-	Id string `json:"id"`
-}
-
-type Object struct {
-	Id         string `json:"id"`
-	URL        []URL  `json:"url"`
-	NewVersion bool   `json:"isNewVersion"`
-}
-
-type URL struct {
-	Name      string `json:"name"`
-	Type      string `json:"type"`
-	Href      string `json:"href"`
-	MediaType string `json:"mediaType"`
-	Rel       string `json:"rel"`
-}
-
-type Attachment struct {
-	Type      string  `json:"type"`
-	Content   Content `json:"content"`
-	MediaType string  `json:"mediaType"`
-}
-
-type Content struct {
-	MimeType       string `json:"mimetype"`
-	Args           string `json:"args"`
-	SourceUri      string `json:"source_uri"`
-	DestinationUri string `json:"destination_uri"`
-	FileUploadUri  string `json:"file_upload_uri"`
-	WebServiceUri  string
-}
-
-type Cmd struct {
-	Command string   `yaml:"cmd,omitempty"`
-	Args    []string `yaml:"args,omitempty"`
-}
-
-type Config struct {
-	Label            string         `yaml:"label"`
-	Method           string         `yaml:"destination-http-method"`
-	FileHeader       string         `yaml:"file-header"`
-	ArgHeader        string         `yaml:"arg-header"`
-	ForwardAuth      bool           `yaml:"forward-auth"`
-	AllowedMimeTypes []string       `yaml:"allowed-mimetypes"`
-	CmdByMimeType    map[string]Cmd `yaml:"cmd-by-mimetype"`
-}
-
 var (
-	config *Config
+	config *scyllaridae.ServerConfig
 )
 
 func init() {
@@ -105,7 +51,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// Read the Alpaca message payload
-	message, err := DecodeAlpacaMessage(r)
+	message, err := api.DecodeAlpacaMessage(r)
 	if err != nil {
 		slog.Error("Error decoding Pub/Sub message", "err", err)
 		http.Error(w, "Error decoding Pub/Sub message", http.StatusInternalServerError)
@@ -113,7 +59,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the file contents from the URL
-	sourceResp, err := http.Get(message.Attachment.Content.SourceUri)
+	sourceResp, err := http.Get(message.Attachment.Content.SourceURI)
 	if err != nil {
 		slog.Error("Error fetching source file contents", "err", err)
 		http.Error(w, "Error fetching file contents from URL", http.StatusInternalServerError)
@@ -144,7 +90,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create the PUT request
-	req, err := http.NewRequest(config.Method, message.Attachment.Content.DestinationUri, &outBuf)
+	req, err := http.NewRequest(config.DestinationHTTPMethod, message.Attachment.Content.DestinationURI, &outBuf)
 	if err != nil {
 		slog.Error("Error creating HTTP request", "err", err)
 		http.Error(w, "Error creating HTTP request", http.StatusInternalServerError)
@@ -155,13 +101,13 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		req.Header.Set("Authorization", auth)
 	}
 	req.Header.Set("Content-Type", message.Attachment.Content.MimeType)
-	req.Header.Set("Content-Location", message.Attachment.Content.FileUploadUri)
+	req.Header.Set("Content-Location", message.Attachment.Content.FileUploadURI)
 
 	// Execute the PUT request
 	client := http.DefaultClient
 	resp, err := client.Do(req)
 	if err != nil {
-		slog.Error("Error sending request", "method", config.Method, "err", err)
+		slog.Error("Error sending request", "method", config.DestinationHTTPMethod, "err", err)
 		http.Error(w, "Internal error.", http.StatusInternalServerError)
 		return
 	}
@@ -169,7 +115,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	if resp.StatusCode > 299 {
 		slog.Error("Request failed on destination server", "code", resp.StatusCode)
-		http.Error(w, fmt.Sprintf("%s request failed with status code %d", config.Method, resp.StatusCode), resp.StatusCode)
+		http.Error(w, fmt.Sprintf("%s request failed with status code %d", config.DestinationHTTPMethod, resp.StatusCode), resp.StatusCode)
 		return
 	}
 
@@ -180,17 +126,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DecodeAlpacaMessage(r *http.Request) (Data, error) {
-	var d Data
-
-	if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
-		return Data{}, err
-	}
-
-	return d, nil
-}
-
-func ReadConfig(yp string) (*Config, error) {
+func ReadConfig(yp string) (*scyllaridae.ServerConfig, error) {
 	var (
 		y   []byte
 		err error
@@ -205,7 +141,7 @@ func ReadConfig(yp string) (*Config, error) {
 		}
 	}
 
-	var c Config
+	var c scyllaridae.ServerConfig
 	err = yaml.Unmarshal(y, &c)
 	if err != nil {
 		return nil, err
@@ -214,13 +150,12 @@ func ReadConfig(yp string) (*Config, error) {
 	return &c, nil
 }
 
-func buildExecCommand(mimetype, addtlArgs string, c *Config) (*exec.Cmd, error) {
-	var cmdConfig Cmd
+func buildExecCommand(mimetype, addtlArgs string, c *scyllaridae.ServerConfig) (*exec.Cmd, error) {
+	var cmdConfig scyllaridae.Command
 	var exists bool
-	slog.Info("Allowed formats", "formats", c.AllowedMimeTypes)
 	if isAllowedMIMEType(mimetype, c.AllowedMimeTypes) {
 		cmdConfig, exists = c.CmdByMimeType[mimetype]
-		if !exists || (len(cmdConfig.Command) == 0) {
+		if !exists || (len(cmdConfig.Cmd) == 0) {
 			// Fallback to default if specific MIME type not configured or if command is empty
 			cmdConfig = c.CmdByMimeType["default"]
 		}
@@ -237,7 +172,7 @@ func buildExecCommand(mimetype, addtlArgs string, c *Config) (*exec.Cmd, error) 
 		}
 	}
 
-	cmd := exec.Command(cmdConfig.Command, args...)
+	cmd := exec.Command(cmdConfig.Cmd, args...)
 
 	return cmd, nil
 }
