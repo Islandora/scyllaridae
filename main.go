@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
@@ -153,7 +152,7 @@ func ReadConfig(yp string) (*scyllaridae.ServerConfig, error) {
 func buildExecCommand(mimetype, addtlArgs string, c *scyllaridae.ServerConfig) (*exec.Cmd, error) {
 	var cmdConfig scyllaridae.Command
 	var exists bool
-	if isAllowedMIMEType(mimetype, c.AllowedMimeTypes) {
+	if scyllaridae.IsAllowedMimeType(mimetype, c.AllowedMimeTypes) {
 		cmdConfig, exists = c.CmdByMimeType[mimetype]
 		if !exists || (len(cmdConfig.Cmd) == 0) {
 			// Fallback to default if specific MIME type not configured or if command is empty
@@ -175,20 +174,4 @@ func buildExecCommand(mimetype, addtlArgs string, c *scyllaridae.ServerConfig) (
 	cmd := exec.Command(cmdConfig.Cmd, args...)
 
 	return cmd, nil
-}
-
-func isAllowedMIMEType(mimetype string, allowedFormats []string) bool {
-	for _, format := range allowedFormats {
-		if format == mimetype {
-			return true
-		}
-		if strings.HasSuffix(format, "/*") {
-			// Check wildcard MIME type
-			prefix := strings.TrimSuffix(format, "*")
-			if strings.HasPrefix(mimetype, prefix) {
-				return true
-			}
-		}
-	}
-	return false
 }

@@ -1,5 +1,7 @@
 package config
 
+import "strings"
+
 // ServerConfig defines server-specific configurations.
 //
 // swagger:model ServerConfig
@@ -53,4 +55,20 @@ type Command struct {
 	//
 	// required: false
 	Args []string `yaml:"args"`
+}
+
+func IsAllowedMimeType(mimetype string, allowedFormats []string) bool {
+	for _, format := range allowedFormats {
+		if format == mimetype {
+			return true
+		}
+		if strings.HasSuffix(format, "/*") {
+			// Check wildcard MIME type
+			prefix := strings.TrimSuffix(format, "*")
+			if strings.HasPrefix(mimetype, prefix) {
+				return true
+			}
+		}
+	}
+	return false
 }
