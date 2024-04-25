@@ -3,7 +3,7 @@ destination-http-method: "PUT"
 file-header: Apix-Ldp-Resource
 arg-header: X-Islandora-Args
 forward-auth: false
-allowed-formats: [
+allowed-mimetypes: [
   "application/pdf",
   "image/*"
 ]

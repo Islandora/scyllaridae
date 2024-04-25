@@ -60,13 +60,13 @@ type Cmd struct {
 }
 
 type Config struct {
-	Label          string         `yaml:"label"`
-	Method         string         `yaml:"destination-http-method"`
-	FileHeader     string         `yaml:"file-header"`
-	ArgHeader      string         `yaml:"arg-header"`
-	ForwardAuth    bool           `yaml:"forward-auth"`
-	AllowedFormats []string       `yaml:"allowed-formats"`
-	Mimetypes      map[string]Cmd `yaml:"mimetypes"`
+	Label            string         `yaml:"label"`
+	Method           string         `yaml:"destination-http-method"`
+	FileHeader       string         `yaml:"file-header"`
+	ArgHeader        string         `yaml:"arg-header"`
+	ForwardAuth      bool           `yaml:"forward-auth"`
+	AllowedMimeTypes []string       `yaml:"allowed-mimetypes"`
+	Mimetypes        map[string]Cmd `yaml:"mimetypes"`
 }
 
 var (
@@ -217,8 +217,8 @@ func ReadConfig(yp string) (*Config, error) {
 func buildExecCommand(mimetype, addtlArgs string, c *Config) (*exec.Cmd, error) {
 	var cmdConfig Cmd
 	var exists bool
-	slog.Info("Allowed formats", "formats", c.AllowedFormats)
-	if isAllowedMIMEType(mimetype, c.AllowedFormats) {
+	slog.Info("Allowed formats", "formats", c.AllowedMimeTypes)
+	if isAllowedMIMEType(mimetype, c.AllowedMimeTypes) {
 		cmdConfig, exists = c.Mimetypes[mimetype]
 		if !exists || (len(cmdConfig.Command) == 0) {
 			// Fallback to default if specific MIME type not configured or if command is empty
