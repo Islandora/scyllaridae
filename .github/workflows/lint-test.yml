@@ -17,5 +17,7 @@ jobs:
         run: go get .
       - name: Build
         run: go build -v ./...
+      - name: Put fixture in place
+        run: cp scyllaridae.example.yml scyllaridae.yml
       - name: Test with the Go CLI
         run: go test -v ./...
