@@ -55,19 +55,18 @@ type Content struct {
 }
 
 type Cmd struct {
-	Command  string   `yaml:"cmd,omitempty"`
-	PreArgs  []string `yaml:"pre-args,omitempty"`
-	PostArgs []string `yaml:"post-args,omitempty"`
+	Command string   `yaml:"cmd,omitempty"`
+	Args    []string `yaml:"args,omitempty"`
 }
 
 type Config struct {
-	Label          string         `yaml:"label"`
-	Method         string         `yaml:"destination-http-method"`
-	FileHeader     string         `yaml:"file-header"`
-	ArgHeader      string         `yaml:"arg-header"`
-	ForwardAuth    bool           `yaml:"forward-auth"`
-	AllowedFormats []string       `yaml:"allowed-formats"`
-	Mimetypes      map[string]Cmd `yaml:"mimetypes"`
+	Label            string         `yaml:"label"`
+	Method           string         `yaml:"destination-http-method"`
+	FileHeader       string         `yaml:"file-header"`
+	ArgHeader        string         `yaml:"arg-header"`
+	ForwardAuth      bool           `yaml:"forward-auth"`
+	AllowedMimeTypes []string       `yaml:"allowed-mimetypes"`
+	CmdByMimeType    map[string]Cmd `yaml:"cmd-by-mimetype"`
 }
 
 var (
@@ -218,27 +217,26 @@ func ReadConfig(yp string) (*Config, error) {
 func buildExecCommand(mimetype, addtlArgs string, c *Config) (*exec.Cmd, error) {
 	var cmdConfig Cmd
 	var exists bool
-	slog.Info("Allowed formats", "formats", c.AllowedFormats)
-	if isAllowedMIMEType(mimetype, c.AllowedFormats) {
-		cmdConfig, exists = c.Mimetypes[mimetype]
+	slog.Info("Allowed formats", "formats", c.AllowedMimeTypes)
+	if isAllowedMIMEType(mimetype, c.AllowedMimeTypes) {
+		cmdConfig, exists = c.CmdByMimeType[mimetype]
 		if !exists || (len(cmdConfig.Command) == 0) {
 			// Fallback to default if specific MIME type not configured or if command is empty
-			cmdConfig = c.Mimetypes["default"]
+			cmdConfig = c.CmdByMimeType["default"]
 		}
 	} else {
 		return nil, fmt.Errorf("undefined mimetype: %s", mimetype)
 	}
 
 	args := []string{}
-	if len(cmdConfig.PreArgs) > 0 {
-		args = append(args, cmdConfig.PreArgs...)
+	for _, a := range cmdConfig.Args {
+		if a == "%s" && addtlArgs != "" {
+			args = append(args, addtlArgs)
+		} else {
+			args = append(args, a)
+		}
 	}
-	if addtlArgs != "" {
-		args = append(args, addtlArgs)
-	}
-	if len(cmdConfig.PostArgs) > 0 {
-		args = append(args, cmdConfig.PostArgs...)
-	}
+
 	cmd := exec.Command(cmdConfig.Command, args...)
 
 	return cmd, nil

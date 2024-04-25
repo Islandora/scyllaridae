@@ -47,10 +47,10 @@ destination-http-method: "PUT"
 file-header: Apix-Ldp-Resource
 arg-header: X-Islandora-Args
 forward-auth: false
-allowed-formats: [
+allowed-mimetypes: [
   "text/plain"
 ]
-mimetypes:
+cmd-by-mimetype:
   default:
     cmd: "cat"
 `)
@@ -139,10 +139,10 @@ destination-http-method: "%s"
 file-header: Apix-Ldp-Resource
 arg-header: X-Islandora-Args
 forward-auth: false
-allowed-formats: [
+allowed-mimetypes: [
   "text/plain"
 ]
-mimetypes:
+cmd-by-mimetype:
   default:
     cmd: "cat"
 `, method))

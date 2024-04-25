@@ -9,9 +9,9 @@ destination-http-method: "GET"
 file-header: Apix-Ldp-Resource
 arg-header: X-Islandora-Args
 forward-auth: false
-allowed-formats: [
+allowed-mimetypes: [
   "text/plain"
 ]
-mimetypes:
+cmd-by-mimetype:
   default:
     cmd: "cat"

@@ -3,18 +3,20 @@ destination-http-method: "PUT"
 file-header: Apix-Ldp-Resource
 arg-header: X-Islandora-Args
 forward-auth: false
-allowed-formats: [
+allowed-mimetypes: [
   "application/pdf",
   "image/*"
 ]
-mimetypes:
+cmd-by-mimetype:
   application/pdf:
     cmd: "pdftotext"
-    post-args:
+    args:
+      - "%s"
       - "-"
       - "-"
   default:
     cmd: "tesseract"
-    pre-args:
+    args:
       - "stdin"
       - "stdout"
+      - "%s"
