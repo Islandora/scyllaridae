@@ -10,6 +10,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
 )
 
 func TestMessageHandler_MethodNotAllowed(t *testing.T) {
@@ -43,14 +45,14 @@ func TestIntegration_PutDestination(t *testing.T) {
 
 	// Mock the environment variable for the configuration file path
 	os.Setenv("SCYLLARIDAE_YML", `
-destination-http-method: "PUT"
-file-header: Apix-Ldp-Resource
-arg-header: X-Islandora-Args
-forward-auth: false
-allowed-mimetypes: [
+destinationHttpMethod: "PUT"
+fileHeader: Apix-Ldp-Resource
+argHeader: X-Islandora-Args
+forwardAuth: false
+allowedMimeTypes: [
   "text/plain"
 ]
-cmd-by-mimetype:
+cmdByMimeType:
   default:
     cmd: "cat"
 `)
@@ -66,13 +68,13 @@ cmd-by-mimetype:
 	defer setupServer.Close()
 
 	// Prepare a mock message to be sent to the main server
-	testData := Data{
-		Actor: Actor{
-			Id: "actor1",
+	testData := api.Payload{
+		Actor: api.Actor{
+			ID: "actor1",
 		},
-		Object: Object{
-			Id: "object1",
-			URL: []URL{
+		Object: api.Object{
+			ID: "object1",
+			URL: []api.Link{
 				{
 					Name:      "Source",
 					Type:      "source",
@@ -81,16 +83,16 @@ cmd-by-mimetype:
 					Rel:       "source",
 				},
 			},
-			NewVersion: true,
+			IsNewVersion: true,
 		},
-		Attachment: Attachment{
+		Attachment: api.Attachment{
 			Type: "file",
-			Content: Content{
+			Content: api.Content{
 				MimeType:       "text/plain",
 				Args:           "",
-				SourceUri:      sourceServer.URL,
-				DestinationUri: destinationServer.URL,
-				FileUploadUri:  "",
+				SourceURI:      sourceServer.URL,
+				DestinationURI: destinationServer.URL,
+				FileUploadURI:  "",
 			},
 			MediaType: "text/plain",
 		},
@@ -135,14 +137,14 @@ func TestIntegration_GetDestination(t *testing.T) {
 
 	// Mock the environment variable for the configuration file path
 	os.Setenv("SCYLLARIDAE_YML", fmt.Sprintf(`
-destination-http-method: "%s"
-file-header: Apix-Ldp-Resource
-arg-header: X-Islandora-Args
-forward-auth: false
-allowed-mimetypes: [
+destinationHttpMethod: "%s"
+fileHeader: Apix-Ldp-Resource
+argHeader: X-Islandora-Args
+forwardAuth: false
+allowedMimeTypes: [
   "text/plain"
 ]
-cmd-by-mimetype:
+cmdByMimeType:
   default:
     cmd: "cat"
 `, method))
@@ -158,13 +160,13 @@ cmd-by-mimetype:
 	defer setupServer.Close()
 
 	// Prepare a mock message to be sent to the main server
-	testData := Data{
-		Actor: Actor{
-			Id: "actor1",
+	testData := api.Payload{
+		Actor: api.Actor{
+			ID: "actor1",
 		},
-		Object: Object{
-			Id: "object1",
-			URL: []URL{
+		Object: api.Object{
+			ID: "object1",
+			URL: []api.Link{
 				{
 					Name:      "Source",
 					Type:      "source",
@@ -173,16 +175,16 @@ cmd-by-mimetype:
 					Rel:       "source",
 				},
 			},
-			NewVersion: true,
+			IsNewVersion: true,
 		},
-		Attachment: Attachment{
+		Attachment: api.Attachment{
 			Type: "file",
-			Content: Content{
+			Content: api.Content{
 				MimeType:       "text/plain",
 				Args:           "",
-				SourceUri:      sourceServer.URL,
-				DestinationUri: destinationServer.URL,
-				FileUploadUri:  "",
+				SourceURI:      sourceServer.URL,
+				DestinationURI: destinationServer.URL,
+				FileUploadURI:  "",
 			},
 			MediaType: "text/plain",
 		},
