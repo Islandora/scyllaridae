@@ -1,8 +1,9 @@
 destinationHttpMethod: PUT
 allowedMimeTypes:
   - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  - "application/xml"
 cmdByMimeType:
-  application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+  default:
     cmd: /usr/local/bin/pandoc
     args:
       - "-f"
