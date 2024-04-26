@@ -54,7 +54,7 @@ jobs:
         dockerFile: ${{ fromJson(needs.find-images.outputs.dockerFiles )}}
     uses: ./.github/workflows/build-push.yml
     with:
-      dockerFile: "public/${{ matrix.dockerFile }}"
+      dockerFile: ${{ matrix.dockerFile }}
     permissions:
       contents: read
       id-token: write
