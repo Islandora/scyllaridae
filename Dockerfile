@@ -3,7 +3,7 @@ FROM golang:1.21-alpine
 WORKDIR /app
 
 RUN apk update && \
-    apk add bash ca-certificates && \
+    apk add curl bash ca-certificates && \
     update-ca-certificates
 
 COPY . ./
