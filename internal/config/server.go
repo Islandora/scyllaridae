@@ -69,6 +69,9 @@ func IsAllowedMimeType(mimetype string, allowedFormats []string) bool {
 		if format == mimetype {
 			return true
 		}
+		if format == "*" {
+			return true
+		}
 		if strings.HasSuffix(format, "/*") {
 			// Check wildcard MIME type
 			prefix := strings.TrimSuffix(format, "*")
