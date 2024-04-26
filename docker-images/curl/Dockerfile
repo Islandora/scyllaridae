@@ -1,15 +1,8 @@
-FROM golang:1.21-alpine
-
-WORKDIR /app
+ARG TAG=main
+ARG DOCKER_REPOSITORY
+FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 
 RUN apk update && \
-    apk add openssl curl && \
-  openssl s_client -connect helloworld.letsencrypt.org:443 -showcerts </dev/null 2>/dev/null | sed -e '/-----BEGIN/,/-----END/!d' | tee "/usr/local/share/ca-certificates/ca.crt" >/dev/null && \
-  update-ca-certificates
+    apk add openssl curl
 
-COPY . ./
-RUN go mod download && \
-  go build -o /app/scyllaridae && \
-  go clean -cache -modcache
-
-ENTRYPOINT ["/app/scyllaridae"]
+COPY scyllaridae.yml /app/scyllaridae.yml

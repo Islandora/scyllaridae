@@ -31,8 +31,18 @@ jobs:
       - name: Test with the Go CLI
         run: go test -v ./...
 
-  find-images:
+  build-push-base:
     needs: [lint-test]
+    uses: ./.github/workflows/build-push.yml
+    with:
+      dockerFile: Dockerfile
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  find-images:
+    needs: [build-push-base]
     name: Find docker images needing built
     runs-on: ubuntu-latest
     outputs:

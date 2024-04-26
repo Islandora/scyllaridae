@@ -32,6 +32,12 @@ jobs:
     - name: Setup docker build
       shell: bash
       run: |-
+        # aka base build
+        if [ ${{ inputs.dockerFile }} == "Dockerfile" ]; then
+          echo "image=scyllaridae" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
         # put the YML file in place so it's copied into the Docker container
         DIR=$(dirname "${{ inputs.dockerFile }}")
         cp ./$DIR/scyllaridae.yml .
@@ -61,6 +67,9 @@ jobs:
       with:
         context: .
         file: ${{ inputs.dockerFile }}
+        build-args:
+          TAG=${{steps.extract_branch.outputs.branch}}
+          DOCKER_REPOSITORY=us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public
         push: true
         tags: |
           us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_branch.outputs.branch}}-${{steps.extract_tag.outputs.tag}}
