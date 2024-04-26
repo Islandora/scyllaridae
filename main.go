@@ -6,12 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/exec"
 
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
-
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -21,7 +18,7 @@ var (
 func init() {
 	var err error
 
-	config, err = ReadConfig("scyllaridae.yml")
+	config, err = scyllaridae.ReadConfig("scyllaridae.yml")
 	if err != nil {
 		slog.Error("Could not read YML", "err", err)
 		os.Exit(1)
@@ -67,7 +64,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	defer sourceResp.Body.Close()
 
 	arg := r.Header.Get(config.ArgHeader)
-	cmd, err := buildExecCommand(message.Attachment.Content.MimeType, arg, config)
+	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.MimeType, arg, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -123,55 +120,4 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("Error writing response", "err", err)
 	}
-}
-
-func ReadConfig(yp string) (*scyllaridae.ServerConfig, error) {
-	var (
-		y   []byte
-		err error
-	)
-	yml := os.Getenv("SCYLLARIDAE_YML")
-	if yml != "" {
-		y = []byte(yml)
-	} else {
-		y, err = os.ReadFile(yp)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var c scyllaridae.ServerConfig
-	err = yaml.Unmarshal(y, &c)
-	if err != nil {
-		return nil, err
-	}
-
-	return &c, nil
-}
-
-func buildExecCommand(mimetype, addtlArgs string, c *scyllaridae.ServerConfig) (*exec.Cmd, error) {
-	var cmdConfig scyllaridae.Command
-	var exists bool
-	if scyllaridae.IsAllowedMimeType(mimetype, c.AllowedMimeTypes) {
-		cmdConfig, exists = c.CmdByMimeType[mimetype]
-		if !exists || (len(cmdConfig.Cmd) == 0) {
-			// Fallback to default if specific MIME type not configured or if command is empty
-			cmdConfig = c.CmdByMimeType["default"]
-		}
-	} else {
-		return nil, fmt.Errorf("undefined mimetype: %s", mimetype)
-	}
-
-	args := []string{}
-	for _, a := range cmdConfig.Args {
-		if a == "%s" && addtlArgs != "" {
-			args = append(args, addtlArgs)
-		} else {
-			args = append(args, a)
-		}
-	}
-
-	cmd := exec.Command(cmdConfig.Cmd, args...)
-
-	return cmd, nil
 }

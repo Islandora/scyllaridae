@@ -1,6 +1,13 @@
 package config
 
-import "strings"
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+
+	"gopkg.in/yaml.v3"
+)
 
 // ServerConfig defines server-specific configurations.
 //
@@ -71,4 +78,55 @@ func IsAllowedMimeType(mimetype string, allowedFormats []string) bool {
 		}
 	}
 	return false
+}
+
+func ReadConfig(yp string) (*ServerConfig, error) {
+	var (
+		y   []byte
+		err error
+	)
+	yml := os.Getenv("SCYLLARIDAE_YML")
+	if yml != "" {
+		y = []byte(yml)
+	} else {
+		y, err = os.ReadFile(yp)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var c ServerConfig
+	err = yaml.Unmarshal(y, &c)
+	if err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+func BuildExecCommand(mimetype, addtlArgs string, c *ServerConfig) (*exec.Cmd, error) {
+	var cmdConfig Command
+	var exists bool
+	if IsAllowedMimeType(mimetype, c.AllowedMimeTypes) {
+		cmdConfig, exists = c.CmdByMimeType[mimetype]
+		if !exists || (len(cmdConfig.Cmd) == 0) {
+			// Fallback to default if specific MIME type not configured or if command is empty
+			cmdConfig = c.CmdByMimeType["default"]
+		}
+	} else {
+		return nil, fmt.Errorf("undefined mimetype: %s", mimetype)
+	}
+
+	args := []string{}
+	for _, a := range cmdConfig.Args {
+		if a == "%s" && addtlArgs != "" {
+			args = append(args, addtlArgs)
+		} else {
+			args = append(args, a)
+		}
+	}
+
+	cmd := exec.Command(cmdConfig.Cmd, args...)
+
+	return cmd, nil
 }
