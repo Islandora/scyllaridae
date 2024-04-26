@@ -1,0 +1,7 @@
+destinationHttpMethod: PUT
+allowedMimeTypes: [
+  "text/html"
+]
+cmdByMimeType:
+  default:
+    cmd: "convert"
