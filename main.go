@@ -52,7 +52,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch the file contents from the URL
+	// Stream the file contents from the source URL
 	sourceResp, err := http.Get(message.Attachment.Content.SourceURI)
 	if err != nil {
 		slog.Error("Error fetching source file contents", "err", err)
@@ -61,8 +61,8 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sourceResp.Body.Close()
 
-	arg := r.Header.Get(config.ArgHeader)
-	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.MimeType, arg, config)
+	// build a command to run that we will pipe the stdin stream into
+	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.MimeType, message.Attachment.Content.Args, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -70,13 +70,14 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Stdin = sourceResp.Body
 
-	// Create a buffer to store the output
+	// Create a buffer to stream the output of the command
 	var stdErr bytes.Buffer
-	cmd.Stdout = w
 	cmd.Stderr = &stdErr
 
-	slog.Info("Running command", "cmd", cmd.String())
+	// send stdout to the ResponseWriter stream
+	cmd.Stdout = w
 
+	slog.Info("Running command", "cmd", cmd.String())
 	if err := cmd.Run(); err != nil {
 		slog.Error("Error running command", "cmd", cmd.String(), "err", stdErr.String())
 		http.Error(w, "Error running command", http.StatusInternalServerError)

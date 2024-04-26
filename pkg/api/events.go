@@ -64,9 +64,15 @@ type Content struct {
 
 func DecodeAlpacaMessage(r *http.Request) (Payload, error) {
 	p := Payload{}
+
+	// set the payload based on the headers alpaca sends to this service
 	p.Attachment.Content.Args = r.Header.Get("X-Islandora-Args")
 	p.Attachment.Content.SourceURI = r.Header.Get("Apix-Ldp-Resource")
-	p.Attachment.Content.MimeType = r.Header.Get("Accept")
+	mimetype := r.Header.Get("Accept")
+	if mimetype == "" {
+		mimetype = "text/plain"
+	}
+	p.Attachment.Content.MimeType = mimetype
 
 	return p, nil
 }

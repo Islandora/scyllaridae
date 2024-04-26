@@ -69,6 +69,7 @@ func IsAllowedMimeType(mimetype string, allowedFormats []string) bool {
 		if format == mimetype {
 			return true
 		}
+		// if the config specified any mimetype is allowed
 		if format == "*" {
 			return true
 		}
@@ -110,18 +111,19 @@ func ReadConfig(yp string) (*ServerConfig, error) {
 func BuildExecCommand(mimetype, addtlArgs string, c *ServerConfig) (*exec.Cmd, error) {
 	var cmdConfig Command
 	var exists bool
-	if IsAllowedMimeType(mimetype, c.AllowedMimeTypes) {
-		cmdConfig, exists = c.CmdByMimeType[mimetype]
-		if !exists || (len(cmdConfig.Cmd) == 0) {
-			// Fallback to default if specific MIME type not configured or if command is empty
-			cmdConfig = c.CmdByMimeType["default"]
-		}
-	} else {
+	if !IsAllowedMimeType(mimetype, c.AllowedMimeTypes) {
 		return nil, fmt.Errorf("undefined mimetype: %s", mimetype)
+	}
+
+	cmdConfig, exists = c.CmdByMimeType[mimetype]
+	if !exists || (len(cmdConfig.Cmd) == 0) {
+		cmdConfig = c.CmdByMimeType["default"]
 	}
 
 	args := []string{}
 	for _, a := range cmdConfig.Args {
+		// if we have the special value of %s
+		// replace it with the args passed by the event
 		if a == "%s" && addtlArgs != "" {
 			args = append(args, addtlArgs)
 		} else {
