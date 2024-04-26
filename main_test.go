@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"os"
 	"testing"
 
+	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
 )
 
@@ -58,7 +58,7 @@ cmdByMimeType:
 `)
 	defer os.Unsetenv("SCYLLARIDAE_YML")
 
-	config, err = ReadConfig("scyllaridae.yml")
+	config, err = scyllaridae.ReadConfig("scyllaridae.yml")
 	if err != nil {
 		slog.Error("Could not read YML", "err", err)
 		os.Exit(1)
@@ -136,8 +136,8 @@ func TestIntegration_GetDestination(t *testing.T) {
 	defer destinationServer.Close()
 
 	// Mock the environment variable for the configuration file path
-	os.Setenv("SCYLLARIDAE_YML", fmt.Sprintf(`
-destinationHttpMethod: "%s"
+	os.Setenv("SCYLLARIDAE_YML", `
+destinationHttpMethod: "`+method+`"
 fileHeader: Apix-Ldp-Resource
 argHeader: X-Islandora-Args
 forwardAuth: false
@@ -146,15 +146,19 @@ allowedMimeTypes: [
 ]
 cmdByMimeType:
   default:
-    cmd: "cat"
-`, method))
+    cmd: "curl"
+    args: [
+      "%s"
+    ]
+`)
 	defer os.Unsetenv("SCYLLARIDAE_YML")
 
-	config, err = ReadConfig("scyllaridae.yml")
+	config, err = scyllaridae.ReadConfig("scyllaridae.yml")
 	if err != nil {
 		slog.Error("Could not read YML", "err", err)
 		os.Exit(1)
 	}
+
 	// Configure and start the main server
 	setupServer := httptest.NewServer(http.HandlerFunc(MessageHandler))
 	defer setupServer.Close()
@@ -203,6 +207,7 @@ cmdByMimeType:
 		t.Fatal(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Islandora-Args", destinationServer.URL)
 
 	// Capture the response
 	resp, err := http.DefaultClient.Do(req)
