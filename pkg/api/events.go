@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 )
 
@@ -64,11 +63,10 @@ type Content struct {
 }
 
 func DecodeAlpacaMessage(r *http.Request) (Payload, error) {
-	var p Payload
-
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		return Payload{}, err
-	}
+	p := Payload{}
+	p.Attachment.Content.Args = r.Header.Get("X-Islandora-Args")
+	p.Attachment.Content.SourceURI = r.Header.Get("Apix-Ldp-Resource")
+	p.Attachment.Content.MimeType = r.Header.Get("Accept")
 
 	return p, nil
 }

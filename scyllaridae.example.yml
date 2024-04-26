@@ -2,9 +2,8 @@ destinationHttpMethod: GET
 fileHeader: Apix-Ldp-Resource
 argHeader: X-Islandora-Args
 forwardAuth: false
-allowedMimeTypes: [
-  "text/html"
-]
+allowedMimeTypes:
+  - "text/html"
 cmdByMimeType:
   default:
     cmd: "cat"
