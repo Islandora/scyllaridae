@@ -18,6 +18,9 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.54
+      
+      - name: check valid yml
+        run: yq . ./docker-images/*/scyllaridae.yml
 
       - name: Install dependencies
         run: go get .

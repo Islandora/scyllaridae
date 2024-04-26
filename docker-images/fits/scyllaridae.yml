@@ -1,15 +1,13 @@
 destinationHttpMethod: GET
 forwardAuth: false
-allowedMimeTypes: [
-  "*"
-]
+allowedMimeTypes:
+  - "*"
 cmdByMimeType:
   default:
     cmd: "curl"
-    args: [
-      "http://fits:8080/fits/examine",
-      "-X",
-      "POST",
-      "-F",
-      "datafile=@-"
-    ]
+    args:
+      - "http://fits:8080/fits/examine"
+      - "-X"
+      - "POST"
+      - "-F"
+      - "datafile=@-"

@@ -1,7 +1,17 @@
 destinationHttpMethod: PUT
-allowedMimeTypes: [
-  "text/html"
-]
+allowedMimeTypes:
+  - "application/pdf"
+  - "image/*"
 cmdByMimeType:
+  "application/pdf":
+    cmd: convert
+    args:
+      - "pdf:-[0]"
+      - "%s"
+      - "pdf:-"
   default:
-    cmd: "convert"
+    cmd: convert
+    args:
+      - "-"
+      - "%s"
+      - "image:-"
