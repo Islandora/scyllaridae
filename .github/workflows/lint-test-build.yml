@@ -32,6 +32,7 @@ jobs:
         run: go test -v ./...
 
   find-images:
+    needs: [lint-test]
     name: Find docker images needing built
     runs-on: ubuntu-latest
     outputs:

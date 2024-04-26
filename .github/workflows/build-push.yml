@@ -34,7 +34,7 @@ jobs:
       run: |-
         # put the YML file in place so it's copied into the Docker container
         DIR=$(dirname "${{ inputs.dockerFile }}")
-        cp $DIR/scyllaridae.yml .
+        cp ./$DIR/scyllaridae.yml .
         # name the docker image after the folder name prefixed by scyllaridae
         # e.g. scyllaridae-curl
         echo "image=scyllaridae-$(basename $DIR)" >> $GITHUB_OUTPUT
