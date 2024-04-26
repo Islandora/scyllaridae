@@ -1,0 +1,76 @@
+name: build-push-ar
+on:
+  workflow_call:
+    inputs:
+      dockerFile:
+        required: true
+        type: string
+jobs:
+  build-push-ar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+    - uses: 'actions/checkout@v4'
+
+    - name: Extract branch name as docker tag
+      shell: bash
+      run: |-
+        BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
+        echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+      id: extract_branch
+
+    - name: Extract tag name
+      shell: bash
+      run: |-
+        t=$(echo ${GITHUB_SHA} | cut -c1-7)
+        echo "tag=$t" >> $GITHUB_OUTPUT
+      id: extract_tag
+
+    - name: Setup docker build
+      shell: bash
+      run: |-
+        # aka base build
+        if [ ${{ inputs.dockerFile }} == "Dockerfile" ]; then
+          echo "image=scyllaridae" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
+        # put the YML file in place so it's copied into the Docker container
+        DIR=$(dirname "${{ inputs.dockerFile }}")
+        cp ./$DIR/scyllaridae.yml .
+        # name the docker image after the folder name prefixed by scyllaridae
+        # e.g. scyllaridae-curl
+        echo "image=scyllaridae-$(basename $DIR)" >> $GITHUB_OUTPUT
+      id: setup
+
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v1'
+      with:
+        workload_identity_provider: ${{ secrets.GCLOUD_OIDC_POOL }}
+        create_credentials_file: true
+        service_account: ${{ secrets.GSA }}
+        token_format: 'access_token'
+
+    - uses: 'docker/login-action@v3'
+      name: 'Docker login'
+      with:
+        registry: 'us-docker.pkg.dev'
+        username: 'oauth2accesstoken'
+        password: '${{ steps.auth.outputs.access_token }}'
+
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ${{ inputs.dockerFile }}
+        build-args: |
+          TAG=${{steps.extract_branch.outputs.branch}}
+          DOCKER_REPOSITORY=us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public
+        push: true
+        tags: |
+          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_branch.outputs.branch}}-${{steps.extract_tag.outputs.tag}}
+          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_branch.outputs.branch}}

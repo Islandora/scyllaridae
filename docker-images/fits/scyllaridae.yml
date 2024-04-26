@@ -1,0 +1,15 @@
+destinationHttpMethod: GET
+forwardAuth: false
+allowedMimeTypes: [
+  "*"
+]
+cmdByMimeType:
+  default:
+    cmd: "curl"
+    args: [
+      "http://fits:8080/fits/examine",
+      "-X",
+      "POST",
+      "-F",
+      "datafile=@-"
+    ]

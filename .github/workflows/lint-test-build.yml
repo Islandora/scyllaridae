@@ -1,0 +1,71 @@
+name: lint-test
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54
+
+      - name: Install dependencies
+        run: go get .
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Put fixture in place
+        run: cp scyllaridae.example.yml scyllaridae.yml
+
+      - name: Test with the Go CLI
+        run: go test -v ./...
+
+  build-push-base:
+    needs: [lint-test]
+    uses: ./.github/workflows/build-push.yml
+    with:
+      dockerFile: Dockerfile
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  find-images:
+    needs: [build-push-base]
+    name: Find docker images needing built
+    runs-on: ubuntu-latest
+    outputs:
+      dockerFiles: ${{ steps.images.outputs.dockerFiles }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find docker files
+        id: images
+        run: |
+          dockerFiles=$(find docker-images -name Dockerfile | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
+          echo "dockerFiles=$dockerFiles" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_REF: ${{ github.ref }}
+
+  build-push:
+    needs: [find-images]
+    strategy:
+      matrix:
+        dockerFile: ${{ fromJson(needs.find-images.outputs.dockerFiles )}}
+    uses: ./.github/workflows/build-push.yml
+    with:
+      dockerFile: ${{ matrix.dockerFile }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit

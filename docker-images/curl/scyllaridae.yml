@@ -1,0 +1,8 @@
+destinationHttpMethod: GET
+forwardAuth: false
+allowedMimeTypes: [
+  "text/html"
+]
+cmdByMimeType:
+  default:
+    cmd: "curl"

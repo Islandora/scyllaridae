@@ -1,0 +1,20 @@
+destinationHttpMethod: PUT
+allowedMimeTypes: [
+  "application/pdf",
+  "image/*"
+]
+cmdByMimeType:
+  "application/pdf":
+    cmd: pdftotext
+    args: [
+      "%s",
+      "-",
+      "-"
+    ]
+  default:
+    cmd: tesseract
+    args: [
+      "stdin",
+      "stdout",
+      "%s"
+    ]
