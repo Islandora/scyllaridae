@@ -1,8 +1,9 @@
 ARG TAG=main
 ARG DOCKER_REPOSITORY=local
+FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG} AS scyllaridae
 FROM pandoc/core:3.1.1 AS pandoc
-FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 
-COPY --from=pandoc /usr/local/bin/pandoc /usr/local/bin/pandoc
+WORKDIR /app/scyllaridae
+COPY --from=scyllaridae /app/scyllaridae /app/scyllaridae
 COPY scyllaridae.yml .
 ENTRYPOINT ["/app/scyllaridae"]
