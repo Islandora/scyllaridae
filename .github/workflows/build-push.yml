@@ -67,7 +67,7 @@ jobs:
       with:
         context: .
         file: ${{ inputs.dockerFile }}
-        build-args:
+        build-args: |
           TAG=${{steps.extract_branch.outputs.branch}}
           DOCKER_REPOSITORY=us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public
         push: true
