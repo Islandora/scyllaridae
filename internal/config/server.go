@@ -20,7 +20,7 @@ type ServerConfig struct {
 
 	// HTTP method used for sending data to the destination server.
 	//
-	// required: true
+	// required: false
 	DestinationHTTPMethod string `yaml:"destinationHttpMethod"`
 
 	// Header name for the file resource.

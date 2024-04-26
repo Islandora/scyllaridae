@@ -48,15 +48,24 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	message, err := api.DecodeAlpacaMessage(r)
 	if err != nil {
 		slog.Error("Error decoding Pub/Sub message", "err", err)
-		http.Error(w, "Error decoding Pub/Sub message", http.StatusInternalServerError)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
 	// Stream the file contents from the source URL
-	sourceResp, err := http.Get(message.Attachment.Content.SourceURI)
+	req, err := http.NewRequest("GET", message.Attachment.Content.SourceURI, nil)
+	if err != nil {
+		slog.Error("Error creating request to source", "source", message.Attachment.Content.SourceURI, "err", err)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
+	if config.ForwardAuth {
+		req.Header.Set("Authorization", r.Header.Get("Authorization"))
+	}
+	sourceResp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		slog.Error("Error fetching source file contents", "err", err)
-		http.Error(w, "Error fetching file contents from URL", http.StatusInternalServerError)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 	defer sourceResp.Body.Close()
@@ -80,7 +89,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Running command", "cmd", cmd.String())
 	if err := cmd.Run(); err != nil {
 		slog.Error("Error running command", "cmd", cmd.String(), "err", stdErr.String())
-		http.Error(w, "Error running command", http.StatusInternalServerError)
+		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 }
