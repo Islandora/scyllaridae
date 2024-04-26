@@ -3,17 +3,17 @@ ARG DOCKER_REPOSITORY=local
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 
 RUN apk update && \
-    apk add leptonica-progs \
+    apk add --no-cache leptonica-dev \
         tesseract-ocr \
-        tesseract-ocr-eng \
-        tesseract-ocr-fra \
-        tesseract-ocr-spa \
-        tesseract-ocr-ita \
-        tesseract-ocr-por \
-        tesseract-ocr-hin \
-        tesseract-ocr-deu \
-        tesseract-ocr-jpn \
-        tesseract-ocr-rus \
+        tesseract-ocr-data-eng \
+        tesseract-ocr-data-fra \
+        tesseract-ocr-data-spa \
+        tesseract-ocr-data-ita \
+        tesseract-ocr-data-por \
+        tesseract-ocr-data-hin \
+        tesseract-ocr-data-deu \
+        tesseract-ocr-data-jpn \
+        tesseract-ocr-data-rus \
         poppler-utils
 
 COPY scyllaridae.yml /app/scyllaridae.yml
