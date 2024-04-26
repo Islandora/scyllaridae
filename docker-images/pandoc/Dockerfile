@@ -6,3 +6,4 @@ FROM pandoc/minimal:3.1.1
 WORKDIR /app
 COPY --from=scyllaridae /app/scyllaridae .
 COPY scyllaridae.yml .
+ENTRYPOINT ["/app/scyllaridae"]
