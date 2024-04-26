@@ -5,7 +5,8 @@ FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 ARG TESSERACT_VERSION=5.3.3-r1
 
 RUN apk update && \
-    apk add --no-cache leptonica-dev \
+    apk add --no-cache \
+        leptonica-dev==1.83.1-r0 \
         tesseract-ocr==${TESSERACT_VERSION} \
         tesseract-ocr-data-eng==${TESSERACT_VERSION} \
         tesseract-ocr-data-fra==${TESSERACT_VERSION} \
