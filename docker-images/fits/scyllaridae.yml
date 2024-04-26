@@ -1,5 +1,3 @@
-destinationHttpMethod: GET
-forwardAuth: false
 allowedMimeTypes:
   - "*"
 cmdByMimeType:
