@@ -1,4 +1,3 @@
-destinationHttpMethod: PUT
 allowedMimeTypes:
   - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   - "application/xml"
