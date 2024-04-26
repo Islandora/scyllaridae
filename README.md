@@ -1,6 +1,6 @@
 # scyllaridae
 
-Any microservice that takes stdin as input and returns a stream to stdout can use scyllaridae to facilitate its execution.
+Any microservice that takes stdin as input to a command streams stdout can use scyllaridae to facilitate its execution.
 
 ## Adding a new microservice
 
@@ -38,15 +38,15 @@ cmdByMimeType:
 Update your ISLE docker-compose.yml to deploy the service's docker image defined above
 
 ```yaml
-    fits-dev: &pandoc
+    fits-dev: &fits
         <<: [*dev, *common]
         image: ${DOCKER_REPOSITORY}/scyllaridae-fits:main
         networks:
             default:
                 aliases:
                     - fits
-    fits-prod: &pandoc-prod
-        <<: [*prod, *pandoc]
+    fits-prod: &fits-prod
+        <<: [*prod, *fits]
 ```
 
 ### Configure alpaca and Drupal
