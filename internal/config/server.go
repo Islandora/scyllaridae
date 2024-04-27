@@ -116,7 +116,7 @@ func BuildExecCommand(mimetype, addtlArgs string, c *ServerConfig) (*exec.Cmd, e
 	}
 
 	cmdConfig, exists = c.CmdByMimeType[mimetype]
-	if !exists || (len(cmdConfig.Cmd) == 0) {
+	if !exists {
 		cmdConfig = c.CmdByMimeType["default"]
 	}
 

@@ -69,6 +69,11 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer sourceResp.Body.Close()
+	if sourceResp.StatusCode != http.StatusOK {
+		slog.Error("SourceURI sent a bad status code", "code", sourceResp.StatusCode, "uri", message.Attachment.Content.SourceURI)
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
 
 	// build a command to run that we will pipe the stdin stream into
 	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.MimeType, message.Attachment.Content.Args, config)
