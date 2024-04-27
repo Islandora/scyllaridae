@@ -4,8 +4,8 @@ cmdByMimeType:
   default:
     cmd: "curl"
     args:
-      - "http://fits:8080/fits/examine"
       - "-X"
       - "POST"
       - "-F"
       - "datafile=@-"
+      - "http://fits:8080/fits/examine"

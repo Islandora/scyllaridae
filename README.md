@@ -6,19 +6,12 @@ Any command that takes stdin as input and streams its output to stdout can use s
 
 ### Create the microservice
 
-`Dockerfile`
-```dockerfile
-ARG TAG=main
-ARG DOCKER_REPOSITORY=local
-FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
+Define the service's behavior in `scyllaridae.yml`.
 
-RUN apk update && \
-    apk add --no-cache curl
+You can specify which mimetypes the service can act on in `allowedMimeTypes`
 
-COPY scyllaridae.yml /app/scyllaridae.yml
-```
+And specify different commands for different mimetypes in `cmdByMimeType`, or set the default command to run for all mimetypes with the `default key.
 
-`scyllaridae.yml`
 ```yaml
 allowedMimeTypes:
   - "*"
@@ -26,16 +19,28 @@ cmdByMimeType:
   default:
     cmd: "curl"
     args:
-      - "http://fits:8080/fits/examine"
       - "-X"
       - "POST"
       - "-F"
       - "datafile=@-"
+      - "http://fits:8080/fits/examine"
 ```
+
+Define the `Dockerfile` to run your microservice. Your service will run the main `scyllaridae` progeam which is an http service configured by your `scyllaridae.yml`. You just need to install the binaries your yml specifies to ensure the command is in the container when it runs.
+
+```dockerfile
+FROM jcorall/scyllaridae:main
+
+RUN apk update && \
+    apk add --no-cache curl==8.5.0-r0
+
+COPY scyllaridae.yml /app/scyllaridae.yml
+```
+
 
 ### Deploy your new microservice
 
-Update your ISLE docker-compose.yml to deploy the service's docker image defined above
+Update your [ISLE docker-compose.yml](https://github.com/Islandora-Devops/isle-site-template/blob/main/docker-compose.yml) to deploy the service's docker image defined above
 
 ```yaml
     fits-dev: &fits
@@ -67,4 +72,6 @@ derivative.QUEUE-NAME.async-consumer=true
 
 ## Attribution
 
-This is spiritually a fork of the php/symfony implementation at https://github.com/Islandora/crayfish, generalized to allow new microservices to just define a Dockerfile to install the proper binary/depencies and a YML spec to execute the binary depending on the mimetype being processed.
+This is spiritually a fork of the php/symfony implementation at https://github.com/Islandora/crayfish, generalized to allow new microservices to just define a Dockerfile to install the proper binary/depencies and a YML spec to execute the binary depending on the mimetype being processed. Hence the name of this service. [From Wikipedia](https://en.wikipedia.org/wiki/Slipper_lobster)
+
+> Slipper lobsters are a family (Scyllaridae) of about 90 species of achelate crustaceans

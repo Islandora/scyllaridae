@@ -1,8 +1,11 @@
-fileHeader: Apix-Ldp-Resource
-argHeader: X-Islandora-Args
-forwardAuth: false
 allowedMimeTypes:
-  - "text/html"
+  - "*"
 cmdByMimeType:
   default:
-    cmd: "cat"
+    cmd: "curl"
+    args:
+      - "-X"
+      - "POST"
+      - "-F"
+      - "datafile=@-"
+      - "http://fits:8080/fits/examine"

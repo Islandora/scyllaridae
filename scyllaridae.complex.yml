@@ -1,0 +1,17 @@
+# different commands based on mimetype
+allowedMimeTypes:
+  - "application/pdf"
+  - "image/*"
+cmdByMimeType:
+  "application/pdf":
+    cmd: convert
+    args:
+      - "pdf:-[0]"
+      - "%s"
+      - "pdf:-"
+  default:
+    cmd: convert
+    args:
+      - "-"
+      - "%s"
+      - "image:-"
