@@ -1,6 +1,6 @@
 # scyllaridae
 
-Any microservice that takes stdin as input to a command streams stdout can use scyllaridae to facilitate its execution.
+Any command that takes stdin as input and streams its output to stdout can use scyllaridae.
 
 ## Adding a new microservice
 
@@ -67,4 +67,4 @@ derivative.QUEUE-NAME.async-consumer=true
 
 ## Attribution
 
-This is spiritually a fork of the php/symfony implementation at https://github.com/Islandora/crayfish, generalized so new microservices that just need the command arguments set properly on a binary on disk can quickly spin up a new microservice.
+This is spiritually a fork of the php/symfony implementation at https://github.com/Islandora/crayfish, generalized to allow new microservices to just define a Dockerfile to install the proper binary/depencies and a YML spec to execute the binary depending on the mimetype being processed.

@@ -1,4 +1,3 @@
-destinationHttpMethod: PUT
 allowedMimeTypes:
   - "audio/*"
   - "video/*"
