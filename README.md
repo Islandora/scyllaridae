@@ -10,7 +10,7 @@ Define the service's behavior in `scyllaridae.yml`.
 
 You can specify which mimetypes the service can act on in `allowedMimeTypes`
 
-And specify different commands for different mimetypes in `cmdByMimeType`, or set the default command to run for all mimetypes with the `default` key. Here's another more [complex example YML](./scyllaridae.complex.yml).
+And specify different commands for different mimetypes in `cmdByMimeType`, or set the default command to run for all mimetypes with the `default` key.
 
 ```yaml
 allowedMimeTypes:
@@ -27,6 +27,9 @@ cmdByMimeType:
       # send the media file to FITS which will return the XML to stdout
       - "http://fits:8080/fits/examine"
 ```
+
+<sup><sub>Here's another more [complex example YML](./scyllaridae.complex.yml).</sub></sup>
+
 
 Define the `Dockerfile` to run your microservice. Your service will run the main `scyllaridae` program which is an http service configured by your `scyllaridae.yml`. You just need to install the binaries your yml specifies to ensure the command is in the container when it runs.
 
@@ -74,6 +77,6 @@ derivative.QUEUE-NAME.async-consumer=true
 
 ## Attribution
 
-This is spiritually a fork of the php/symfony implementation at [Islandora/Crayfish](https://github.com/Islandora/crayfish). The implementation of Crayfish was then generalized to allow new microservices to just define a Dockerfile to install the proper binary/depencies and a YML spec to execute the binary depending on the mimetype being processed. Hence the name of this service. [From Wikipedia](https://en.wikipedia.org/wiki/Slipper_lobster):
+This is spiritually a fork of the php/symfony implementation at [Islandora/Crayfish](https://github.com/Islandora/crayfish). The implementation of Crayfish was then generalized here to allow new microservices to just define a Dockerfile to install the proper binary/dependencies and a YML spec to execute the binary depending on the mimetype being processed. Hence the name of this service. [From Wikipedia](https://en.wikipedia.org/wiki/Slipper_lobster):
 
 > Slipper lobsters are a family (Scyllaridae) of about 90 species of achelate crustaceans
