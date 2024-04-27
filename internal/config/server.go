@@ -109,13 +109,11 @@ func ReadConfig(yp string) (*ServerConfig, error) {
 }
 
 func BuildExecCommand(mimetype, addtlArgs string, c *ServerConfig) (*exec.Cmd, error) {
-	var cmdConfig Command
-	var exists bool
 	if !IsAllowedMimeType(mimetype, c.AllowedMimeTypes) {
 		return nil, fmt.Errorf("undefined mimetype: %s", mimetype)
 	}
 
-	cmdConfig, exists = c.CmdByMimeType[mimetype]
+	cmdConfig, exists := c.CmdByMimeType[mimetype]
 	if !exists {
 		cmdConfig = c.CmdByMimeType["default"]
 	}

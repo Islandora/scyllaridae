@@ -10,7 +10,7 @@ Define the service's behavior in `scyllaridae.yml`.
 
 You can specify which mimetypes the service can act on in `allowedMimeTypes`
 
-And specify different commands for different mimetypes in `cmdByMimeType`, or set the default command to run for all mimetypes with the `default` key.
+And specify different commands for different mimetypes in `cmdByMimeType`, or set the default command to run for all mimetypes with the `default` key. Here's another more [complex example YML](./scyllaridae.complex.yml).
 
 ```yaml
 allowedMimeTypes:
@@ -21,8 +21,10 @@ cmdByMimeType:
     args:
       - "-X"
       - "POST"
+      # read the source media file in from stdin
       - "-F"
       - "datafile=@-"
+      # send the media file to FITS which will return the XML to stdout
       - "http://fits:8080/fits/examine"
 ```
 

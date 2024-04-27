@@ -7,11 +7,15 @@ cmdByMimeType:
     cmd: convert
     args:
       - "pdf:-[0]"
+      # %s is a special string used by scyllaridae
+      # populated by the X-Islandora-Args HTTP header
       - "%s"
       - "pdf:-"
   default:
     cmd: convert
     args:
       - "-"
+      # %s is a special string used by scyllaridae
+      # populated by the X-Islandora-Args HTTP header
       - "%s"
       - "image:-"
