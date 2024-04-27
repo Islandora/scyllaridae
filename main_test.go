@@ -16,6 +16,8 @@ type Test struct {
 	requestAuth    string
 	expectedStatus int
 	expectedBody   string
+	returnedBody   string
+	expectMismatch bool
 	yml            string
 	mimetype       string
 }
@@ -40,11 +42,13 @@ func TestMessageHandler_MethodNotAllowed(t *testing.T) {
 func TestIntegration(t *testing.T) {
 	tests := []Test{
 		{
-			name:           "cURL no auth",
+			name:           "cURL pass no auth",
 			authHeader:     "foo",
 			requestAuth:    "bar",
 			expectedStatus: http.StatusOK,
+			returnedBody:   "foo",
 			expectedBody:   "foo",
+			expectMismatch: false,
 			mimetype:       "text/plain",
 			yml: `
 forwardAuth: false
@@ -62,7 +66,9 @@ cmdByMimeType:
 			authHeader:     "foo",
 			requestAuth:    "bar",
 			expectedStatus: http.StatusBadRequest,
+			returnedBody:   "foo",
 			expectedBody:   "foo",
+			expectMismatch: false,
 			mimetype:       "text/plain",
 			yml: `
 forwardAuth: true
@@ -76,11 +82,52 @@ cmdByMimeType:
 `,
 		},
 		{
-			name:           "cURL pass auth",
+			name:           "cURL pass with auth",
 			authHeader:     "pass",
 			requestAuth:    "pass",
 			expectedStatus: http.StatusOK,
+			returnedBody:   "foo",
 			expectedBody:   "foo",
+			expectMismatch: false,
+			mimetype:       "text/plain",
+			yml: `
+forwardAuth: true
+allowedMimeTypes:
+  - "text/plain"
+cmdByMimeType:
+  default:
+    cmd: curl
+    args:
+      - "%s"
+`,
+		},
+		{
+			name:           "cURL fail no auth bad output",
+			requestAuth:    "pass",
+			expectedStatus: http.StatusOK,
+			returnedBody:   "foo",
+			expectedBody:   "bar",
+			expectMismatch: true,
+			mimetype:       "text/plain",
+			yml: `
+forwardAuth: false
+allowedMimeTypes:
+  - "text/plain"
+cmdByMimeType:
+  default:
+    cmd: curl
+    args:
+      - "%s"
+`,
+		},
+		{
+			name:           "cURL fail bad output",
+			authHeader:     "pass",
+			requestAuth:    "pass",
+			expectedStatus: http.StatusOK,
+			returnedBody:   "foo",
+			expectedBody:   "bar",
+			expectMismatch: true,
 			mimetype:       "text/plain",
 			yml: `
 forwardAuth: true
@@ -97,7 +144,7 @@ cmdByMimeType:
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var err error
-			destinationServer := createMockDestinationServer(tt.expectedBody)
+			destinationServer := createMockDestinationServer(tt.returnedBody)
 			defer destinationServer.Close()
 
 			sourceServer := createMockSourceServer(t, tt.authHeader, destinationServer.URL)
@@ -132,7 +179,9 @@ cmdByMimeType:
 			}
 			defer resp.Body.Close()
 			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			assert.Equal(t, os.Getenv("NEEDFUL"), tt.expectedBody)
+			if !tt.expectMismatch {
+				assert.Equal(t, os.Getenv("NEEDFUL"), tt.expectedBody)
+			}
 		})
 	}
 }
