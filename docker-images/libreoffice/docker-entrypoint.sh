@@ -10,7 +10,7 @@ cat > "$input_temp"
 
 libreoffice --headless --convert-to pdf "$input_temp" > /dev/null 2>&1
 
-PDF="$(basename "$input_temp").pdf"
-cat "/app/$PDF"
+PDF="/app/$(basename "$input_temp").pdf"
+cat "$PDF"
 
-rm "$input_temp" "/app/$PDF"
+rm "$input_temp" "$PDF"
