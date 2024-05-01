@@ -7,4 +7,4 @@ cmdByMimeType:
       - "-f"
       - "%source-mime-ext"
       - "-t"
-      - "pdf"
+      - "%destination-mime-ext"
