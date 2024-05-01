@@ -147,7 +147,7 @@ cmdByMimeType:
 			destinationServer := createMockDestinationServer(tt.returnedBody)
 			defer destinationServer.Close()
 
-			sourceServer := createMockSourceServer(t, tt.authHeader, destinationServer.URL)
+			sourceServer := createMockSourceServer(t, tt.mimetype, tt.authHeader, destinationServer.URL)
 			defer sourceServer.Close()
 
 			os.Setenv("SCYLLARIDAE_YML", tt.yml)
@@ -168,7 +168,8 @@ cmdByMimeType:
 				t.Fatal(err)
 			}
 			req.Header.Set("X-Islandora-Args", destinationServer.URL)
-			req.Header.Set("Accept", tt.mimetype)
+			// set the mimetype to send to the destination server in the Accept header
+			req.Header.Set("Accept", "application/xml")
 			req.Header.Set("Authorization", tt.requestAuth)
 			req.Header.Set("Apix-Ldp-Resource", sourceServer.URL)
 
@@ -192,13 +193,14 @@ func createMockDestinationServer(content string) *httptest.Server {
 	}))
 }
 
-func createMockSourceServer(t *testing.T, auth, content string) *httptest.Server {
+func createMockSourceServer(t *testing.T, mimetype, auth, content string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if config.ForwardAuth && r.Header.Get("Authorization") != auth {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
+		w.Header().Set("Content-Type", mimetype)
 		if _, err := w.Write([]byte(content)); err != nil {
 			t.Fatal("Failed to write response in mock server")
 		}

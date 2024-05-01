@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
 )
 
@@ -55,24 +57,55 @@ type Attachment struct {
 //
 // swagger:model Content
 type Content struct {
-	MimeType       string `json:"mimetype" description:"MIME type of the content"`
-	Args           string `json:"args" description:"Arguments used or applicable to the content"`
-	SourceURI      string `json:"sourceUri" description:"Source URI from which the content is fetched"`
-	DestinationURI string `json:"destinationUri" description:"Destination URI to where the content is delivered"`
-	FileUploadURI  string `json:"fileUploadUri" description:"File upload URI for uploading the content"`
+	SourceMimeType      string `json:"source_mimetype,omitempty" description:"MIME type of the source URI"`
+	DestinationMimeType string `json:"mimetype" description:"MIME type of the derivative being created"`
+	Args                string `json:"args" description:"Arguments used or applicable to the content"`
+	SourceURI           string `json:"sourceUri" description:"Source URI from which the content is fetched"`
+	DestinationURI      string `json:"destinationUri" description:"Destination URI to where the content is delivered"`
+	FileUploadURI       string `json:"fileUploadUri" description:"File upload URI for uploading the content"`
 }
 
-func DecodeAlpacaMessage(r *http.Request) (Payload, error) {
+func DecodeAlpacaMessage(r *http.Request, auth string) (Payload, error) {
 	p := Payload{}
 
 	// set the payload based on the headers alpaca sends to this service
 	p.Attachment.Content.Args = r.Header.Get("X-Islandora-Args")
 	p.Attachment.Content.SourceURI = r.Header.Get("Apix-Ldp-Resource")
-	mimetype := r.Header.Get("Accept")
-	if mimetype == "" {
-		mimetype = "text/plain"
+
+	p.Attachment.Content.DestinationMimeType = r.Header.Get("Accept")
+	if p.Attachment.Content.DestinationMimeType == "" {
+		p.Attachment.Content.DestinationMimeType = "text/plain"
 	}
-	p.Attachment.Content.MimeType = mimetype
+
+	err := p.getSourceUri(auth)
+	if err != nil {
+		return p, err
+	}
 
 	return p, nil
+}
+
+func (p *Payload) getSourceUri(auth string) error {
+	client := &http.Client{}
+
+	req, err := http.NewRequest("HEAD", p.Attachment.Content.SourceURI, nil)
+	if err != nil {
+		slog.Error("Unable to create source URI request", "uri", p.Attachment.Content.SourceURI, "err", err)
+		return fmt.Errorf("error creating request for %s", p.Attachment.Content.SourceURI)
+	}
+
+	if auth != "" {
+		req.Header.Set("Authorization", auth)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		slog.Error("Unable to get source URI", "uri", p.Attachment.Content.SourceURI, "err", err)
+		return fmt.Errorf("error issuing HEAD request on %s", p.Attachment.Content.SourceURI)
+	}
+	defer resp.Body.Close()
+
+	p.Attachment.Content.SourceMimeType = resp.Header.Get("Content-Type")
+	slog.Info("Got mimetype", "mime", p.Attachment.Content.SourceMimeType)
+	return nil
 }
