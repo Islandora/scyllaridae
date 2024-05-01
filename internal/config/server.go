@@ -178,6 +178,7 @@ func getMimeTypeExtension(mimeType string) (string, error) {
 		"video/3gpp":                    "3gp",
 		"video/x-m4v":                   "m4v",
 		"video/x-msvideo":               "avi",
+		"video/ogg":                     "ogg",
 
 		"audio/ogg":         "ogg",
 		"audio/webm":        "webm",
