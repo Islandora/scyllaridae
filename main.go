@@ -45,7 +45,11 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	// Read the Alpaca message payload
-	message, err := api.DecodeAlpacaMessage(r)
+	auth := ""
+	if config.ForwardAuth {
+		auth = r.Header.Get("Authorization")
+	}
+	message, err := api.DecodeAlpacaMessage(r, auth)
 	if err != nil {
 		slog.Error("Error decoding Pub/Sub message", "err", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -60,7 +64,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if config.ForwardAuth {
-		req.Header.Set("Authorization", r.Header.Get("Authorization"))
+		req.Header.Set("Authorization", auth)
 	}
 	sourceResp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -76,7 +80,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// build a command to run that we will pipe the stdin stream into
-	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.MimeType, message.Attachment.Content.Args, config)
+	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.SourceMimeType, message.Attachment.Content.Args, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
