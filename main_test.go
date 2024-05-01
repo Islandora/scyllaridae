@@ -284,7 +284,7 @@ func TestMimeTypes(t *testing.T) {
 		"audio/mpeg":        "mp3",
 		"audio/x-wav":       "wav",
 		"audio/ogg":         "ogg",
-		"audio/aac":         "aac",
+		"audio/aac":         "m4a",
 		"audio/webm":        "webm",
 		"audio/flac":        "flac",
 		"audio/midi":        "mid",
@@ -304,6 +304,7 @@ func TestMimeTypes(t *testing.T) {
 		"video/x-m4v":                   "m4v",
 		"video/x-mng":                   "mng",
 		"video/x-ms-asf":                "asx",
+		"video/ogg":                     "ogg",
 
 		"text/plain":      "txt",
 		"text/html":       "html",
