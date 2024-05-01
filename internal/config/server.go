@@ -156,6 +156,9 @@ func BuildExecCommand(sourceMimeType, destinationMimeType, addtlArgs string, c *
 }
 
 func getMimeTypeExtension(mimeType string) (string, error) {
+	// since the std mimetype -> extension conversion returns a list
+	// we need to override the default extension to use
+	// it also is missing some mimetypes
 	mimeToExtension := map[string]string{
 		"application/msword":            "doc",
 		"application/vnd.ms-excel":      "xls",
@@ -163,9 +166,18 @@ func getMimeTypeExtension(mimeType string) (string, error) {
 
 		"image/svg+xml": "svg",
 		"image/webp":    "webp",
+		"image/jp2":     "jp2",
+		"image/bmp":     "bmp",
 
-		"video/mp4":       "mp4",
-		"video/quicktime": "mov",
+		"video/mp4":                     "mp4",
+		"video/quicktime":               "mov",
+		"video/x-ms-asf":                "asx",
+		"video/mp2t":                    "ts",
+		"video/mpeg":                    "mpg",
+		"application/vnd.apple.mpegurl": "m3u8",
+		"video/3gpp":                    "3gp",
+		"video/x-m4v":                   "m4v",
+		"video/x-msvideo":               "avi",
 
 		"audio/ogg":         "ogg",
 		"audio/webm":        "webm",
