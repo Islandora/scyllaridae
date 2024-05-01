@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log/slog"
 	"mime"
 	"os"
 	"os/exec"
@@ -132,20 +131,18 @@ func BuildExecCommand(sourceMimeType, destinationMimeType, addtlArgs string, c *
 		} else if a == "%source-mime-ext" {
 			extensions, err := mime.ExtensionsByType(sourceMimeType)
 			if err != nil || len(extensions) == 0 {
-				slog.Error("unknown mime extension", "mimetype", sourceMimeType, "err", err)
 				return nil, fmt.Errorf("unknown mime extension: %s", sourceMimeType)
 			}
-			args = append(args, strings.TrimPrefix(extensions[0], "."))
+			args = append(args, strings.TrimPrefix(extensions[len(extensions)-1], "."))
 
 			// if we have the special value of %destination-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%destination-mime-ext" {
 			extensions, err := mime.ExtensionsByType(destinationMimeType)
 			if err != nil || len(extensions) == 0 {
-				slog.Error("unknown mime extension", "mimetype", destinationMimeType, "err", err)
 				return nil, fmt.Errorf("unknown mime extension: %s", destinationMimeType)
 			}
-			args = append(args, strings.TrimPrefix(extensions[0], "."))
+			args = append(args, strings.TrimPrefix(extensions[len(extensions)-1], "."))
 
 		} else {
 			args = append(args, a)
