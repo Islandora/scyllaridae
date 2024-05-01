@@ -58,7 +58,7 @@ cmdByMimeType:
   default:
     cmd: curl
     args:
-      - "%s"
+      - "%args"
 `,
 		},
 		{
@@ -78,7 +78,7 @@ cmdByMimeType:
   default:
     cmd: curl
     args:
-      - "%s"
+      - "%args"
 `,
 		},
 		{
@@ -98,7 +98,7 @@ cmdByMimeType:
   default:
     cmd: curl
     args:
-      - "%s"
+      - "%args"
 `,
 		},
 		{
@@ -117,7 +117,7 @@ cmdByMimeType:
   default:
     cmd: curl
     args:
-      - "%s"
+      - "%args"
 `,
 		},
 		{
@@ -137,7 +137,7 @@ cmdByMimeType:
   default:
     cmd: curl
     args:
-      - "%s"
+      - "%args"
 `,
 		},
 	}

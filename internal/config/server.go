@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
+	"mime"
 	"os"
 	"os/exec"
 	"strings"
@@ -108,22 +110,43 @@ func ReadConfig(yp string) (*ServerConfig, error) {
 	return &c, nil
 }
 
-func BuildExecCommand(mimetype, addtlArgs string, c *ServerConfig) (*exec.Cmd, error) {
-	if !IsAllowedMimeType(mimetype, c.AllowedMimeTypes) {
-		return nil, fmt.Errorf("undefined mimetype: %s", mimetype)
+func BuildExecCommand(sourceMimeType, destinationMimeType, addtlArgs string, c *ServerConfig) (*exec.Cmd, error) {
+	if !IsAllowedMimeType(sourceMimeType, c.AllowedMimeTypes) {
+		return nil, fmt.Errorf("undefined sourceMimeType: %s", sourceMimeType)
 	}
 
-	cmdConfig, exists := c.CmdByMimeType[mimetype]
+	cmdConfig, exists := c.CmdByMimeType[sourceMimeType]
 	if !exists {
 		cmdConfig = c.CmdByMimeType["default"]
 	}
 
 	args := []string{}
 	for _, a := range cmdConfig.Args {
-		// if we have the special value of %s
+		// if we have the special value of %args
 		// replace it with the args passed by the event
-		if a == "%s" && addtlArgs != "" {
+		if a == "%args" && addtlArgs != "" {
 			args = append(args, addtlArgs)
+
+			// if we have the special value of %source-mime-ext
+			// replace it with the source mimetype extension
+		} else if a == "%source-mime-ext" {
+			extensions, err := mime.ExtensionsByType(sourceMimeType)
+			if err != nil || len(extensions) == 0 {
+				slog.Error("unknown mime extension", "mimetype", sourceMimeType, "err", err)
+				return nil, fmt.Errorf("unknown mime extension: %s", sourceMimeType)
+			}
+			args = append(args, strings.TrimPrefix(extensions[0], "."))
+
+			// if we have the special value of %destination-mime-ext
+			// replace it with the source mimetype extension
+		} else if a == "%destination-mime-ext" {
+			extensions, err := mime.ExtensionsByType(destinationMimeType)
+			if err != nil || len(extensions) == 0 {
+				slog.Error("unknown mime extension", "mimetype", destinationMimeType, "err", err)
+				return nil, fmt.Errorf("unknown mime extension: %s", destinationMimeType)
+			}
+			args = append(args, strings.TrimPrefix(extensions[0], "."))
+
 		} else {
 			args = append(args, a)
 		}

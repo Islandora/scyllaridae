@@ -80,7 +80,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// build a command to run that we will pipe the stdin stream into
-	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.SourceMimeType, message.Attachment.Content.Args, config)
+	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.SourceMimeType, message.Attachment.Content.DestinationMimeType, message.Attachment.Content.Args, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)

@@ -1,11 +1,10 @@
 allowedMimeTypes:
-  - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  - "application/xml"
+  - "text/csv"
 cmdByMimeType:
   default:
     cmd: /usr/local/bin/pandoc
     args:
       - "-f"
-      - "docx"
+      - "%source-mime-ext"
       - "-t"
       - "pdf"
