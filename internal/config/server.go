@@ -182,6 +182,7 @@ func getMimeTypeExtension(mimeType string) (string, error) {
 		"audio/ogg":         "ogg",
 		"audio/webm":        "webm",
 		"audio/flac":        "flac",
+		"audio/aac":         "m4a",
 		"audio/mpeg":        "mp3",
 		"audio/x-m4a":       "m4a",
 		"audio/x-realaudio": "ra",
