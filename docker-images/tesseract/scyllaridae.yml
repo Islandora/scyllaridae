@@ -5,7 +5,7 @@ cmdByMimeType:
   "application/pdf":
     cmd: pdftotext
     args:
-      - "%s"
+      - "%args"
       - "-"
       - "-"
   default:
@@ -13,4 +13,4 @@ cmdByMimeType:
     args:
       - "stdin"
       - "stdout"
-      - "%s"
+      - "%args"

@@ -4,52 +4,12 @@ allowedMimeTypes:
   - "image/jpeg"
   - "image/png"
 cmdByMimeType:
-  "video/x-msvideo":
-    cmd: ffmpeg
-    args:
-      - "-i"
-      - "-"
-      - "%s"
-      - "-f"
-      - "avi"
-  "video/ogg":
-    cmd: ffmpeg
-    args:
-      - "-i"
-      - "-"
-      - "%s"
-      - "-f"
-      - "ogg"
-  "audio/x-wav":
-    cmd: ffmpeg
-    args:
-      - "-i"
-      - "-"
-      - "%s"
-      - "-f"
-      - "wav"
-  "audio/mpeg":
-    cmd: ffmpeg
-    args:
-      - "-i"
-      - "-"
-      - "%s"
-      - "-f"
-      - "mp3"
-  "audio/aac":
-    cmd: ffmpeg
-    args:
-      - "-i"
-      - "-"
-      - "%s"
-      - "-f"
-      - "m4a"
   "image/jpeg":
     cmd: ffmpeg
     args:
       - "-i"
       - "-"
-      - "%s"
+      - "%args"
       - "-f"
       - "image2pipe"
   "image/png":
@@ -57,7 +17,7 @@ cmdByMimeType:
     args:
       - "-i"
       - "-"
-      - "%s"
+      - "%args"
       - "-f"
       - "image2pipe"
   "video/mp4":
@@ -65,7 +25,7 @@ cmdByMimeType:
     args:
       - "-i"
       - "-"
-      - "%s"
+      - "%args"
       - "-vcodec"
       - "libx264"
       - "-preset"
@@ -85,4 +45,15 @@ cmdByMimeType:
       - "-y"
       - "-f"
       - "mp4"
+      - "-"
+  default:
+    cmd: ffmpeg
+    args:
+      - "-f"
+      - "%source-mime-ext"
+      - "-i"
+      - "-"
+      - "%args"
+      - "-f"
+      - "%destination-mime-ext"
       - "-"

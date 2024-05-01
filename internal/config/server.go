@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"mime"
 	"os"
 	"os/exec"
 	"strings"
@@ -108,22 +109,42 @@ func ReadConfig(yp string) (*ServerConfig, error) {
 	return &c, nil
 }
 
-func BuildExecCommand(mimetype, addtlArgs string, c *ServerConfig) (*exec.Cmd, error) {
-	if !IsAllowedMimeType(mimetype, c.AllowedMimeTypes) {
-		return nil, fmt.Errorf("undefined mimetype: %s", mimetype)
+func BuildExecCommand(sourceMimeType, destinationMimeType, addtlArgs string, c *ServerConfig) (*exec.Cmd, error) {
+	if !IsAllowedMimeType(sourceMimeType, c.AllowedMimeTypes) {
+		return nil, fmt.Errorf("undefined sourceMimeType: %s", sourceMimeType)
 	}
 
-	cmdConfig, exists := c.CmdByMimeType[mimetype]
+	cmdConfig, exists := c.CmdByMimeType[sourceMimeType]
 	if !exists {
 		cmdConfig = c.CmdByMimeType["default"]
 	}
 
 	args := []string{}
 	for _, a := range cmdConfig.Args {
-		// if we have the special value of %s
+		// if we have the special value of %args
 		// replace it with the args passed by the event
-		if a == "%s" && addtlArgs != "" {
+		if a == "%args" && addtlArgs != "" {
 			args = append(args, addtlArgs)
+
+			// if we have the special value of %source-mime-ext
+			// replace it with the source mimetype extension
+		} else if a == "%source-mime-ext" {
+			a, err := getMimeTypeExtension(sourceMimeType)
+			if err != nil {
+				return nil, fmt.Errorf("unknown mime extension: %s", sourceMimeType)
+			}
+
+			args = append(args, a)
+			// if we have the special value of %destination-mime-ext
+			// replace it with the source mimetype extension
+		} else if a == "%destination-mime-ext" {
+			a, err := getMimeTypeExtension(destinationMimeType)
+			if err != nil {
+				return nil, fmt.Errorf("unknown mime extension: %s", destinationMimeType)
+			}
+
+			args = append(args, a)
+
 		} else {
 			args = append(args, a)
 		}
@@ -132,4 +153,50 @@ func BuildExecCommand(mimetype, addtlArgs string, c *ServerConfig) (*exec.Cmd, e
 	cmd := exec.Command(cmdConfig.Cmd, args...)
 
 	return cmd, nil
+}
+
+func getMimeTypeExtension(mimeType string) (string, error) {
+	// since the std mimetype -> extension conversion returns a list
+	// we need to override the default extension to use
+	// it also is missing some mimetypes
+	mimeToExtension := map[string]string{
+		"application/msword":            "doc",
+		"application/vnd.ms-excel":      "xls",
+		"application/vnd.ms-powerpoint": "ppt",
+
+		"image/svg+xml": "svg",
+		"image/webp":    "webp",
+		"image/jp2":     "jp2",
+		"image/bmp":     "bmp",
+
+		"video/mp4":                     "mp4",
+		"video/quicktime":               "mov",
+		"video/x-ms-asf":                "asx",
+		"video/mp2t":                    "ts",
+		"video/mpeg":                    "mpg",
+		"application/vnd.apple.mpegurl": "m3u8",
+		"video/3gpp":                    "3gp",
+		"video/x-m4v":                   "m4v",
+		"video/x-msvideo":               "avi",
+
+		"audio/ogg":         "ogg",
+		"audio/webm":        "webm",
+		"audio/flac":        "flac",
+		"audio/aac":         "aac",
+		"audio/mpeg":        "mp3",
+		"audio/x-m4a":       "m4a",
+		"audio/x-realaudio": "ra",
+		"audio/midi":        "mid",
+	}
+	cleanMimeType := strings.TrimSpace(strings.ToLower(mimeType))
+	if ext, ok := mimeToExtension[cleanMimeType]; ok {
+		return ext, nil
+	}
+
+	extensions, err := mime.ExtensionsByType(mimeType)
+	if err != nil || len(extensions) == 0 {
+		return "", fmt.Errorf("unknown mime extension: %s", mimeType)
+	}
+
+	return strings.TrimPrefix(extensions[len(extensions)-1], "."), nil
 }

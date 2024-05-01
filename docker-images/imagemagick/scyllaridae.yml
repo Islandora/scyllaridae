@@ -6,11 +6,11 @@ cmdByMimeType:
     cmd: convert
     args:
       - "pdf:-[0]"
-      - "%s"
+      - "%args"
       - "pdf:-"
   default:
     cmd: convert
     args:
       - "-"
-      - "%s"
+      - "%args"
       - "image:-"

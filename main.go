@@ -60,7 +60,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	req, err := http.NewRequest("GET", message.Attachment.Content.SourceURI, nil)
 	if err != nil {
 		slog.Error("Error creating request to source", "source", message.Attachment.Content.SourceURI, "err", err)
-		http.Error(w, "Internal error", http.StatusInternalServerError)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 	if config.ForwardAuth {
@@ -80,10 +80,10 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// build a command to run that we will pipe the stdin stream into
-	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.SourceMimeType, message.Attachment.Content.Args, config)
+	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.SourceMimeType, message.Attachment.Content.DestinationMimeType, message.Attachment.Content.Args, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
-		http.Error(w, "Internal error", http.StatusInternalServerError)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 	cmd.Stdin = sourceResp.Body
