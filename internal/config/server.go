@@ -129,20 +129,21 @@ func BuildExecCommand(sourceMimeType, destinationMimeType, addtlArgs string, c *
 			// if we have the special value of %source-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%source-mime-ext" {
-			extensions, err := mime.ExtensionsByType(sourceMimeType)
-			if err != nil || len(extensions) == 0 {
+			a, err := getMimeTypeExtension(sourceMimeType)
+			if err != nil {
 				return nil, fmt.Errorf("unknown mime extension: %s", sourceMimeType)
 			}
-			args = append(args, strings.TrimPrefix(extensions[len(extensions)-1], "."))
 
+			args = append(args, a)
 			// if we have the special value of %destination-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%destination-mime-ext" {
-			extensions, err := mime.ExtensionsByType(destinationMimeType)
-			if err != nil || len(extensions) == 0 {
+			a, err := getMimeTypeExtension(destinationMimeType)
+			if err != nil {
 				return nil, fmt.Errorf("unknown mime extension: %s", destinationMimeType)
 			}
-			args = append(args, strings.TrimPrefix(extensions[len(extensions)-1], "."))
+
+			args = append(args, a)
 
 		} else {
 			args = append(args, a)
@@ -152,4 +153,38 @@ func BuildExecCommand(sourceMimeType, destinationMimeType, addtlArgs string, c *
 	cmd := exec.Command(cmdConfig.Cmd, args...)
 
 	return cmd, nil
+}
+
+func getMimeTypeExtension(mimeType string) (string, error) {
+	mimeToExtension := map[string]string{
+		"application/msword":            "doc",
+		"application/vnd.ms-excel":      "xls",
+		"application/vnd.ms-powerpoint": "ppt",
+
+		"image/svg+xml": "svg",
+		"image/webp":    "webp",
+
+		"video/mp4":       "mp4",
+		"video/quicktime": "mov",
+
+		"audio/ogg":         "ogg",
+		"audio/webm":        "webm",
+		"audio/flac":        "flac",
+		"audio/aac":         "aac",
+		"audio/mpeg":        "mp3",
+		"audio/x-m4a":       "m4a",
+		"audio/x-realaudio": "ra",
+		"audio/midi":        "mid",
+	}
+	cleanMimeType := strings.TrimSpace(strings.ToLower(mimeType))
+	if ext, ok := mimeToExtension[cleanMimeType]; ok {
+		return ext, nil
+	}
+
+	extensions, err := mime.ExtensionsByType(mimeType)
+	if err != nil || len(extensions) == 0 {
+		return "", fmt.Errorf("unknown mime extension: %s", mimeType)
+	}
+
+	return strings.TrimPrefix(extensions[len(extensions)-1], "."), nil
 }
