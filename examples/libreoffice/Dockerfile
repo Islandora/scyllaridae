@@ -3,7 +3,7 @@ ARG DOCKER_REPOSITORY=local
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG} AS scyllaridae
 
 COPY scyllaridae.yml /app/
-COPY docker-entrypoint.sh /app/
+COPY cmd.sh /app/
 
 RUN apk update && \
   apk add --no-cache \

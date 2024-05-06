@@ -7,4 +7,4 @@ allowedMimeTypes:
   - "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 cmdByMimeType:
   default:
-    cmd: /app/docker-entrypoint.sh
+    cmd: /app/cmd.sh
