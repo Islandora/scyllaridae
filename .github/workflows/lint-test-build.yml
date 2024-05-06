@@ -12,6 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: check valid yml
+        run: yq . ./examples/*/scyllaridae.yml
+
+      - name: check valid sh
+        run: shellcheck examples/*/*.sh
+
       - uses: actions/setup-go@v5
         with:
           go-version: '>=1.22.2'
@@ -21,9 +27,6 @@ jobs:
         with:
           version: v1.54
       
-      - name: check valid yml
-        run: yq . ./examples/*/scyllaridae.yml
-
       - name: Install dependencies
         run: go get .
 
