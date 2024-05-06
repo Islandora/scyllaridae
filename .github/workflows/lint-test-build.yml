@@ -22,7 +22,7 @@ jobs:
           version: v1.54
       
       - name: check valid yml
-        run: yq . ./docker-images/*/scyllaridae.yml
+        run: yq . ./examples/*/scyllaridae.yml
 
       - name: Install dependencies
         run: go get .
@@ -57,7 +57,7 @@ jobs:
       - name: Find docker files
         id: images
         run: |
-          dockerFiles=$(find docker-images -name Dockerfile | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
+          dockerFiles=$(find examples -name Dockerfile | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
           echo "dockerFiles=$dockerFiles" >> $GITHUB_OUTPUT
         env:
           GITHUB_REF: ${{ github.ref }}
