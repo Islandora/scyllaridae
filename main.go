@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -158,9 +159,19 @@ func connectAndSubscribe(queueName string, subscribed chan bool) error {
 	if addr == "" {
 		addr = "activemq:61613"
 	}
-	conn, err := stomp.Dial("tcp", addr, stomp.ConnOpt.Host("/"), stomp.ConnOpt.HeartBeat(10*time.Second, 10*time.Second))
+
+	c, err := net.Dial("tcp", addr)
 	if err != nil {
-		slog.Error("cannot connect to server", "err", err.Error())
+		slog.Error("cannot connect to port", "err", err.Error())
+		return err
+	}
+	tcpConn := c.(*net.TCPConn)
+	tcpConn.SetKeepAlive(true)
+	tcpConn.SetKeepAlivePeriod(10 * time.Second)
+
+	conn, err := stomp.Connect(tcpConn, stomp.ConnOpt.HeartBeat(10*time.Second, 0*time.Second))
+	if err != nil {
+		slog.Error("cannot connect to stomp server", "err", err.Error())
 		return err
 	}
 	defer func() {
