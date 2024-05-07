@@ -151,6 +151,7 @@ func BuildExecCommand(sourceMimeType, destinationMimeType, addtlArgs string, c *
 	}
 
 	cmd := exec.Command(cmdConfig.Cmd, args...)
+	cmd.Env = os.Environ()
 
 	return cmd, nil
 }

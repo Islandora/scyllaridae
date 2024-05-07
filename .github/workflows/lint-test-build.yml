@@ -37,7 +37,7 @@ jobs:
         run: cp scyllaridae.example.yml scyllaridae.yml
 
       - name: Test with the Go CLI
-        run: go test -v ./...
+        run: go test -v -race ./...
 
   build-push-base:
     needs: [lint-test]

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -65,6 +66,18 @@ type Content struct {
 	FileUploadURI       string `json:"fileUploadUri" description:"File upload URI for uploading the content"`
 }
 
+// decode the event message sent by Islandora directly from ActiveMQ
+func DecodeEventMessage(msg []byte) (Payload, error) {
+	var p Payload
+
+	if err := json.Unmarshal(msg, &p); err != nil {
+		return Payload{}, err
+	}
+
+	return p, nil
+}
+
+// decode the event message transformed by Alpaca
 func DecodeAlpacaMessage(r *http.Request, auth string) (Payload, error) {
 	p := Payload{}
 
