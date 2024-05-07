@@ -19,6 +19,11 @@ type ServerConfig struct {
 	// required: true
 	Label string `yaml:"label"`
 
+	// Label of the server configuration used for identification.
+	//
+	// required: false
+	QueueName string `yaml:"queueName"`
+
 	// HTTP method used for sending data to the destination server.
 	//
 	// required: false
@@ -41,12 +46,12 @@ type ServerConfig struct {
 
 	// List of MIME types allowed for processing.
 	//
-	// required: true
+	// required: false
 	AllowedMimeTypes []string `yaml:"allowedMimeTypes"`
 
 	// Commands and arguments ran by MIME type.
 	//
-	// required: true
+	// required: false
 	CmdByMimeType map[string]Command `yaml:"cmdByMimeType"`
 }
 
@@ -109,12 +114,12 @@ func ReadConfig(yp string) (*ServerConfig, error) {
 	return &c, nil
 }
 
-func BuildExecCommand(sourceMimeType, destinationMimeType, addtlArgs string, c *ServerConfig) (*exec.Cmd, error) {
-	if !IsAllowedMimeType(sourceMimeType, c.AllowedMimeTypes) {
-		return nil, fmt.Errorf("undefined sourceMimeType: %s", sourceMimeType)
+func BuildExecCommand(replacements map[string]string, c *ServerConfig) (*exec.Cmd, error) {
+	if replacements["sourceMimeType"] != "" && !IsAllowedMimeType(replacements["sourceMimeType"], c.AllowedMimeTypes) {
+		return nil, fmt.Errorf("undefined sourceMimeType: %s", replacements["sourceMimeType"])
 	}
 
-	cmdConfig, exists := c.CmdByMimeType[sourceMimeType]
+	cmdConfig, exists := c.CmdByMimeType[replacements["sourceMimeType"]]
 	if !exists {
 		cmdConfig = c.CmdByMimeType["default"]
 	}
@@ -123,34 +128,37 @@ func BuildExecCommand(sourceMimeType, destinationMimeType, addtlArgs string, c *
 	for _, a := range cmdConfig.Args {
 		// if we have the special value of %args
 		// replace it with the args passed by the event
-		if a == "%args" && addtlArgs != "" {
-			args = append(args, addtlArgs)
+		if a == "%args" && replacements["addtlArgs"] != "" {
+			args = append(args, replacements["addtlArgs"])
 
 			// if we have the special value of %source-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%source-mime-ext" {
-			a, err := getMimeTypeExtension(sourceMimeType)
+			a, err := getMimeTypeExtension(replacements["sourceMimeType"])
 			if err != nil {
-				return nil, fmt.Errorf("unknown mime extension: %s", sourceMimeType)
+				return nil, fmt.Errorf("unknown mime extension: %s", replacements["sourceMimeType"])
 			}
 
 			args = append(args, a)
 			// if we have the special value of %destination-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%destination-mime-ext" {
-			a, err := getMimeTypeExtension(destinationMimeType)
+			a, err := getMimeTypeExtension(replacements["destinationMimeType"])
 			if err != nil {
-				return nil, fmt.Errorf("unknown mime extension: %s", destinationMimeType)
+				return nil, fmt.Errorf("unknown mime extension: %s", replacements["destinationMimeType"])
 			}
 
 			args = append(args, a)
 
+		} else if a == "%target" {
+			args = append(args, replacements["target"])
 		} else {
 			args = append(args, a)
 		}
 	}
 
 	cmd := exec.Command(cmdConfig.Cmd, args...)
+	cmd.Env = os.Environ()
 
 	return cmd, nil
 }
