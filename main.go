@@ -3,9 +3,16 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"log/slog"
+	"math/rand"
+	"net"
 	"net/http"
 	"os"
+	"os/exec"
+	"os/signal"
+	"syscall"
+	"time"
 
 	stomp "github.com/go-stomp/stomp/v3"
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
@@ -14,7 +21,6 @@ import (
 
 var (
 	config *scyllaridae.ServerConfig
-	stop   = make(chan bool)
 )
 
 func init() {
@@ -31,8 +37,21 @@ func main() {
 	// either subscribe to activemq directly
 	if config.QueueName != "" {
 		subscribed := make(chan bool)
+		stopChan := make(chan os.Signal, 1)
+		signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+
 		go RecvStompMessages(config.QueueName, subscribed)
-		<-subscribed
+
+		select {
+		case <-subscribed:
+			slog.Info("Subscription to queue successful")
+		case <-stopChan:
+			slog.Info("Received stop signal, exiting")
+			return
+		}
+
+		<-stopChan
+		slog.Info("Shutting down message listener")
 	} else {
 		// or make this an available API ala crayfish
 		http.HandleFunc("/", MessageHandler)
@@ -121,82 +140,140 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RecvStompMessages(queueName string, subscribed chan bool) {
-	defer func() {
-		stop <- true
-	}()
-
-	var options []func(*stomp.Conn) error = []func(*stomp.Conn) error{
-		//	stomp.ConnOpt.Login("guest", "guest"),
-		stomp.ConnOpt.Host("/"),
+	defer close(subscribed)
+	attempt := 0
+	maxAttempts := 30
+	for attempt = 0; attempt < maxAttempts; attempt += 1 {
+		if err := connectAndSubscribe(queueName, subscribed); err != nil {
+			slog.Error("resubscribing", "error", err)
+			if err := retryWithExponentialBackoff(attempt, maxAttempts); err != nil {
+				slog.Error("Failed subscribing after too many failed attempts", "attempts", attempt)
+				return
+			}
+		}
 	}
+}
 
+func connectAndSubscribe(queueName string, subscribed chan bool) error {
 	addr := os.Getenv("STOMP_SERVER_ADDR")
 	if addr == "" {
 		addr = "activemq:61613"
 	}
-	conn, err := stomp.Dial("tcp", addr, options...)
 
+	c, err := net.Dial("tcp", addr)
 	if err != nil {
-		slog.Error("cannot connect to server", "err", err.Error())
-		return
+		slog.Error("cannot connect to port", "err", err.Error())
+		return err
 	}
+	tcpConn := c.(*net.TCPConn)
+
+	err = tcpConn.SetKeepAlive(true)
+	if err != nil {
+		slog.Error("cannot set keepalive", "err", err.Error())
+		return err
+	}
+
+	err = tcpConn.SetKeepAlivePeriod(10 * time.Second)
+	if err != nil {
+		slog.Error("cannot set keepalive period", "err", err.Error())
+		return err
+	}
+
+	conn, err := stomp.Connect(tcpConn, stomp.ConnOpt.HeartBeat(10*time.Second, 0*time.Second))
+	if err != nil {
+		slog.Error("cannot connect to stomp server", "err", err.Error())
+		return err
+	}
+	defer func() {
+		err := conn.Disconnect()
+		if err != nil {
+			slog.Error("problem disconnecting from stomp server", "err", err)
+		}
+	}()
 
 	sub, err := conn.Subscribe(queueName, stomp.AckAuto)
 	if err != nil {
-		slog.Error("cannot subscribe to", queueName, err.Error())
+		slog.Error("cannot subscribe to queue", "queue", queueName, "err", err.Error())
+		return err
+	}
+	defer func() {
+		if !sub.Active() {
+			return
+		}
+		err := sub.Unsubscribe()
+		if err != nil {
+			slog.Error("problem unsubscribing", "err", err)
+		}
+	}()
+	slog.Info("Server subscribed to", "queue", queueName)
+	subscribed <- true
+
+	for msg := range sub.C {
+		if msg == nil || len(msg.Body) == 0 {
+			// if the subscription isn't active return so we can try reconnecting
+			if !sub.Active() {
+				return fmt.Errorf("no longer subscribed to %s", queueName)
+			}
+			// else just try reading again. There's probably just no messages in the queue
+			continue
+		}
+		handleStompMessage(msg)
+	}
+
+	return nil
+}
+
+func handleStompMessage(msg *stomp.Message) {
+	message, err := api.DecodeEventMessage(msg.Body)
+	if err != nil {
+		slog.Error("could not read the event message", "err", err, "msg", string(msg.Body))
 		return
 	}
-	close(subscribed)
-	slog.Info("Server subscriber to", "queue", queueName)
 
-	for i := 1; i <= 10; i++ {
-		msg := <-sub.C
-		message, err := api.DecodeEventMessage(msg.Body)
-		if err != nil {
-			slog.Error("could not read the event message", "err", err, "msg", string(msg.Body))
-			continue
-		}
-		cmdArgs := map[string]string{
-			"sourceMimeType":      message.Attachment.Content.SourceMimeType,
-			"destinationMimeType": message.Attachment.Content.DestinationMimeType,
-			"addtlArgs":           message.Attachment.Content.Args,
-			"target":              message.Target,
-		}
-
-		cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
-		if err != nil {
-			slog.Error("Error building command", "err", err)
-			continue
-		}
-
-		// log stdout for the command as it prints
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			slog.Error("error creating stdout pipe", "err", err)
-			continue
-		}
-
-		// Create a buffer to stream the error output of the command
-		var stdErr bytes.Buffer
-		cmd.Stderr = &stdErr
-
-		slog.Info("Running command", "cmd", cmd.String())
-		if err := cmd.Start(); err != nil {
-			slog.Error("Error starting command", "cmd", cmd.String(), "err", stdErr.String())
-			continue
-		}
-
-		go func() {
-			scanner := bufio.NewScanner(stdout)
-			for scanner.Scan() {
-				slog.Info("Cmd output", "stdout", scanner.Text())
-			}
-		}()
-
-		if err := cmd.Wait(); err != nil {
-			slog.Error("command finished with error", "err", stdErr.String())
-		}
-
-		slog.Info("Great success!")
+	cmdArgs := map[string]string{
+		"sourceMimeType":      message.Attachment.Content.SourceMimeType,
+		"destinationMimeType": message.Attachment.Content.DestinationMimeType,
+		"addtlArgs":           message.Attachment.Content.Args,
+		"target":              message.Target,
 	}
+	cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
+	if err != nil {
+		slog.Error("Error building command", "err", err)
+		return
+	}
+
+	runCommand(cmd)
+}
+
+func runCommand(cmd *exec.Cmd) {
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		slog.Error("error creating stdout pipe", "err", err)
+		return
+	}
+	scanner := bufio.NewScanner(stdout)
+	go func() {
+		for scanner.Scan() {
+			slog.Info("cmd output", "stdout", scanner.Text())
+		}
+	}()
+
+	var stdErr bytes.Buffer
+	cmd.Stderr = &stdErr
+	if err := cmd.Start(); err != nil {
+		slog.Error("Error starting command", "cmd", cmd.String(), "err", stdErr.String())
+		return
+	}
+	if err := cmd.Wait(); err != nil {
+		slog.Error("command finished with error", "err", stdErr.String())
+	}
+}
+
+func retryWithExponentialBackoff(attempt int, maxAttempts int) error {
+	if attempt >= maxAttempts {
+		return fmt.Errorf("maximum retry attempts reached")
+	}
+	wait := time.Duration(rand.Intn(1<<attempt)) * time.Second
+	time.Sleep(wait)
+	return nil
 }
