@@ -2,26 +2,55 @@
 
 set -eou pipefail
 
-# how many cURL commands to run in parallel
-PARALLEL_EXECUTIONS=3
+export LOCK_FILE="/tmp/scyllaridae-cache.lock"
 
-# Base URL of the sitemap.xml file
-BASE_URL="$DRUPAL_URL/sitemap.xml"
-PAGE=1
+handle_error() {
+  rm -f "$LOCK_FILE"
+  exit 1
+}
+trap 'handle_error' ERR
 
+# curl wrapper function so on 302 we can forward the cache-warmer paramater
 process_url() {
   local URL="$1"
   local COUNT=0
   echo "Crawling: $URL"
   REDIRECT_URL=$(curl -w "%{redirect_url}" --silent -o /dev/null "$URL")
-  while [ "$REDIRECT_URL" != "" ]; then
+  while [ "$REDIRECT_URL" != "" ]; do
     REDIRECT_URL=$(curl -w "%{redirect_url}" --silent -o /dev/null "$REDIRECT_URL?cache-warmer=1")
     COUNT=$((COUNT + 1))
     if [ "$COUNT" -gt 5 ]; then
       break
     fi
-  fi
+  done
 }
+
+# if we just need to warm the cache for a single node, do that then bail
+if [ "$#" -eq 1 ] && [ "$1" != "all" ]; then
+  process_url "$1?cache-warmer=1"
+  process_url "$DRUPAL_URL/browse?cache-warmer=1"
+  process_url "$DRUPAL_URL/collections?cache-warmer=1"
+
+  exit 0
+fi
+
+# otherwise we're warming the entire site's cache
+
+if [ -f "$LOCK_FILE" ]; then
+  # TODO: we need a lock mechanism in scyllardiae that can kill running processes
+  # but for now we can just gate it here
+  echo "Cache warming is already taking place"
+  exit 0
+fi
+
+touch "$LOCK_FILE"
+
+# how many cURL commands to run in parallel
+PARALLEL_EXECUTIONS=3
+
+# Warm everything in the sitemap
+BASE_URL="$DRUPAL_URL/sitemap.xml"
+PAGE=1
 
 while true; do
   NEXT_PAGE_URL="$BASE_URL?page=$PAGE"
@@ -41,7 +70,6 @@ while true; do
         else
           break
         fi
-        echo "Crawling: $URL"
         process_url "$URL?cache-warmer=1" &
         job_ids+=($!)
       done
@@ -52,7 +80,7 @@ while true; do
     done
 
     PAGE=$((PAGE + 1))
-    if [ PAGE -gt 100 ]; then
+    if [ "$PAGE" -gt 100 ]; then
       break
     fi
   else
@@ -62,12 +90,27 @@ done
 
 rm -f links.xml
 
+# now that the sitemap is warm, get all the IIIF paged content manifests warm
 curl -v "$DRUPAL_URL/api/v1/paged-content" > pc.json
-
 mapfile -t NIDS < <(jq -r '.[]' pc.json)
 for NID in "${NIDS[@]}"; do
-  echo "Processing: $NID"
-  curl -s -o /dev/null "$DRUPAL_URL/node/$NID/book-manifest?cache-warmer=1"
+  for ((i = 0; i < PARALLEL_EXECUTIONS; i++)); do
+    array_length=${#URLS[@]}
+    if [ "$array_length" -gt 0 ]; then
+      URL="${URLS[$((array_length-1))]}"
+      unset "URLS[$((array_length-1))]"
+    else
+      break
+    fi
+    curl -s -o /dev/null "$DRUPAL_URL/node/$NID/book-manifest?cache-warmer=1" &
+    job_ids+=($!)
+  done
+
+  for job_id in "${job_ids[@]}"; do
+    wait "$job_id" || echo "One job failed, but continuing anyway"
+  done
 done
 
 rm -f pc.json
+
+rm "$LOCK_FILE"
