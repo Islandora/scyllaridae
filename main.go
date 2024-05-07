@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
 
 	stomp "github.com/go-stomp/stomp/v3"
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
@@ -179,24 +181,23 @@ func RecvStompMessages(queueName string, subscribed chan bool) {
 		// Create a buffer to stream the error output of the command
 		var stdErr bytes.Buffer
 		cmd.Stderr = &stdErr
+		messageID := msg.Header.Get("message-id")
 
-		slog.Info("Running command", "cmd", cmd.String())
+		slog.Info("Running command", "message-id", messageID, "cmd", cmd.String())
 		if err := cmd.Start(); err != nil {
 			slog.Error("Error starting command", "cmd", cmd.String(), "err", stdErr.String())
-			continue
 		}
 
-		go func() {
+		go func(cmd *exec.Cmd, stdout io.ReadCloser, messageID string) {
 			scanner := bufio.NewScanner(stdout)
 			for scanner.Scan() {
-				slog.Info("Cmd output", "stdout", scanner.Text())
+				slog.Info("cmd output", "message-id", messageID, "stdout", scanner.Text())
 			}
-		}()
 
-		if err := cmd.Wait(); err != nil {
-			slog.Error("command finished with error", "err", stdErr.String())
-		}
-
-		slog.Info("Great success!")
+			if err := cmd.Wait(); err != nil {
+				slog.Error("command finished with error", "message-id", messageID, "err", stdErr.String())
+			}
+			slog.Info("Great success!")
+		}(cmd, stdout, messageID)
 	}
 }
