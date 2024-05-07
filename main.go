@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"log/slog"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -44,7 +46,7 @@ func main() {
 			slog.Info("Subscription to queue successful")
 		case <-stopChan:
 			slog.Info("Received stop signal, exiting")
-			os.Exit(0)
+			return
 		}
 
 		<-stopChan
@@ -138,15 +140,28 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 
 func RecvStompMessages(queueName string, subscribed chan bool) {
 	defer close(subscribed)
+	attempt := 0
+	maxAttempts := 30
+	for attempt = 0; attempt < maxAttempts; attempt += 1 {
+		if err := connectAndSubscribe(queueName, subscribed); err != nil {
+			slog.Error("resubscribing", "error", err)
+			if err := retryWithExponentialBackoff(attempt, maxAttempts); err != nil {
+				slog.Error("Failed subscribing after too many failed attempts", "attempts", attempt)
+				return
+			}
+		}
+	}
+}
 
+func connectAndSubscribe(queueName string, subscribed chan bool) error {
 	addr := os.Getenv("STOMP_SERVER_ADDR")
 	if addr == "" {
 		addr = "activemq:61613"
 	}
-	conn, err := stomp.Dial("tcp", addr, stomp.ConnOpt.Host("/"))
+	conn, err := stomp.Dial("tcp", addr, stomp.ConnOpt.Host("/"), stomp.ConnOpt.HeartBeat(10*time.Second, 10*time.Second))
 	if err != nil {
 		slog.Error("cannot connect to server", "err", err.Error())
-		return
+		return err
 	}
 	defer func() {
 		err := conn.Disconnect()
@@ -158,25 +173,33 @@ func RecvStompMessages(queueName string, subscribed chan bool) {
 	sub, err := conn.Subscribe(queueName, stomp.AckAuto)
 	if err != nil {
 		slog.Error("cannot subscribe to queue", "queue", queueName, "err", err.Error())
-		return
+		return err
 	}
 	defer func() {
+		if !sub.Active() {
+			return
+		}
 		err := sub.Unsubscribe()
 		if err != nil {
-			slog.Error("problem disconnecting from stomp server", "err", err)
+			slog.Error("problem unsubscribing", "err", err)
 		}
 	}()
 	slog.Info("Server subscribed to", "queue", queueName)
-	// Notify main goroutine that subscription is successful
 	subscribed <- true
 
 	for msg := range sub.C {
 		if msg == nil || len(msg.Body) == 0 {
-			time.Sleep(time.Second * 5)
+			// if the subscription isn't active return so we can try reconnecting
+			if !sub.Active() {
+				return fmt.Errorf("no longer subscribed to %s", queueName)
+			}
+			// else just try reading again. There's probably just no messages in the queue
 			continue
 		}
 		handleStompMessage(msg)
 	}
+
+	return nil
 }
 
 func handleStompMessage(msg *stomp.Message) {
@@ -223,4 +246,13 @@ func runCommand(cmd *exec.Cmd) {
 	if err := cmd.Wait(); err != nil {
 		slog.Error("command finished with error", "err", stdErr.String())
 	}
+}
+
+func retryWithExponentialBackoff(attempt int, maxAttempts int) error {
+	if attempt >= maxAttempts {
+		return fmt.Errorf("maximum retry attempts reached")
+	}
+	wait := time.Duration(rand.Intn(1<<attempt)) * time.Second
+	time.Sleep(wait)
+	return nil
 }

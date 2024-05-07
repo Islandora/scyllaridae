@@ -122,10 +122,7 @@ cmdByMimeType:
 
 	// make sure the command ran
 	f := "/tmp/stomp.success"
-	_, err = os.Stat(f)
-	if err != nil && os.IsNotExist(err) {
-		t.Errorf("The stomp subscriber not create the expected file %s", f)
-	}
+	assert.FileExists(t, f)
 }
 
 type Test struct {

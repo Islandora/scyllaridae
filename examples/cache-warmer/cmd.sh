@@ -91,17 +91,18 @@ done
 rm -f links.xml
 
 # now that the sitemap is warm, get all the IIIF paged content manifests warm
-curl -v "$DRUPAL_URL/api/v1/paged-content" > pc.json
+curl -s "$DRUPAL_URL/api/v1/paged-content" > pc.json
 mapfile -t NIDS < <(jq -r '.[]' pc.json)
 for NID in "${NIDS[@]}"; do
   for ((i = 0; i < PARALLEL_EXECUTIONS; i++)); do
-    array_length=${#URLS[@]}
+    array_length=${#NIDS[@]}
     if [ "$array_length" -gt 0 ]; then
-      URL="${URLS[$((array_length-1))]}"
-      unset "URLS[$((array_length-1))]"
+      NID="${NIDS[$((array_length-1))]}"
+      unset "NIDS[$((array_length-1))]"
     else
       break
     fi
+    echo "Crawling: $DRUPAL_URL/node/$NID/book-manifest"
     curl -s -o /dev/null "$DRUPAL_URL/node/$NID/book-manifest?cache-warmer=1" &
     job_ids+=($!)
   done
