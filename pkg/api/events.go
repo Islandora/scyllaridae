@@ -14,6 +14,7 @@ type Payload struct {
 	Actor      Actor      `json:"actor" description:"Details of the actor performing the action"`
 	Object     Object     `json:"object" description:"Contains details about the object of the action"`
 	Attachment Attachment `json:"attachment" description:"Holds additional data related to the action"`
+	Target     string     `json:"target" description:"Target for the payload"`
 	Type       string     `json:"type" description:"Type of the payload"`
 	Summary    string     `json:"summary" description:"Summary of the payload"`
 }

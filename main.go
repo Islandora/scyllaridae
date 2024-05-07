@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"log/slog"
 	"net/http"
@@ -12,12 +13,8 @@ import (
 )
 
 var (
-	config  *scyllaridae.ServerConfig
-	options []func(*stomp.Conn) error = []func(*stomp.Conn) error{
-		//	stomp.ConnOpt.Login("guest", "guest"),
-		stomp.ConnOpt.Host("/"),
-	}
-	stop = make(chan bool)
+	config *scyllaridae.ServerConfig
+	stop   = make(chan bool)
 )
 
 func init() {
@@ -31,19 +28,23 @@ func init() {
 }
 
 func main() {
-	subscribed := make(chan bool)
-	go RecvMessages(subscribed)
-	<-subscribed
+	// either subscribe to activemq directly
+	if config.QueueName != "" {
+		subscribed := make(chan bool)
+		go RecvStompMessages(config.QueueName, subscribed)
+		<-subscribed
+	} else {
+		// or make this an available API ala crayfish
+		http.HandleFunc("/", MessageHandler)
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
 
-	http.HandleFunc("/", MessageHandler)
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	slog.Info("Server listening", "port", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		panic(err)
+		slog.Info("Server listening", "port", port)
+		if err := http.ListenAndServe(":"+port, nil); err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -90,7 +91,13 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// build a command to run that we will pipe the stdin stream into
-	cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.SourceMimeType, message.Attachment.Content.DestinationMimeType, message.Attachment.Content.Args, config)
+	cmdArgs := map[string]string{
+		"sourceMimeType":      message.Attachment.Content.SourceMimeType,
+		"destinationMimeType": message.Attachment.Content.DestinationMimeType,
+		"addtlArgs":           message.Attachment.Content.Args,
+		"target":              "",
+	}
+	cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
 		http.Error(w, "Bad request", http.StatusBadRequest)
@@ -113,19 +120,27 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RecvMessages(subscribed chan bool) {
+func RecvStompMessages(queueName string, subscribed chan bool) {
 	defer func() {
 		stop <- true
 	}()
 
-	conn, err := stomp.Dial("tcp", "activemq:61613", options...)
+	var options []func(*stomp.Conn) error = []func(*stomp.Conn) error{
+		//	stomp.ConnOpt.Login("guest", "guest"),
+		stomp.ConnOpt.Host("/"),
+	}
+
+	addr := os.Getenv("STOMP_SERVER_ADDR")
+	if addr == "" {
+		addr = "activemq:61613"
+	}
+	conn, err := stomp.Dial("tcp", addr, options...)
 
 	if err != nil {
 		slog.Error("cannot connect to server", "err", err.Error())
 		return
 	}
 
-	queueName := "islandora-cache-warmer"
 	sub, err := conn.Subscribe(queueName, stomp.AckAuto)
 	if err != nil {
 		slog.Error("cannot subscribe to", queueName, err.Error())
@@ -138,23 +153,48 @@ func RecvMessages(subscribed chan bool) {
 		msg := <-sub.C
 		message, err := api.DecodeEventMessage(msg.Body)
 		if err != nil {
-			slog.Info("could not read the event message", "err", err, "msg", string(msg.Body))
+			slog.Error("could not read the event message", "err", err, "msg", string(msg.Body))
 		}
-		cmd, err := scyllaridae.BuildExecCommand(message.Attachment.Content.SourceMimeType, message.Attachment.Content.DestinationMimeType, message.Attachment.Content.Args, config)
+		cmdArgs := map[string]string{
+			"sourceMimeType":      message.Attachment.Content.SourceMimeType,
+			"destinationMimeType": message.Attachment.Content.DestinationMimeType,
+			"addtlArgs":           message.Attachment.Content.Args,
+			"target":              message.Target,
+		}
+		cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
 		if err != nil {
 			slog.Error("Error building command", "err", err)
 			return
 		}
 
-		// Create a buffer to stream the output of the command
+		// log stdout for the command as it prints
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			slog.Error("error creating stdout pipe", "err", err)
+			return
+		}
+
+		// Create a buffer to stream the error output of the command
 		var stdErr bytes.Buffer
 		cmd.Stderr = &stdErr
 
 		slog.Info("Running command", "cmd", cmd.String())
-		if err := cmd.Run(); err != nil {
-			slog.Error("Error running command", "cmd", cmd.String(), "err", stdErr.String())
+		if err := cmd.Start(); err != nil {
+			slog.Error("Error starting command", "cmd", cmd.String(), "err", stdErr.String())
 			return
 		}
 
+		go func() {
+			scanner := bufio.NewScanner(stdout)
+			for scanner.Scan() {
+				slog.Info("Cmd output", "stdout", scanner.Text())
+			}
+		}()
+
+		if err := cmd.Wait(); err != nil {
+			slog.Error("command finished with error", "err", stdErr.String())
+		}
+
+		slog.Info("Great success!")
 	}
 }
