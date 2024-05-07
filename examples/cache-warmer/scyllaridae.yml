@@ -1,6 +1,1 @@
-allowedMimeTypes: [
-  "*"
-]
-cmdByMimeType:
-  default:
-    cmd: "/app/cmd.sh"
+queueName: islandora-cache-warmer

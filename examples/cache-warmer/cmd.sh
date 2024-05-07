@@ -2,21 +2,26 @@
 
 set -eou pipefail
 
-mygrep() {
-  # mac OS needs ggrep for the -P flag
-  if command -v ggrep &>/dev/null; then
-    ggrep "$@"
-  else
-    grep "$@"
-  fi
-}
-
 # how many cURL commands to run in parallel
 PARALLEL_EXECUTIONS=3
 
 # Base URL of the sitemap.xml file
-BASE_URL="https://$DOMAIN/sitemap.xml"
+BASE_URL="$DRUPAL_URL/sitemap.xml"
 PAGE=1
+
+process_url() {
+  local URL="$1"
+  local COUNT=0
+  echo "Crawling: $URL"
+  REDIRECT_URL=$(curl -w "%{redirect_url}" --silent -o /dev/null "$URL")
+  while [ "$REDIRECT_URL" != "" ]; then
+    REDIRECT_URL=$(curl -w "%{redirect_url}" --silent -o /dev/null "$REDIRECT_URL?cache-warmer=1")
+    COUNT=$((COUNT + 1))
+    if [ "$COUNT" -gt 5 ]; then
+      break
+    fi
+  fi
+}
 
 while true; do
   NEXT_PAGE_URL="$BASE_URL?page=$PAGE"
@@ -26,7 +31,7 @@ while true; do
     "${NEXT_PAGE_URL}")
 
   if [ "${STATUS}" -eq 200 ]; then
-    mapfile -t URLS < <(mygrep -oP '<loc>\K[^<]+' links.xml)
+    mapfile -t URLS < <(grep -oP '<loc>\K[^<]+' links.xml)
     while [ "${#URLS[@]}" -gt 0 ]; do
       for ((i = 0; i < PARALLEL_EXECUTIONS; i++)); do
         array_length=${#URLS[@]}
@@ -37,7 +42,7 @@ while true; do
           break
         fi
         echo "Crawling: $URL"
-        curl --silent -o /dev/null "${URL}" &
+        process_url "$URL?cache-warmer=1" &
         job_ids+=($!)
       done
 
@@ -47,6 +52,9 @@ while true; do
     done
 
     PAGE=$((PAGE + 1))
+    if [ PAGE -gt 100 ]; then
+      break
+    fi
   else
     break
   fi
@@ -54,12 +62,12 @@ done
 
 rm -f links.xml
 
-curl -v "https://$DOMAIN/api/v1/paged-content" > pc.json
+curl -v "$DRUPAL_URL/api/v1/paged-content" > pc.json
 
 mapfile -t NIDS < <(jq -r '.[]' pc.json)
 for NID in "${NIDS[@]}"; do
   echo "Processing: $NID"
-  curl -s -o /dev/null "https://$DOMAIN/node/$NID/book-manifest?cache-warmer=1"
+  curl -s -o /dev/null "$DRUPAL_URL/node/$NID/book-manifest?cache-warmer=1"
 done
 
 rm -f pc.json
