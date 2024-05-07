@@ -147,11 +147,13 @@ func RecvStompMessages(queueName string, subscribed chan bool) {
 		slog.Error("cannot subscribe to", queueName, err.Error())
 		return
 	}
-	close(subscribed)
-	slog.Info("Server subscriber to", "queue", queueName)
+	slog.Info("Server subscribed to", "queue", queueName)
 
-	for i := 1; i <= 10; i++ {
-		msg := <-sub.C
+	for msg := range sub.C {
+		if msg == nil {
+			break
+		}
+
 		message, err := api.DecodeEventMessage(msg.Body)
 		if err != nil {
 			slog.Error("could not read the event message", "err", err, "msg", string(msg.Body))
@@ -198,5 +200,8 @@ func RecvStompMessages(queueName string, subscribed chan bool) {
 			}
 			slog.Info("Great success!")
 		}(cmd, stdout, messageID)
+		if err := msg.Conn.Ack(msg); err != nil {
+			slog.Error("could not ack msg", "message-id", messageID, "err", stdErr.String())
+		}
 	}
 }
