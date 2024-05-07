@@ -115,7 +115,7 @@ func ReadConfig(yp string) (*ServerConfig, error) {
 }
 
 func BuildExecCommand(replacements map[string]string, c *ServerConfig) (*exec.Cmd, error) {
-	if !IsAllowedMimeType(replacements["sourceMimeType"], c.AllowedMimeTypes) {
+	if replacements["sourceMimeType"] != "" && !IsAllowedMimeType(replacements["sourceMimeType"], c.AllowedMimeTypes) {
 		return nil, fmt.Errorf("undefined sourceMimeType: %s", replacements["sourceMimeType"])
 	}
 

@@ -3,14 +3,130 @@ package main
 import (
 	"fmt"
 	"io"
+	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
+	stomp "github.com/go-stomp/stomp/v3"
+	ss "github.com/go-stomp/stomp/v3/server"
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestRecvStompMessages(t *testing.T) {
+	addr := "127.0.0.1:61613"
+	os.Setenv("STOMP_SERVER_ADDR", addr)
+
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		t.Fatalf("Could not start stomp mock server: %v", err)
+	}
+	defer func() { l.Close() }()
+	go func() {
+		err := ss.Serve(l)
+		if err != nil {
+			slog.Error("Error starting mock stomp server", "err", err)
+			os.Exit(1)
+		}
+	}()
+
+	os.Setenv("SCYLLARIDAE_YML", `
+queueName: "test-queue"
+allowedMimeTypes:
+  - "*"
+cmdByMimeType:
+  default:
+    cmd: touch
+    args:
+      - "%target"
+`)
+	config, err = scyllaridae.ReadConfig("")
+	if err != nil {
+		t.Fatalf("Could not read YML: %v", err)
+		os.Exit(1)
+	}
+
+	subscribed := make(chan bool, 1)
+	go RecvStompMessages("test-queue", subscribed)
+	<-subscribed
+
+	conn, err := stomp.Dial("tcp", addr,
+		stomp.ConnOpt.AcceptVersion(stomp.V11),
+		stomp.ConnOpt.AcceptVersion(stomp.V12),
+		stomp.ConnOpt.Host("dragon"),
+		stomp.ConnOpt.Header("nonce", "B256B26D320A"))
+
+	if err != nil {
+		t.Fatalf("Could not connection to stomp mock server: %v", err)
+	}
+
+	err = conn.Send(
+		"test-queue",
+		"text/plain",
+		[]byte(`{
+	"@context": "https://www.w3.org/ns/activitystreams",
+	"actor": {
+		"type": "Person",
+		"id": "urn:uuid:b3f0a1ba-fd0c-4977-a123-3faf470374f2",
+		"url": [
+			{
+				"name": "Canonical",
+				"type": "Link",
+				"href": "https://islandora.dev/user/1",
+				"mediaType": "text/html",
+				"rel": "canonical"
+			}
+		]
+	},
+	"object": {
+		"id": "urn:uuid:abcdef01-2345-6789-abcd-ef0123456789",
+		"url": [
+			{
+				"name": "Canonical",
+				"type": "Link",
+				"href": "https://islandora.dev/node/1",
+				"mediaType": "text/html",
+				"rel": "canonical"
+			},
+			{
+				"name": "JSON",
+				"type": "Link",
+				"href": "https://islandora.dev/node/1?_format=json",
+				"mediaType": "application/json",
+				"rel": "alternate"
+			},
+			{
+				"name": "JSONLD",
+				"type": "Link",
+				"href": "https://islandora.dev/node/1?_format=jsonld",
+				"mediaType": "application/ld+json",
+				"rel": "alternate"
+			}
+		],
+		"isNewVersion": true
+	},
+	"target": "/tmp/stomp.success",
+	"type": "Update",
+	"summary": "Update a Node"
+}`))
+	if err != nil {
+		t.Fatalf("Could not send test stomp message: %v", err)
+	}
+
+	// give the command some time to finish
+	time.Sleep(time.Second * 5)
+
+	// make sure the command ran
+	f := "/tmp/stomp.success"
+	_, err = os.Stat(f)
+	if err != nil && os.IsNotExist(err) {
+		t.Errorf("The stomp subscriber not create the expected file %s", f)
+	}
+}
 
 type Test struct {
 	name                string

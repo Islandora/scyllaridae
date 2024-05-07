@@ -154,6 +154,7 @@ func RecvStompMessages(queueName string, subscribed chan bool) {
 		message, err := api.DecodeEventMessage(msg.Body)
 		if err != nil {
 			slog.Error("could not read the event message", "err", err, "msg", string(msg.Body))
+			continue
 		}
 		cmdArgs := map[string]string{
 			"sourceMimeType":      message.Attachment.Content.SourceMimeType,
@@ -161,17 +162,18 @@ func RecvStompMessages(queueName string, subscribed chan bool) {
 			"addtlArgs":           message.Attachment.Content.Args,
 			"target":              message.Target,
 		}
+
 		cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
 		if err != nil {
 			slog.Error("Error building command", "err", err)
-			return
+			continue
 		}
 
 		// log stdout for the command as it prints
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			slog.Error("error creating stdout pipe", "err", err)
-			return
+			continue
 		}
 
 		// Create a buffer to stream the error output of the command
@@ -181,7 +183,7 @@ func RecvStompMessages(queueName string, subscribed chan bool) {
 		slog.Info("Running command", "cmd", cmd.String())
 		if err := cmd.Start(); err != nil {
 			slog.Error("Error starting command", "cmd", cmd.String(), "err", stdErr.String())
-			return
+			continue
 		}
 
 		go func() {
