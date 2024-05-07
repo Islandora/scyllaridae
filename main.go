@@ -3,11 +3,13 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
+	"time"
 
 	stomp "github.com/go-stomp/stomp/v3"
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
@@ -32,12 +34,21 @@ func main() {
 	// either subscribe to activemq directly
 	if config.QueueName != "" {
 		subscribed := make(chan bool)
-		go RecvStompMessages(config.QueueName, subscribed)
-		<-subscribed
+		stopChan := make(chan os.Signal, 1)
+		signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 
-		// wait for messages
-		stop := make(chan os.Signal, 1)
-		<-stop
+		go RecvStompMessages(config.QueueName, subscribed)
+
+		select {
+		case <-subscribed:
+			slog.Info("Subscription to queue successful")
+		case <-stopChan:
+			slog.Info("Received stop signal, exiting")
+			os.Exit(0)
+		}
+
+		<-stopChan
+		slog.Info("Shutting down message listener")
 	} else {
 		// or make this an available API ala crayfish
 		http.HandleFunc("/", MessageHandler)
@@ -126,82 +137,90 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RecvStompMessages(queueName string, subscribed chan bool) {
-	var options []func(*stomp.Conn) error = []func(*stomp.Conn) error{
-		//	stomp.ConnOpt.Login("guest", "guest"),
-		stomp.ConnOpt.Host("/"),
-	}
+	defer close(subscribed)
 
 	addr := os.Getenv("STOMP_SERVER_ADDR")
 	if addr == "" {
 		addr = "activemq:61613"
 	}
-	conn, err := stomp.Dial("tcp", addr, options...)
-
+	conn, err := stomp.Dial("tcp", addr, stomp.ConnOpt.Host("/"))
 	if err != nil {
 		slog.Error("cannot connect to server", "err", err.Error())
 		return
 	}
+	defer func() {
+		err := conn.Disconnect()
+		if err != nil {
+			slog.Error("problem disconnecting from stomp server", "err", err)
+		}
+	}()
 
 	sub, err := conn.Subscribe(queueName, stomp.AckAuto)
 	if err != nil {
-		slog.Error("cannot subscribe to", queueName, err.Error())
+		slog.Error("cannot subscribe to queue", "queue", queueName, "err", err.Error())
 		return
 	}
+	defer func() {
+		err := sub.Unsubscribe()
+		if err != nil {
+			slog.Error("problem disconnecting from stomp server", "err", err)
+		}
+	}()
 	slog.Info("Server subscribed to", "queue", queueName)
+	// Notify main goroutine that subscription is successful
+	subscribed <- true
 
 	for msg := range sub.C {
-		if msg == nil {
-			break
-		}
-
-		message, err := api.DecodeEventMessage(msg.Body)
-		if err != nil {
-			slog.Error("could not read the event message", "err", err, "msg", string(msg.Body))
+		if msg == nil || len(msg.Body) == 0 {
+			time.Sleep(time.Second * 5)
 			continue
 		}
-		cmdArgs := map[string]string{
-			"sourceMimeType":      message.Attachment.Content.SourceMimeType,
-			"destinationMimeType": message.Attachment.Content.DestinationMimeType,
-			"addtlArgs":           message.Attachment.Content.Args,
-			"target":              message.Target,
+		handleStompMessage(msg)
+	}
+}
+
+func handleStompMessage(msg *stomp.Message) {
+	message, err := api.DecodeEventMessage(msg.Body)
+	if err != nil {
+		slog.Error("could not read the event message", "err", err, "msg", string(msg.Body))
+		return
+	}
+
+	cmdArgs := map[string]string{
+		"sourceMimeType":      message.Attachment.Content.SourceMimeType,
+		"destinationMimeType": message.Attachment.Content.DestinationMimeType,
+		"addtlArgs":           message.Attachment.Content.Args,
+		"target":              message.Target,
+	}
+	cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
+	if err != nil {
+		slog.Error("Error building command", "err", err)
+		return
+	}
+
+	runCommand(cmd)
+}
+
+func runCommand(cmd *exec.Cmd) {
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		slog.Error("error creating stdout pipe", "err", err)
+		return
+	}
+	scanner := bufio.NewScanner(stdout)
+	go func() {
+		for scanner.Scan() {
+			slog.Info("cmd output", "stdout", scanner.Text())
 		}
+	}()
 
-		cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
-		if err != nil {
-			slog.Error("Error building command", "err", err)
-			continue
-		}
-
-		// log stdout for the command as it prints
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			slog.Error("error creating stdout pipe", "err", err)
-			continue
-		}
-
-		// Create a buffer to stream the error output of the command
-		var stdErr bytes.Buffer
-		cmd.Stderr = &stdErr
-		messageID := msg.Header.Get("message-id")
-
-		slog.Info("Running command", "message-id", messageID, "cmd", cmd.String())
-		if err := cmd.Start(); err != nil {
-			slog.Error("Error starting command", "cmd", cmd.String(), "err", stdErr.String())
-		}
-
-		go func(cmd *exec.Cmd, stdout io.ReadCloser, messageID string) {
-			scanner := bufio.NewScanner(stdout)
-			for scanner.Scan() {
-				slog.Info("cmd output", "message-id", messageID, "stdout", scanner.Text())
-			}
-
-			if err := cmd.Wait(); err != nil {
-				slog.Error("command finished with error", "message-id", messageID, "err", stdErr.String())
-			}
-			slog.Info("Great success!")
-		}(cmd, stdout, messageID)
-		if err := msg.Conn.Ack(msg); err != nil {
-			slog.Error("could not ack msg", "message-id", messageID, "err", stdErr.String())
-		}
+	var stdErr bytes.Buffer
+	cmd.Stderr = &stdErr
+	if err := cmd.Start(); err != nil {
+		slog.Error("Error starting command", "cmd", cmd.String(), "err", stdErr.String())
+		return
+	}
+	if err := cmd.Wait(); err != nil {
+		slog.Error("command finished with error", "err", stdErr.String())
 	}
 }
