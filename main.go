@@ -16,7 +16,6 @@ import (
 
 var (
 	config *scyllaridae.ServerConfig
-	stop   = make(chan bool)
 )
 
 func init() {
@@ -35,6 +34,10 @@ func main() {
 		subscribed := make(chan bool)
 		go RecvStompMessages(config.QueueName, subscribed)
 		<-subscribed
+
+		// wait for messages
+		stop := make(chan os.Signal, 1)
+		<-stop
 	} else {
 		// or make this an available API ala crayfish
 		http.HandleFunc("/", MessageHandler)
@@ -123,10 +126,6 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func RecvStompMessages(queueName string, subscribed chan bool) {
-	defer func() {
-		stop <- true
-	}()
-
 	var options []func(*stomp.Conn) error = []func(*stomp.Conn) error{
 		//	stomp.ConnOpt.Login("guest", "guest"),
 		stomp.ConnOpt.Host("/"),
