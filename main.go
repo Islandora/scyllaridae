@@ -166,8 +166,18 @@ func connectAndSubscribe(queueName string, subscribed chan bool) error {
 		return err
 	}
 	tcpConn := c.(*net.TCPConn)
-	tcpConn.SetKeepAlive(true)
-	tcpConn.SetKeepAlivePeriod(10 * time.Second)
+
+	err = tcpConn.SetKeepAlive(true)
+	if err != nil {
+		slog.Error("cannot set keepalive", "err", err.Error())
+		return err
+	}
+
+	err = tcpConn.SetKeepAlivePeriod(10 * time.Second)
+	if err != nil {
+		slog.Error("cannot set keepalive period", "err", err.Error())
+		return err
+	}
 
 	conn, err := stomp.Connect(tcpConn, stomp.ConnOpt.HeartBeat(10*time.Second, 0*time.Second))
 	if err != nil {
