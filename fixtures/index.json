@@ -1,0 +1,46 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": {
+    "type": "Person",
+    "id": "urn:uuid:b3f0a1ba-fd0c-4977-a123-3faf470374f2",
+    "url": [
+      {
+        "name": "Canonical",
+        "type": "Link",
+        "href": "https://islandora.dev/user/1",
+        "mediaType": "text/html",
+        "rel": "canonical"
+      }
+    ]
+  },
+  "object": {
+    "id": "urn:uuid:abcdef01-2345-6789-abcd-ef0123456789",
+    "url": [
+      {
+        "name": "Canonical",
+        "type": "Link",
+        "href": "https://islandora.dev/node/1",
+        "mediaType": "text/html",
+        "rel": "canonical"
+      },
+      {
+        "name": "JSON",
+        "type": "Link",
+        "href": "https://islandora.dev/node/1?_format=json",
+        "mediaType": "application/json",
+        "rel": "alternate"
+      },
+      {
+        "name": "JSONLD",
+        "type": "Link",
+        "href": "https://islandora.dev/node/1?_format=jsonld",
+        "mediaType": "application/ld+json",
+        "rel": "alternate"
+      }
+    ],
+    "isNewVersion": true
+  },
+  "target": "https://fcrepo.islandora.dev/fcrepo/rest/",
+  "type": "Update",
+  "summary": "Update a Node"
+}
