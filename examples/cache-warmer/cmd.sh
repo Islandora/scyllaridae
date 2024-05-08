@@ -4,6 +4,17 @@ set -eou pipefail
 
 export LOCK_FILE="/tmp/scyllaridae-cache.lock"
 
+# how many cURL commands to run in parallel for /node/\d+
+if [ ! -v NODE_PARALLEL_EXECUTIONS ] || [ "$NODE_PARALLEL_EXECUTIONS" = "" ]; then
+  NODE_PARALLEL_EXECUTIONS=5
+fi
+
+# how many cURL commands to run in parallel for IIIF manifests
+if [ ! -v IIIF_PARALLEL_EXECUTIONS ] || [ "$IIIF_PARALLEL_EXECUTIONS" = "" ]; then
+  IIIF_PARALLEL_EXECUTIONS=3
+fi
+
+
 handle_error() {
   rm -f "$LOCK_FILE"
   exit 1
@@ -45,9 +56,6 @@ fi
 
 touch "$LOCK_FILE"
 
-# how many cURL commands to run in parallel
-PARALLEL_EXECUTIONS=3
-
 # Warm everything in the sitemap
 BASE_URL="$DRUPAL_URL/sitemap.xml"
 PAGE=1
@@ -62,7 +70,7 @@ while true; do
   if [ "${STATUS}" -eq 200 ]; then
     mapfile -t URLS < <(grep -oP '<loc>\K[^<]+' links.xml)
     while [ "${#URLS[@]}" -gt 0 ]; do
-      for ((i = 0; i < PARALLEL_EXECUTIONS; i++)); do
+      for ((i = 0; i < NODE_PARALLEL_EXECUTIONS; i++)); do
         array_length=${#URLS[@]}
         if [ "$array_length" -gt 0 ]; then
           URL="${URLS[$((array_length-1))]}"
@@ -94,7 +102,7 @@ rm -f links.xml
 curl -s "$DRUPAL_URL/api/v1/paged-content" > pc.json
 mapfile -t NIDS < <(jq -r '.[]' pc.json)
 for NID in "${NIDS[@]}"; do
-  for ((i = 0; i < PARALLEL_EXECUTIONS; i++)); do
+  for ((i = 0; i < IIIF_PARALLEL_EXECUTIONS; i++)); do
     array_length=${#NIDS[@]}
     if [ "$array_length" -gt 0 ]; then
       NID="${NIDS[$((array_length-1))]}"
