@@ -94,13 +94,17 @@ We can also emit events on node/media CUD events to have the anonymous view kept
 
 ### Other cache solutions considered
 
-Putting Drupal behind a CDN or Varnish is a common pattern for site speed improvements.
+Putting Drupal behind a CDN or Varnish is a common pattern for site speed improvements. In general, both a CDN and Varnish were not chosen to avoid adding additional complexity to [the ISLE stack](https://github.com/Islandora-Devops/islandora-starter-site). The ISLE stack already includes an event driven microservice architecture which we can leverage to keep our caches fresh. If that microservice architecture was not in place, a CDN or Varnish would have been given more serious consideration.
+
+#### CDN
 
 A CDN was disqualified since it would require not only additional integration complexity, but also would add additional cost to your site, which we are trying to keep at a minimum.
 
-Varnish was not chosen to avoid the complexity of adding an aditional service to our stack. Adding Varnish would mean needing to configure VCL for the Varnish server and also configuring cache invalidations with something like the Drupal purge module. Instead, it was decided to have the cache handled internally with a custom event subscriber (this is analagous to what varnish would be doing) and `hook_entity_CUD` implementations to keep the cache fresh (instead of the purge module).
+#### Varnish
 
-This leads to another key decision point why Varnish was not chosen over this custom implementation: Varnish can only really handle variants based on HTTP headers returned by Drupal's response. Since we're implementing the cache within Drupal we have much more flexibility about cache variants and deciding when something can be cached, how it is cached, and when that cache needs invalidated or when it's safe to serve to site visitors. Implementing something like this in Varnish I'm sure could be done, but implementing and debugging would require context switching between php and VCL and massaging HTTP headers to be emitted and received properly by the two languages. This leads back to our original point: this solution reduces the complexity of our tech stack by having the caching logic in Drupal.
+Varnish was not chosen to avoid the complexity of adding an additional service to our stack. Adding Varnish would mean needing to configure VCL for the Varnish server and also configuring cache invalidations with something like the Drupal purge module. Instead, it was decided to have the cache handled internally with a custom event subscriber (this is analagous to what varnish would be doing) and `hook_entity_CUD` implementations to keep the cache fresh (instead of the purge module).
+
+This leads to another key decision point why Varnish was not chosen over this custom implementation: Varnish can only really handle cache variants based on HTTP headers returned by Drupal's response. Since we're implementing the cache within Drupal we have much more flexibility about cache variants and deciding when something can be cached, how it is cached, and when that cache needs invalidated or when it's safe to serve to site visitors. Implementing something like this in Varnish I'm sure could be done, but implementing and debugging would require context switching between php and VCL and massaging HTTP headers to be emitted and received properly by the two languages/programs. This leads back to the original point: this solution reduces the complexity of our tech stack by having the caching logic in Drupal.
 
 ## Consequences
 
