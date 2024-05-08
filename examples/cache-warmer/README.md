@@ -1,10 +1,10 @@
 # Cache Warmer
 
-Keep slow Drupal responses cached and fresh.
+Keep slow Drupal HTML responses cached and fresh.
 
 Islandora/Drupal's internal page cache system is wiped whenever `drush cr` is called. Since deployments require a `drush cr` this results in degraded performance of the site after deployments.
 
-Traditionally, the only way to recover from the degraded state would be a site visitor accessing a given page (which would fill the cache for that page for other site visitors). Though waiting for organic hits to fill the cache would likely result in many poor experiences for the first visitor for each page needing filled. Waiting for organic cache fills also means there's a fairly large window for a potential cache stampede if the site were to see a sudden surge of organic traffic after a deployment.
+Traditionally, the only way to recover from the degraded state would be a site visitor accessing a given page (which would fill the cache for that page for other site visitors). Waiting for organic hits to fill the cache would likely result in many poor experiences for the first visitor for each page needing filled. Waiting for organic cache fills also means there's a fairly large window for a potential cache stampede if the site were to see a sudden surge of organic traffic after a deployment.
 
 A custom crawler could also be leveraged to help fill the cache after deployment. This would help mitigate site visitors from experiencing slow page loads, but to avoid overloading the system that crawling process can take several hours to traverse a large site. That means a larger time window for site visitors to have poor experiences.
 
@@ -18,7 +18,7 @@ Keep the three slowest HTML responses from Drupal cached on disk to persist beyo
 
 ### Deployment
 
-When deployments happen, send an event to this service to cache the entire site
+When code deployments happen, send an event to this service to invalidate/cache the entire site
 
 ```mermaid
 sequenceDiagram
@@ -71,7 +71,7 @@ Putting Drupal behind a CDN or Varnish is a common pattern for site speed improv
 
 #### CDN
 
-A CDN was disqualified since it would require not only additional integration complexity, but also would add additional cost to your site, which we are trying to keep at a minimum.
+A CDN was disqualified since it would require not only additional integration complexity, but also would add additional cost to your site, which we are trying to keep at a minimum. It also has similar shortcomings related to relying on HTTP headers as detailed further in the below Varnish section.
 
 #### Varnish
 
@@ -89,7 +89,7 @@ Positive:
 - A faster site means compute resources can be better utilized by other processes
 - With our cache invalidation strategy, only the cache warmer service should ever run into a slow page load during. So a better experience for site visitors
 - Having the cache logic implemented in Drupal simplifies our tech stack and codebase
-- Since we're caching per user, we effectively have a single private and public cache store
+- Since we're caching responses on a per-user basis, we effectively have a single private and public cache store implementation
 
 Negative:
 
