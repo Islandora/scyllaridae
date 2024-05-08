@@ -92,6 +92,16 @@ If instead we hold the cache on disk instead of in Drupal's database cache we ca
 
 We can also emit events on node/media CUD events to have the anonymous view kept warm after entity updates using this same mechanism.
 
+### Other cache solutions considered
+
+Putting Drupal behind a CDN or Varnish is a common pattern for site speed improvements.
+
+A CDN was disqualified since it would require not only additional integration complexity, but also would add additional cost to your site, which we are trying to keep at a minimum.
+
+Varnish was not chosen to avoid the complexity of adding an aditional service to our stack. Adding Varnish would mean needing to configure VCL for the Varnish server and also configuring cache invalidations with something like the Drupal purge module. Instead, it was decided to have the cache handled internally with a custom event subscriber (this is analagous to what varnish would be doing) and `hook_entity_CUD` implementations to keep the cache fresh (instead of the purge module).
+
+This leads to another key decision point why Varnish was not chosen over this custom implementation: Varnish can only really handle variants based on HTTP headers returned by Drupal's response. Since we're implementing the cache within Drupal we have much more flexibility about cache variants and deciding when something can be cached, how it is cached, and when that cache needs invalidated or when it's safe to serve to site visitors. Implementing something like this in Varnish I'm sure could be done, but implementing and debugging would require context switching between php and VCL and massaging HTTP headers to be emitted and received properly by the two languages. This leads back to our original point: this solution reduces the complexity of our tech stack by having the caching logic in Drupal.
+
 ## Consequences
 
 Positive:
@@ -99,8 +109,7 @@ Positive:
 - Fast page loads for site visitors
 - A significantly faster site means resources can be better utilized by other processes
 - With our cache invalidation strategy, only the cache warmer service should ever run into a slow page load during the cache invalidation / warming process
-- Having the cache handled internally by Drupal avoids external configurations like a CDN or Varnish which would introduce additional cache purging configuration. We're instead solving with a custom event subscriber and `hook_entity_CUD` implementations
-- Having the cache logic inside Drupal also allows for holding the cache and only invalidating on a given signal, with that logic written in php/Drupal so keeps a bit more consistent tech stack
+- Having the cache logic implemented in Drupal simplifies our tech stack
 
 Negative:
 
@@ -113,6 +122,6 @@ This will be implemented by:
 
 - This scyllaridae microservice
 - A Drupal module that handles
-  - hook_node/media_insert/update/delete implementations to wipe the cached responses from the filesystem
+  - `hook_node/media_insert/update/delete()` implementations to wipe the cached responses from the filesystem
   - A custom route to get paged content nids
   - An event subscriber to handle caching the responses on disk and invalidating when receiving requests from the microservice
