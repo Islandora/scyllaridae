@@ -1,16 +1,20 @@
 # Cache Warmer
 
-Islandora/Drupal's internal page cache system is wiped whenever `drush cr` is called. Since deployments require a `drush cr` this results in degraded performance for the site after deployments.
+Keep slow Drupal responses cached and fresh.
 
-Traditionally, the only way to recover from the degraded state would be a site visitor accessing a given page, which would mean potentially a poor experience for that first visitor if the page takes a long time to load. A custom crawler could also be leveraged to help fill the cache after deployment, but to avoid overloading the system that crawling process can take several hours to traverse a large site. That means a larger time window for site visitors to have poor experiences, and more potential for a cache stampede if the site were to see a sudden surge of organic traffic after a deployment.
+Islandora/Drupal's internal page cache system is wiped whenever `drush cr` is called. Since deployments require a `drush cr` this results in degraded performance of the site after deployments.
+
+Traditionally, the only way to recover from the degraded state would be a site visitor accessing a given page (which would fill the cache for that page for other site visitors). Though waiting for organic hits to fill the cache would likely result in many poor experiences for the first visitor for each page needing filled. Waiting for organic cache fills also means there's a fairly large window for a potential cache stampede if the site were to see a sudden surge of organic traffic after a deployment.
+
+A custom crawler could also be leveraged to help fill the cache after deployment. This would help mitigate site visitors from experiencing slow page loads, but to avoid overloading the system that crawling process can take several hours to traverse a large site. That means a larger time window for site visitors to have poor experiences.
 
 ## Solution
 
-Keep the three slowest responses from Drupal cached on disk to persist beyond cache flushes.
+Keep the three slowest HTML responses from Drupal cached on disk to persist beyond cache flushes. Only have this service invalidate the responses based on events emitted by Islandora/Drupal this service listens for.
 
-- IIIF book manifests
-- Node canonical pages
-- Search results
+- IIIF book manifests (`/node/\d+/book-manifests`)
+- Node canonical pages (`/node/\d+`)
+- Search results (on Lehigh's Islandora instance `/browse`)
 
 ### Deployment
 
@@ -123,3 +127,9 @@ Update your docker-compose.yml with
 ```
 
 You'd also need an accompanying Drupal module to handle disk caching/invalidation on the Drupal side, which can eventually be broken out of [lehigh-university-libraries/lehigh_islandora](https://github.com/lehigh-university-libraries/lehigh_islandora)
+
+## Further work
+
+- [ ] The service that runs the sitewide crawl could be improved by reading response times from the drupal site to inform if more URLs can be crawled in parallel, or if we need to backoff if the response time goes over some threshold
+- [ ] We have a lock on the sitewide crawler to avoid multiple instances running at once, but there is no mechanism to restart the crawler if a new deployment occurs during a given run. Currently this is mitigated by just recreating the docker container to kill the process during the rollout so a new crawl can be started fresh
+- [ ] More work needs done to ensure CSS/JS asset aggregation creating new asset file names are handled properly
