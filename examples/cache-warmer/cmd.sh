@@ -111,7 +111,7 @@ for NID in "${NIDS[@]}"; do
       break
     fi
     echo "Crawling: $DRUPAL_URL/node/$NID/book-manifest"
-    curl -s -o /dev/null "$DRUPAL_URL/node/$NID/book-manifest?cache-warmer=1" &
+    curl -s -o /dev/null "$DRUPAL_URL/node/$NID/book-manifest" &
     job_ids+=($!)
   done
 
