@@ -1,0 +1,46 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\geometry{a4paper, margin=1in}
+
+% Hyperlink colors
+\hypersetup{
+    colorlinks=true,
+    urlcolor=blue,
+}
+
+\begin{document}
+
+% Title Page
+\begin{titlepage}
+    \begin{center}
+        \vspace*{2cm}
+
+        % Logo
+        \scalebox{.5}{\includegraphics{logo.png}}\\[1cm]
+        % Sitename
+        {\Large\bfseries The Preserve: Lehigh Library Digital Collections}\\[2cm]
+
+        % Article Title
+        {\Huge\bfseries \noindent TITLE}\\[3cm]
+    \end{center}
+
+    {\large \noindent \textbf{Citation}}\\[0.25cm]
+    {\large \noindent CITATION}\\[1cm]
+
+    % Add some vertical space
+    \vfill
+
+    \begin{center}
+        % Footer
+        {\sffamily Find more at \href{https://preserve.lehigh.edu/}{https://preserve.lehigh.edu/}}\\[0.5cm]
+
+        {\sffamily\textit{This document is brought to you for free and open access by Lehigh Preserve. It has been accepted for inclusion by an authorized administrator of Lehigh Preserve. For more information, please contact \href{mailto:preserve@lehigh.edu}{preserve@lehigh.edu}.}}
+    \end{center}
+\end{titlepage}
+
+\end{document}
