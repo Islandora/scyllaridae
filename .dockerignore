@@ -2,3 +2,4 @@ docker-images
 scyllaridae
 .git
 .github
+gha-creds-*.json
