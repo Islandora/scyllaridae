@@ -34,7 +34,8 @@ curl -L -s -o "${ORIGINAL_PDF}" "$2"
 
 gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="${MERGED_PDF}" "${COVERPAGE_FILE}" "${ORIGINAL_PDF}"
 
-rm "$TMP_FILE" "$TMP_FILE.tex" "$(basename "$TMP_FILE").*"
+TMP_FILENAME=$(basename "$TMP_FILE")
+rm "$TMP_FILE" "$TMP_FILE.tex" "${TMP_FILENAME}.log" "${TMP_FILENAME}.aux" "${TMP_FILENAME}.out" "${COVERPAGE_FILE}" "${ORIGINAL_PDF}" || echo "Could not cleanup all files"
 
 curl -XPUT \
   --header "Authorization: $SCYLLARIDAE_AUTH" \
@@ -42,3 +43,5 @@ curl -XPUT \
   --header "Content-Type: application/pdf" \
   --upload-file "$MERGED_PDF" \
   "$4"
+
+rm "$MERGED_PDF" || echo "Could not cleanup merged PDF"
