@@ -8,6 +8,6 @@ RUN apk update && \
       texlive==20230506.66984-r3 \
       ghostscript==10.02.1-r0
 
-COPY . .
+COPY . /app/
 
 ENTRYPOINT ["/app/scyllaridae"]
