@@ -7,3 +7,5 @@ cmdByMimeType:
     args:
       - "%canonical"
       - "%target"
+      - "%file-upload-uri"
+      - "%destination-uri"

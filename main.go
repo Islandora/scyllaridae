@@ -109,14 +109,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// build a command to run that we will pipe the stdin stream into
-	cmdArgs := map[string]string{
-		"sourceMimeType":      message.Attachment.Content.SourceMimeType,
-		"destinationMimeType": message.Attachment.Content.DestinationMimeType,
-		"addtlArgs":           message.Attachment.Content.Args,
-		"target":              "",
-	}
-	cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
+	cmd, err := scyllaridae.BuildExecCommand(message, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
 		http.Error(w, "Bad request", http.StatusBadRequest)
@@ -230,19 +223,7 @@ func handleStompMessage(msg *stomp.Message) {
 		return
 	}
 
-	cmdArgs := map[string]string{
-		"sourceMimeType":      message.Attachment.Content.SourceMimeType,
-		"destinationMimeType": message.Attachment.Content.DestinationMimeType,
-		"addtlArgs":           message.Attachment.Content.Args,
-		"target":              message.Target,
-	}
-	for _, u := range message.Object.URL {
-		if u.Rel == "canonical" {
-			cmdArgs["canonical"] = u.Href
-			break
-		}
-	}
-	cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
+	cmd, err := scyllaridae.BuildExecCommand(message, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
 		return
