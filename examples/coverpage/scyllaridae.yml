@@ -1,3 +1,4 @@
+queueName: islandora-pdf-coverpage
 allowedMimeTypes:
   - "application/pdf"
 cmdByMimeType:

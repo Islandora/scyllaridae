@@ -2,7 +2,12 @@
 
 set -eou pipefail
 
-NODE_JSON=$(curl -L -s "$1")
+if [ "$#" -ne 2 ]; then
+  echo "Usage NODE-JSON-URL ORIGINAL-PDF-URL"
+  exit 1
+fi
+
+NODE_JSON=$(curl -L -s "$1?_format=json")
 
 TITLE=$(echo "$NODE_JSON" | jq -r .title[0].value)
 
