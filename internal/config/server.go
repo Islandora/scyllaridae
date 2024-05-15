@@ -171,6 +171,10 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 
 	cmd := exec.Command(cmdConfig.Cmd, args...)
 	cmd.Env = os.Environ()
+	// pass the Authorization header as an environment variable to avoid logging it
+	if c.ForwardAuth {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("SCYLLARIDAE_AUTH=%s", message.Authorization))
+	}
 
 	return cmd, nil
 }

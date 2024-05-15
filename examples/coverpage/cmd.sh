@@ -2,8 +2,8 @@
 
 set -eou pipefail
 
-if [ "$#" -ne 2 ]; then
-  echo "Usage NODE-JSON-URL ORIGINAL-PDF-URL"
+if [ "$#" -ne 4 ]; then
+  echo "Usage NODE-JSON-URL ORIGINAL-PDF-URL FILE-UPLOAD-URI DESTINATION-URI"
   exit 1
 fi
 
@@ -36,4 +36,9 @@ gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="${MERGED_PDF}" "${COVERP
 
 rm "$TMP_FILE" "$TMP_FILE.tex" "$(basename "$TMP_FILE").*"
 
-cat "$MERGED_PDF"
+curl -XPUT \
+  --header "Authorization: $SCYLLARIDAE_AUTH" \
+  --header "Content-Location: $3" \
+  --header "Content-Type: application/pdf" \
+  --upload-file "$MERGED_PDF" \
+  "$4"

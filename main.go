@@ -223,6 +223,7 @@ func handleStompMessage(msg *stomp.Message) {
 		return
 	}
 
+	message.Authorization = msg.Header.Get("Authorization")
 	cmd, err := scyllaridae.BuildExecCommand(message, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
