@@ -63,9 +63,9 @@ type Content struct {
 	SourceMimeType      string `json:"source_mimetype,omitempty" description:"MIME type of the source URI"`
 	DestinationMimeType string `json:"mimetype" description:"MIME type of the derivative being created"`
 	Args                string `json:"args" description:"Arguments used or applicable to the content"`
-	SourceURI           string `json:"sourceUri" description:"Source URI from which the content is fetched"`
-	DestinationURI      string `json:"destinationUri" description:"Destination URI to where the content is delivered"`
-	FileUploadURI       string `json:"fileUploadUri" description:"File upload URI for uploading the content"`
+	SourceURI           string `json:"source_uri" description:"Source URI from which the content is fetched"`
+	DestinationURI      string `json:"destination_uri" description:"Destination URI to where the content is delivered"`
+	FileUploadURI       string `json:"file_upload_uri" description:"File upload URI for uploading the content"`
 }
 
 // decode the event message sent by Islandora directly from ActiveMQ
