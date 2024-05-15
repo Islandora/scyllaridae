@@ -9,10 +9,10 @@ convert_unicode_to_latex() {
     while IFS= read -r line; do
         unicode_char=$(echo "$line" | cut -d ' ' -f 1)
         latex_command=$(echo "$line" | cut -d ' ' -f 2-)
-        output=$(echo "$output" | sed "s/${unicode_char}/${latex_command}/g")
+        output="${output//${unicode_char}/${latex_command}}"
     done < unicode_to_latex.map
 
-    echo "$output" | sed -E 's/\^(\{[^}]*\})/$\^\1$/g' | sed -E 's/_\{([^}]*)\}/$_{\1}$/g'
+    echo "$output" | sed -E "s/\^(\{[^}]*\})/\$\^\1\$/g" | sed -E "s/_\{([^}]*)\}/\$_{\1}\$/g"
 }
 
 if [ "$#" -ne 4 ]; then
