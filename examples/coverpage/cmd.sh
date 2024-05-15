@@ -2,46 +2,69 @@
 
 set -eou pipefail
 
+convert_unicode_to_latex() {
+    local input="$1"
+    local output="$input"
+
+    while IFS= read -r line; do
+        unicode_char=$(echo "$line" | cut -d ' ' -f 1)
+        latex_command=$(echo "$line" | cut -d ' ' -f 2-)
+        output=$(echo "$output" | sed "s/${unicode_char}/${latex_command}/g")
+    done < unicode_to_latex.map
+
+    echo "$output" | sed -E 's/\^(\{[^}]*\})/$\^\1$/g' | sed -E 's/_\{([^}]*)\}/$_{\1}$/g'
+}
+
 if [ "$#" -ne 4 ]; then
-  echo "Usage NODE-JSON-URL ORIGINAL-PDF-URL FILE-UPLOAD-URI DESTINATION-URI"
+  echo "Usage: $0 NODE-JSON-URL ORIGINAL-PDF-URL FILE-UPLOAD-URI DESTINATION-URI"
   exit 1
 fi
 
-NODE_JSON=$(curl -L -s "$1?_format=json")
+NODE_JSON_URL="$1"
+ORIGINAL_PDF_URL="$2"
+FILE_UPLOAD_URI="$3"
+DESTINATION_URI="$4"
+TMP_DIR=$(mktemp -d)
 
-TITLE=$(echo "$NODE_JSON" | jq -r .title[0].value)
+curl -L -s -o "$TMP_DIR/node.json" "${NODE_JSON_URL}?_format=json"
+NODE_JSON=$(cat "$TMP_DIR/node.json")
 
-# Make any URL in the citation an href
-# and convert <i> tags to \textit
-CITATION=$(echo "$NODE_JSON" | jq -r .citation[0].value | \
+# Decode HTML entities and convert them to text using html2text
+TITLE=$(echo "$NODE_JSON" | jq -r '.title[0].value' | html2text -nobs -utf8)
+convert_unicode_to_latex "$TITLE" > "$TMP_DIR/title.tex"
+
+# Decode HTML entities and convert them to text using html2text
+CITATION=$(echo "$NODE_JSON" | jq -r .citation[0].value | html2text -nobs -utf8)
+# Make any URL in the citation an href and convert <i> tags to \textit
+CITATION=$(echo "$CITATION" | \
   sed -E 's|(https?://[a-zA-Z0-9./?=_-]+)([.,;!?])|\\\\href{\1}{\1}\2|g' | \
   sed -E 's|<i>([^<]+)</i>|\\\\textit{\1}|g')
+convert_unicode_to_latex "$CITATION" > "$TMP_DIR/citation.tex"
 
-TMP_FILE=$(mktemp)
+TMP_FILE="$TMP_DIR/coverpage.tex"
+PDF_FILE="$TMP_DIR/coverpage.pdf"
+MERGED_PDF="$TMP_DIR/merged.pdf"
+EXISTING_PDF="$TMP_DIR/existing.pdf"
 
-sed -e "s|TITLE|${TITLE}|" \
-    -e "s|CITATION|${CITATION}|" \
-    coverpage.tex > "$TMP_FILE.tex"
+# Create the LaTeX file
+sed -e "s|TMP_DIR|${TMP_DIR}|" coverpage.tex > "$TMP_FILE"
 
-pdflatex "$TMP_FILE.tex" > /dev/null
+# Generate the cover page PDF
+xelatex -output-directory="$TMP_DIR" "$TMP_FILE" > /dev/null
 
-COVERPAGE_FILE="$(basename "$TMP_FILE").pdf"
-ORIGINAL_PDF="${TMP_FILE}.pdf"
-MERGED_PDF=$(mktemp)
+# Download the original PDF
+curl -L -s -o "${EXISTING_PDF}" "$ORIGINAL_PDF_URL"
 
-# download the original PDF
-curl -L -s -o "${ORIGINAL_PDF}" "$2"
+# Merge the cover page with the existing PDF using ghostscript
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="${MERGED_PDF}" "$PDF_FILE" "$EXISTING_PDF"
 
-gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="${MERGED_PDF}" "${COVERPAGE_FILE}" "${ORIGINAL_PDF}"
-
-TMP_FILENAME=$(basename "$TMP_FILE")
-rm "$TMP_FILE" "$TMP_FILE.tex" "${TMP_FILENAME}.log" "${TMP_FILENAME}.aux" "${TMP_FILENAME}.out" "${COVERPAGE_FILE}" "${ORIGINAL_PDF}" || echo "Could not cleanup all files"
-
-curl -XPUT \
+# Upload the merged PDF
+curl -X PUT \
   --header "Authorization: $SCYLLARIDAE_AUTH" \
-  --header "Content-Location: $3" \
+  --header "Content-Location: $FILE_UPLOAD_URI" \
   --header "Content-Type: application/pdf" \
   --upload-file "$MERGED_PDF" \
-  "$4"
+  "$DESTINATION_URI"
 
-rm "$MERGED_PDF" || echo "Could not cleanup merged PDF"
+# Cleanup
+rm -r "$TMP_DIR" || echo "Could not cleanup temporary files"

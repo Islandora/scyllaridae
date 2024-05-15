@@ -1,5 +1,7 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{geometry}
 \usepackage{xcolor}
@@ -14,6 +16,8 @@
 }
 
 \begin{document}
+\newcommand{\insertTitle}{\input{TMP_DIR/title.tex}}
+\newcommand{\insertCitation}{\input{TMP_DIR/citation.tex}}
 
 % Title Page
 \begin{titlepage}
@@ -26,11 +30,11 @@
         {\Large\bfseries The Preserve: Lehigh Library Digital Collections}\\[2cm]
 
         % Article Title
-        {\Huge\bfseries \noindent TITLE}\\[3cm]
+        {\Huge\bfseries \noindent \insertTitle}\\[3cm]
     \end{center}
 
     {\large \noindent \textbf{Citation}}\\[0.25cm]
-    {\large \noindent CITATION}\\[1cm]
+    {\large \noindent \insertCitation}\\[1cm]
 
     % Add some vertical space
     \vfill
