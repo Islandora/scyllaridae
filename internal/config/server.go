@@ -152,6 +152,8 @@ func BuildExecCommand(replacements map[string]string, c *ServerConfig) (*exec.Cm
 
 		} else if a == "%target" {
 			args = append(args, replacements["target"])
+		} else if a == "%canonical" {
+			args = append(args, replacements["canonical"])
 		} else {
 			args = append(args, a)
 		}

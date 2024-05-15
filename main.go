@@ -236,6 +236,12 @@ func handleStompMessage(msg *stomp.Message) {
 		"addtlArgs":           message.Attachment.Content.Args,
 		"target":              message.Target,
 	}
+	for _, u := range message.Object.URL {
+		if u.Rel == "canonical" {
+			cmdArgs["canonical"] = u.Href
+			break
+		}
+	}
 	cmd, err := scyllaridae.BuildExecCommand(cmdArgs, config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
