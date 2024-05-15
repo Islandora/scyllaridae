@@ -153,6 +153,8 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 
 		} else if a == "%target" {
 			args = append(args, message.Target)
+		} else if a == "%source-uri" {
+			args = append(args, message.Attachment.Content.SourceURI)
 		} else if a == "%file-upload-uri" {
 			args = append(args, message.Attachment.Content.FileUploadURI)
 		} else if a == "%destination-uri" {

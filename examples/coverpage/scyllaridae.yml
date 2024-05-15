@@ -6,6 +6,6 @@ cmdByMimeType:
     cmd: "/app/cmd.sh"
     args:
       - "%canonical"
-      - "%target"
+      - "%source-uri"
       - "%file-upload-uri"
       - "%destination-uri"
