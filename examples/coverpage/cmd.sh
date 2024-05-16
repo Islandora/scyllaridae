@@ -2,19 +2,6 @@
 
 set -eou pipefail
 
-convert_unicode_to_latex() {
-    local input="$1"
-    local output="$input"
-
-    while IFS= read -r line; do
-        unicode_char=$(echo "$line" | cut -d ' ' -f 1)
-        latex_command=$(echo "$line" | cut -d ' ' -f 2-)
-        output="${output//${unicode_char}/${latex_command}}"
-    done < unicode_to_latex.map
-
-    echo "$output" | sed -E "s/\^(\{[^}]*\})/\$\^\1\$/g" | sed -E "s/_\{([^}]*)\}/\$_{\1}\$/g"
-}
-
 if [ "$#" -ne 4 ]; then
   echo "Usage: $0 NODE-JSON-URL ORIGINAL-PDF-URL FILE-UPLOAD-URI DESTINATION-URI"
   exit 1
@@ -26,30 +13,34 @@ FILE_UPLOAD_URI="$3"
 DESTINATION_URI="$4"
 TMP_DIR=$(mktemp -d)
 
+# get the node JSON export
 curl -L -s -o "$TMP_DIR/node.json" "${NODE_JSON_URL}?_format=json"
 NODE_JSON=$(cat "$TMP_DIR/node.json")
 
-# Decode HTML entities and convert them to text using html2text
-TITLE=$(echo "$NODE_JSON" | jq -r '.title[0].value' | html2text -nobs -utf8)
-convert_unicode_to_latex "$TITLE" > "$TMP_DIR/title.tex"
+# extract the title and citation from the node JSON
+echo "$NODE_JSON" | jq -r '.field_full_title[0].value' > "$TMP_DIR/title.html"
+echo "$NODE_JSON" | jq -r .citation[0].value > "$TMP_DIR/citation.html"
 
-# Decode HTML entities and convert them to text using html2text
-CITATION=$(echo "$NODE_JSON" | jq -r .citation[0].value | html2text -nobs -utf8)
-# Make any URL in the citation an href and convert <i> tags to \textit
-CITATION=$(echo "$CITATION" | \
-  sed -E 's|(https?://[a-zA-Z0-9./?=_-]+)([.,;!?])|\\\\href{\1}{\1}\2|g' | \
-  sed -E 's|<i>([^<]+)</i>|\\\\textit{\1}|g')
-convert_unicode_to_latex "$CITATION" > "$TMP_DIR/citation.tex"
+# The contents could contain MathML and other non-standard unicode characters
+# so have pandoc convert them to LaTex
+pandoc "$TMP_DIR/title.html" -o "$TMP_DIR/title-latex.tex"
+pandoc "$TMP_DIR/citation.html" -o "$TMP_DIR/citation-latex.tex"
+
+# replace new lines with a space
+# and put the file in the location our main coverpage.tex will insert from
+tr '\n' ' ' < "$TMP_DIR/title-latex.tex" > "$TMP_DIR/title.tex"
+tr '\n' ' ' < "$TMP_DIR/citation-latex.tex" > "$TMP_DIR/citation.tex"
+
+## Now generate the coverpage PDF
 
 TMP_FILE="$TMP_DIR/coverpage.tex"
 PDF_FILE="$TMP_DIR/coverpage.pdf"
 MERGED_PDF="$TMP_DIR/merged.pdf"
 EXISTING_PDF="$TMP_DIR/existing.pdf"
 
-# Create the LaTeX file
-sed -e "s|TMP_DIR|${TMP_DIR}|" coverpage.tex > "$TMP_FILE"
+cp coverpage.tex "$TMP_FILE"
 
-# Generate the cover page PDF
+# Generate the cover page from LaTex to PDF
 xelatex -output-directory="$TMP_DIR" "$TMP_FILE" > /dev/null
 
 # Download the original PDF
