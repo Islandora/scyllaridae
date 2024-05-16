@@ -18,10 +18,23 @@ curl -L -s -o "$TMP_DIR/node.json" "${NODE_JSON_URL}?_format=json"
 NODE_JSON=$(cat "$TMP_DIR/node.json")
 
 # extract the title and citation from the node JSON
-echo "$NODE_JSON" | jq -r '.field_full_title[0].value' > "$TMP_DIR/title.html"
-echo "$NODE_JSON" | jq -r .citation[0].value > "$TMP_DIR/citation.html"
+echo "$NODE_JSON" | jq -r '.field_full_title[0].value' | \
+  sed -e 's/&lt;/</g' \
+      -e 's/&gt;/>/g' \
+      -e 's/&amp;/\&/g' \
+      -e 's/&quot;/"/g' \
+      -e 's/&apos;/'"'"'/g' \
+      -e 's/< mml/<\/mml/g' > "$TMP_DIR/title.html"
 
-# The contents could contain MathML and other non-standard unicode characters
+echo "$NODE_JSON" | jq -r '.citation[0].value' | \
+  sed -e 's/&lt;/</g' \
+      -e 's/&gt;/>/g' \
+      -e 's/&amp;/\&/g' \
+      -e 's/&quot;/"/g' \
+      -e 's/&apos;/'"'"'/g' \
+      -e 's/< mml/<\/mml/g' > "$TMP_DIR/citation.html"
+
+# The title and citation could contain MathML and other non-standard unicode characters
 # so have pandoc convert them to LaTex
 pandoc "$TMP_DIR/title.html" -o "$TMP_DIR/title-latex.tex"
 pandoc "$TMP_DIR/citation.html" -o "$TMP_DIR/citation-latex.tex"
