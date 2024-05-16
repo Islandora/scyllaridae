@@ -18,6 +18,9 @@ curl -L -s -o "$TMP_DIR/node.json" "${NODE_JSON_URL}?_format=json"
 NODE_JSON=$(cat "$TMP_DIR/node.json")
 
 # extract the title and citation from the node JSON
+# instead of installing a perl module or python or php
+# just do some basic html entity decoding with sed replacements
+# so things like MathML can get rendered correctly
 echo "$NODE_JSON" | jq -r '.field_full_title[0].value' | \
   sed -e 's/&lt;/</g' \
       -e 's/&gt;/>/g' \
