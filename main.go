@@ -54,6 +54,10 @@ func main() {
 		slog.Info("Shutting down message listener")
 	} else {
 		// or make this an available API ala crayfish
+		http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintln(w, "OK")
+		})
 		http.HandleFunc("/", MessageHandler)
 		port := os.Getenv("PORT")
 		if port == "" {
