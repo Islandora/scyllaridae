@@ -1,4 +1,5 @@
-docker-images
+examples
 scyllaridae
 .git
 .github
+gha-creds-*.json

@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
 	"gopkg.in/yaml.v3"
 )
 
@@ -114,12 +115,12 @@ func ReadConfig(yp string) (*ServerConfig, error) {
 	return &c, nil
 }
 
-func BuildExecCommand(replacements map[string]string, c *ServerConfig) (*exec.Cmd, error) {
-	if replacements["sourceMimeType"] != "" && !IsAllowedMimeType(replacements["sourceMimeType"], c.AllowedMimeTypes) {
-		return nil, fmt.Errorf("undefined sourceMimeType: %s", replacements["sourceMimeType"])
+func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
+	if message.Attachment.Content.SourceMimeType != "" && !IsAllowedMimeType(message.Attachment.Content.SourceMimeType, c.AllowedMimeTypes) {
+		return nil, fmt.Errorf("undefined sourceMimeType: %s", message.Attachment.Content.SourceMimeType)
 	}
 
-	cmdConfig, exists := c.CmdByMimeType[replacements["sourceMimeType"]]
+	cmdConfig, exists := c.CmdByMimeType[message.Attachment.Content.SourceMimeType]
 	if !exists {
 		cmdConfig = c.CmdByMimeType["default"]
 	}
@@ -128,30 +129,43 @@ func BuildExecCommand(replacements map[string]string, c *ServerConfig) (*exec.Cm
 	for _, a := range cmdConfig.Args {
 		// if we have the special value of %args
 		// replace it with the args passed by the event
-		if a == "%args" && replacements["addtlArgs"] != "" {
-			args = append(args, replacements["addtlArgs"])
+		if a == "%args" && message.Attachment.Content.Args != "" {
+			args = append(args, message.Attachment.Content.Args)
 
 			// if we have the special value of %source-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%source-mime-ext" {
-			a, err := getMimeTypeExtension(replacements["sourceMimeType"])
+			a, err := getMimeTypeExtension(message.Attachment.Content.SourceMimeType)
 			if err != nil {
-				return nil, fmt.Errorf("unknown mime extension: %s", replacements["sourceMimeType"])
+				return nil, fmt.Errorf("unknown mime extension: %s", message.Attachment.Content.SourceMimeType)
 			}
 
 			args = append(args, a)
 			// if we have the special value of %destination-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%destination-mime-ext" {
-			a, err := getMimeTypeExtension(replacements["destinationMimeType"])
+			a, err := getMimeTypeExtension(message.Attachment.Content.DestinationMimeType)
 			if err != nil {
-				return nil, fmt.Errorf("unknown mime extension: %s", replacements["destinationMimeType"])
+				return nil, fmt.Errorf("unknown mime extension: %s", message.Attachment.Content.DestinationMimeType)
 			}
 
 			args = append(args, a)
 
 		} else if a == "%target" {
-			args = append(args, replacements["target"])
+			args = append(args, message.Target)
+		} else if a == "%source-uri" {
+			args = append(args, message.Attachment.Content.SourceURI)
+		} else if a == "%file-upload-uri" {
+			args = append(args, message.Attachment.Content.FileUploadURI)
+		} else if a == "%destination-uri" {
+			args = append(args, message.Attachment.Content.DestinationURI)
+		} else if a == "%canonical" {
+			for _, u := range message.Object.URL {
+				if u.Rel == "canonical" {
+					args = append(args, u.Href)
+					break
+				}
+			}
 		} else {
 			args = append(args, a)
 		}
@@ -159,6 +173,10 @@ func BuildExecCommand(replacements map[string]string, c *ServerConfig) (*exec.Cm
 
 	cmd := exec.Command(cmdConfig.Cmd, args...)
 	cmd.Env = os.Environ()
+	// pass the Authorization header as an environment variable to avoid logging it
+	if c.ForwardAuth {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("SCYLLARIDAE_AUTH=%s", message.Authorization))
+	}
 
 	return cmd, nil
 }

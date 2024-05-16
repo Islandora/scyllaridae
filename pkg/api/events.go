@@ -11,12 +11,13 @@ import (
 //
 // swagger:model Payload
 type Payload struct {
-	Actor      Actor      `json:"actor" description:"Details of the actor performing the action"`
-	Object     Object     `json:"object" description:"Contains details about the object of the action"`
-	Attachment Attachment `json:"attachment" description:"Holds additional data related to the action"`
-	Target     string     `json:"target" description:"Target for the payload"`
-	Type       string     `json:"type" description:"Type of the payload"`
-	Summary    string     `json:"summary" description:"Summary of the payload"`
+	Actor         Actor      `json:"actor" description:"Details of the actor performing the action"`
+	Object        Object     `json:"object" description:"Contains details about the object of the action"`
+	Attachment    Attachment `json:"attachment" description:"Holds additional data related to the action"`
+	Target        string     `json:"target" description:"Target for the payload"`
+	Type          string     `json:"type" description:"Type of the payload"`
+	Summary       string     `json:"summary" description:"Summary of the payload"`
+	Authorization string     `json:"authorization" description:"The Authorization HTTP header"`
 }
 
 // Actor represents an entity performing an action.
@@ -62,9 +63,9 @@ type Content struct {
 	SourceMimeType      string `json:"source_mimetype,omitempty" description:"MIME type of the source URI"`
 	DestinationMimeType string `json:"mimetype" description:"MIME type of the derivative being created"`
 	Args                string `json:"args" description:"Arguments used or applicable to the content"`
-	SourceURI           string `json:"sourceUri" description:"Source URI from which the content is fetched"`
-	DestinationURI      string `json:"destinationUri" description:"Destination URI to where the content is delivered"`
-	FileUploadURI       string `json:"fileUploadUri" description:"File upload URI for uploading the content"`
+	SourceURI           string `json:"source_uri" description:"Source URI from which the content is fetched"`
+	DestinationURI      string `json:"destination_uri" description:"Destination URI to where the content is delivered"`
+	FileUploadURI       string `json:"file_upload_uri" description:"File upload URI for uploading the content"`
 }
 
 // decode the event message sent by Islandora directly from ActiveMQ

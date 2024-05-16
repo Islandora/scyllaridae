@@ -6,7 +6,7 @@ RUN apk update && \
     apk add --no-cache \
       curl==8.5.0-r0 \
       bash==5.2.21-r0 \
-      ca-certificates==20230506-r0 && \
+      ca-certificates==20240226-r0 && \
     update-ca-certificates
 
 COPY . ./
