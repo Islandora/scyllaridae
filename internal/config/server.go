@@ -129,9 +129,10 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 	for _, a := range cmdConfig.Args {
 		// if we have the special value of %args
 		// replace it with the args passed by the event
-		if a == "%args" && message.Attachment.Content.Args != "" {
-			args = append(args, message.Attachment.Content.Args)
-
+		if a == "%args" {
+			if message.Attachment.Content.Args != "" {
+				args = append(args, message.Attachment.Content.Args)
+			}
 			// if we have the special value of %source-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%source-mime-ext" {
