@@ -76,6 +76,10 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	if r.Header.Get("Apix-Ldp-Resource") == "" {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
 	defer r.Body.Close()
 
 	// Read the Alpaca message payload
