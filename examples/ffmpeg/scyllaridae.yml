@@ -1,3 +1,4 @@
+mimeTypeFromDestination: true
 allowedMimeTypes:
   - "audio/*"
   - "video/*"
