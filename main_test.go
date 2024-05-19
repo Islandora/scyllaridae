@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"log/slog"
 	"net"
@@ -371,129 +370,6 @@ cmdByMimeType:
 					t.Fatalf("Unable to read source uri resp body: %v", err)
 				}
 				assert.Equal(t, tt.expectedBody, string(body))
-			}
-		})
-	}
-}
-
-func TestMimeTypes(t *testing.T) {
-	mimeTypes := map[string]string{
-		"application/msword": "doc",
-		"application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-		"application/vnd.ms-excel": "xls",
-		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         "xlsx",
-		"application/vnd.ms-powerpoint":                                             "ppt",
-		"application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
-
-		"image/jpeg":    "jpg",
-		"image/jp2":     "jp2",
-		"image/png":     "png",
-		"image/gif":     "gif",
-		"image/bmp":     "bmp",
-		"image/svg+xml": "svg",
-		"image/tiff":    "tiff",
-		"image/webp":    "webp",
-
-		"audio/mpeg":        "mp3",
-		"audio/x-wav":       "wav",
-		"audio/ogg":         "ogg",
-		"audio/aac":         "m4a",
-		"audio/webm":        "webm",
-		"audio/flac":        "flac",
-		"audio/midi":        "mid",
-		"audio/x-m4a":       "m4a",
-		"audio/x-realaudio": "ra",
-
-		"video/mp4":                     "mp4",
-		"video/x-msvideo":               "avi",
-		"video/x-ms-wmv":                "wmv",
-		"video/mpeg":                    "mpg",
-		"video/webm":                    "webm",
-		"video/quicktime":               "mov",
-		"application/vnd.apple.mpegurl": "m3u8",
-		"video/3gpp":                    "3gp",
-		"video/mp2t":                    "ts",
-		"video/x-flv":                   "flv",
-		"video/x-m4v":                   "m4v",
-		"video/x-mng":                   "mng",
-		"video/x-ms-asf":                "asx",
-		"video/ogg":                     "ogg",
-
-		"text/plain":      "txt",
-		"text/html":       "html",
-		"application/pdf": "pdf",
-		"text/csv":        "csv",
-	}
-	test := Test{
-		authHeader:          "pass",
-		requestAuth:         "pass",
-		expectedStatus:      http.StatusOK,
-		expectedBody:        "%s txt\n",
-		returnedBody:        "",
-		expectMismatch:      false,
-		destinationMimeType: "text/plain",
-		yml: `
-forwardAuth: false
-allowedMimeTypes:
-  - "*"
-cmdByMimeType:
-  default:
-    cmd: echo
-    args:
-      - "%source-mime-ext"
-      - "%destination-mime-ext"
-`,
-	}
-	for mimeType, extension := range mimeTypes {
-		test.name = fmt.Sprintf("test %s to %s conversion", mimeType, extension)
-		test.mimetype = mimeType
-		test.expectedBody = fmt.Sprintf("%s txt\n", extension)
-		t.Run(test.name, func(t *testing.T) {
-			var err error
-			destinationServer := createMockDestinationServer(t, test.returnedBody)
-			defer destinationServer.Close()
-
-			sourceServer := createMockSourceServer(t, test.mimetype, test.authHeader, destinationServer.URL)
-			defer sourceServer.Close()
-
-			os.Setenv("SCYLLARIDAE_YML", test.yml)
-			// set the config based on test.yml
-			config, err = scyllaridae.ReadConfig("")
-			if err != nil {
-				t.Fatalf("Could not read YML: %v", err)
-				os.Exit(1)
-			}
-
-			// Configure and start the main server
-			setupServer := httptest.NewServer(http.HandlerFunc(MessageHandler))
-			defer setupServer.Close()
-
-			// Send the mock message to the main server
-			req, err := http.NewRequest("GET", setupServer.URL, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			req.Header.Set("X-Islandora-Args", destinationServer.URL)
-			// set the mimetype to send to the destination server in the Accept header
-			req.Header.Set("Accept", test.destinationMimeType)
-			req.Header.Set("Authorization", test.requestAuth)
-			req.Header.Set("Apix-Ldp-Resource", sourceServer.URL)
-
-			// Capture the response
-			resp, err := http.DefaultClient.Do(req)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer resp.Body.Close()
-			assert.Equal(t, test.expectedStatus, resp.StatusCode)
-			if !test.expectMismatch {
-				// if we're setesting up the destination server as the cURL target
-				// make sure it returned
-				body, err := io.ReadAll(resp.Body)
-				if err != nil {
-					t.Fatalf("Unable to read source uri resp body: %v", err)
-				}
-				assert.Equal(t, test.expectedBody, string(body))
 			}
 		})
 	}

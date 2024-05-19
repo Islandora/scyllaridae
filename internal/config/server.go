@@ -5,6 +5,7 @@ import (
 	"mime"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/google/shlex"
@@ -142,16 +143,16 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 		// replace it with the args passed by the event
 		if a == "%args" {
 			if message.Attachment.Content.Args != "" {
-				passedArgs, err := shlex.Split(message.Attachment.Content.Args)
+				passedArgs, err := GetPassedArgs(message.Attachment.Content.Args)
 				if err != nil {
-					return nil, fmt.Errorf("Error parsing args %s: %v", message.Attachment.Content.Args, err)
+					return nil, fmt.Errorf("could not parse args: %v", err)
 				}
 				args = append(args, passedArgs...)
 			}
 			// if we have the special value of %source-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%source-mime-ext" {
-			a, err := getMimeTypeExtension(message.Attachment.Content.SourceMimeType)
+			a, err := GetMimeTypeExtension(message.Attachment.Content.SourceMimeType)
 			if err != nil {
 				return nil, fmt.Errorf("unknown mime extension: %s", message.Attachment.Content.SourceMimeType)
 			}
@@ -160,7 +161,7 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 			// if we have the special value of %destination-mime-ext
 			// replace it with the source mimetype extension
 		} else if a == "%destination-mime-ext" {
-			a, err := getMimeTypeExtension(message.Attachment.Content.DestinationMimeType)
+			a, err := GetMimeTypeExtension(message.Attachment.Content.DestinationMimeType)
 			if err != nil {
 				return nil, fmt.Errorf("unknown mime extension: %s", message.Attachment.Content.DestinationMimeType)
 			}
@@ -197,7 +198,7 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 	return cmd, nil
 }
 
-func getMimeTypeExtension(mimeType string) (string, error) {
+func GetMimeTypeExtension(mimeType string) (string, error) {
 	// since the std mimetype -> extension conversion returns a list
 	// we need to override the default extension to use
 	// it also is missing some mimetypes
@@ -230,6 +231,7 @@ func getMimeTypeExtension(mimeType string) (string, error) {
 		"audio/x-m4a":       "m4a",
 		"audio/x-realaudio": "ra",
 		"audio/midi":        "mid",
+		"audio/x-wav":       "wav",
 	}
 	cleanMimeType := strings.TrimSpace(strings.ToLower(mimeType))
 	if ext, ok := mimeToExtension[cleanMimeType]; ok {
@@ -242,4 +244,24 @@ func getMimeTypeExtension(mimeType string) (string, error) {
 	}
 
 	return strings.TrimPrefix(extensions[len(extensions)-1], "."), nil
+}
+
+func GetPassedArgs(args string) ([]string, error) {
+	passedArgs, err := shlex.Split(args)
+	if err != nil {
+		return nil, fmt.Errorf("error splitting args %s: %v", args, err)
+	}
+
+	// make sure args are OK
+	regex, err := regexp.Compile(`^[a-zA-Z0-9._\-:\/@ ]+$`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile regex: %v", err)
+	}
+	for _, value := range passedArgs {
+		if !regex.MatchString(value) {
+			return nil, fmt.Errorf("invalid input for passed arg: %s", value)
+		}
+	}
+
+	return passedArgs, nil
 }
