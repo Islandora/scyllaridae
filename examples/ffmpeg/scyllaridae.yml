@@ -8,22 +8,34 @@ cmdByMimeType:
   "image/jpeg":
     cmd: ffmpeg
     args:
+      - "-f"
+      - "%source-mime-ext"
       - "-i"
       - "-"
       - "%args"
       - "-f"
       - "image2pipe"
+      - "-vcodec"
+      - "mjpeg"
+      - "-"
   "image/png":
     cmd: ffmpeg
     args:
+      - "-f"
+      - "%source-mime-ext"
       - "-i"
       - "-"
       - "%args"
       - "-f"
       - "image2pipe"
+      - "-vcodec"
+      - "png"
+      - "-"
   "video/mp4":
     cmd: ffmpeg
     args:
+      - "-f"
+      - "%source-mime-ext"
       - "-i"
       - "-"
       - "%args"
@@ -45,7 +57,7 @@ cmdByMimeType:
       - "faststart"
       - "-y"
       - "-f"
-      - "mp4"
+      - "%destination-mime-ext"
       - "-"
   default:
     cmd: ffmpeg

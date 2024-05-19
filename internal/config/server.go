@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/google/shlex"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
 	"gopkg.in/yaml.v3"
 )
@@ -141,7 +142,11 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 		// replace it with the args passed by the event
 		if a == "%args" {
 			if message.Attachment.Content.Args != "" {
-				args = append(args, message.Attachment.Content.Args)
+				passedArgs, err := shlex.Split(message.Attachment.Content.Args)
+				if err != nil {
+					return nil, fmt.Errorf("Error parsing args %s: %v", message.Attachment.Content.Args, err)
+				}
+				args = append(args, passedArgs...)
 			}
 			// if we have the special value of %source-mime-ext
 			// replace it with the source mimetype extension
