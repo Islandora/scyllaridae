@@ -127,7 +127,7 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 	}
 
 	if mimeType != "" && !IsAllowedMimeType(mimeType, c.AllowedMimeTypes) {
-		return nil, fmt.Errorf("undefined sourceMimeType: %s", mimeType)
+		return nil, fmt.Errorf("undefined mimeType to build command: %s", mimeType)
 	}
 
 	cmdConfig, exists := c.CmdByMimeType[mimeType]
