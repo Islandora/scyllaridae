@@ -54,6 +54,11 @@ type ServerConfig struct {
 	//
 	// required: false
 	CmdByMimeType map[string]Command `yaml:"cmdByMimeType"`
+
+	// Commands and arguments ran by MIME type based on the destination file format
+	//
+	// required: false
+	MimeTypeFromDestination bool `yaml:"mimeTypeFromDestination,omitempty"`
 }
 
 // Command describes the command and arguments to execute for a specific MIME type.
@@ -116,11 +121,16 @@ func ReadConfig(yp string) (*ServerConfig, error) {
 }
 
 func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
-	if message.Attachment.Content.SourceMimeType != "" && !IsAllowedMimeType(message.Attachment.Content.SourceMimeType, c.AllowedMimeTypes) {
-		return nil, fmt.Errorf("undefined sourceMimeType: %s", message.Attachment.Content.SourceMimeType)
+	mimeType := message.Attachment.Content.SourceMimeType
+	if c.MimeTypeFromDestination {
+		mimeType = message.Attachment.Content.DestinationMimeType
 	}
 
-	cmdConfig, exists := c.CmdByMimeType[message.Attachment.Content.SourceMimeType]
+	if mimeType != "" && !IsAllowedMimeType(mimeType, c.AllowedMimeTypes) {
+		return nil, fmt.Errorf("undefined mimeType to build command: %s", mimeType)
+	}
+
+	cmdConfig, exists := c.CmdByMimeType[mimeType]
 	if !exists {
 		cmdConfig = c.CmdByMimeType["default"]
 	}
