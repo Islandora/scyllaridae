@@ -253,7 +253,7 @@ func GetPassedArgs(args string) ([]string, error) {
 	}
 
 	// make sure args are OK
-	regex, err := regexp.Compile(`^[a-zA-Z0-9._\-:\/@]+$`)
+	regex, err := regexp.Compile(`^[a-zA-Z0-9._\-:\/@ ]+$`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile regex: %v", err)
 	}
