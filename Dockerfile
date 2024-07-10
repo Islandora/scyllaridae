@@ -18,4 +18,5 @@ RUN go mod download && \
   go build -o /app/scyllaridae && \
   go clean -cache -modcache
 
-ENTRYPOINT ["/app/scyllaridae"]
+ENTRYPOINT ["/bin/bash"]
+CMD ["/app/docker-entrypoint.sh"]

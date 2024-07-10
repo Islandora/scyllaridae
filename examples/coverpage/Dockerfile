@@ -12,5 +12,8 @@ RUN apk update && \
 
 WORKDIR /app
 COPY --from=scyllaridae /app/scyllaridae /app/scyllaridae
+COPY --from=scyllaridae /app/docker-entrypoint.sh /app/docker-entrypoint.sh
 COPY . /app
-ENTRYPOINT ["/app/scyllaridae"]
+
+ENTRYPOINT ["/bin/bash"]
+CMD ["/app/docker-entrypoint.sh"]
