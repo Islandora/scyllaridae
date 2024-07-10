@@ -2,7 +2,7 @@ ARG TAG=main
 ARG DOCKER_REPOSITORY=local
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 
-ARG TESSERACT_VERSION=5.3.3-r1
+ARG TESSERACT_VERSION=5.3.4-r0
 
 RUN apk update && \
     apk add --no-cache \
