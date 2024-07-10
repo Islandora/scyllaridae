@@ -2,11 +2,11 @@ ARG TAG=main
 ARG DOCKER_REPOSITORY=local
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 
-ARG TESSERACT_VERSION=5.3.3-r1
+ARG TESSERACT_VERSION=5.3.4-r0
 
 RUN apk update && \
     apk add --no-cache \
-        leptonica-dev==1.83.1-r0 \
+        leptonica-dev==1.84.1-r0 \
         tesseract-ocr==${TESSERACT_VERSION} \
         tesseract-ocr-data-eng==${TESSERACT_VERSION} \
         tesseract-ocr-data-fra==${TESSERACT_VERSION} \
@@ -17,6 +17,6 @@ RUN apk update && \
         tesseract-ocr-data-deu==${TESSERACT_VERSION} \
         tesseract-ocr-data-jpn==${TESSERACT_VERSION} \
         tesseract-ocr-data-rus==${TESSERACT_VERSION} \
-        poppler-utils==23.10.0-r0
+        poppler-utils==24.02.0-r1
 
 COPY scyllaridae.yml /app/scyllaridae.yml
