@@ -23,6 +23,9 @@ find . -name 'Dockerfile' | while read -r DOCKERFILE; do
         PACKAGE_NAME=$(echo "$PACKAGE" | cut -d'=' -f1|awk '{print $1}')
         CURRENT_VERSION=$(echo "$PACKAGE" | cut -d'=' -f3|awk '{print $1}')
         LATEST_VERSION=$(get_latest_version "$PACKAGE_NAME")
+        if [ "$LATEST_VERSION" = "" ]; then
+          continue
+        fi
         if [[ "$LATEST_VERSION" != "$CURRENT_VERSION" ]]; then
             echo -e "\t\tUpdating to $LATEST_VERSION"
             sed -E "s/($PACKAGE_NAME)==$CURRENT_VERSION/\1==$LATEST_VERSION/" "$DOCKERFILE" > "${DOCKERFILE}.bak"
