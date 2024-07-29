@@ -6,10 +6,10 @@ SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 RUN apk update && \
     apk add --no-cache \
-      curl==8.8.0-r0 \
+      curl==8.9.0-r0 \
       bash==5.2.26-r0 \
-      ca-certificates==20240226-r0 \
-      openssl==3.3.1-r1 && \
+      ca-certificates==20240705-r0 \
+      openssl==3.3.1-r3 && \
     openssl s_client -connect helloworld.letsencrypt.org:443 -showcerts </dev/null 2>/dev/null | sed -e '/-----BEGIN/,/-----END/!d' | tee "/usr/local/share/ca-certificates/letsencrypt.crt" >/dev/null && \
     update-ca-certificates
 
