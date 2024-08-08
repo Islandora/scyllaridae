@@ -8,4 +8,4 @@ if [ -f /app/ca.pem ]; then
     update-ca-certificates
 fi
 
-exec /app/scyllaridae
+exec gosu scyllaridae /app/scyllaridae
