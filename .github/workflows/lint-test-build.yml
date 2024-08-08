@@ -77,3 +77,22 @@ jobs:
       contents: read
       id-token: write
     secrets: inherit
+
+  integration-tests:
+    needs: [build-push]
+    name: Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract branch name as docker tag
+        shell: bash
+        run: |-
+          BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+        id: extract_branch
+      - name: Find docker files
+        id: images
+        run: ./ci/run.sh
+        env:
+          DOCKER_REPOSITORY_BASE: us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/scyllaridae
+          DOCKER_TAG: ${{steps.extract_branch.outputs.branch}}
