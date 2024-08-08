@@ -3,3 +3,5 @@ scyllaridae
 .git
 .github
 gha-creds-*.json
+ci
+fixtures
