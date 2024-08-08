@@ -90,7 +90,7 @@ jobs:
           BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
         id: extract_branch
-      - name: Find docker files
+      - name: Run tests
         id: images
         run: ./ci/run.sh
         env:
