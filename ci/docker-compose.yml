@@ -5,6 +5,8 @@ services:
         image: islandora/fits:main
     crayfits:
         image: ${DOCKER_REPOSITORY_BASE}-fits:${DOCKER_TAG}
+    ffmpeg:
+        image: ${DOCKER_REPOSITORY_BASE}-ffmpeg:${DOCKER_TAG}
     imagemagick:
         image: ${DOCKER_REPOSITORY_BASE}-imagemagick:${DOCKER_TAG}
     tesseract:

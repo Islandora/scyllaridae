@@ -14,6 +14,7 @@ SERVICES=(
   "tesseract"
   "imagemagick"
   "crayfits"
+  "ffmpeg"
 )
 for SERVICE in "${SERVICES[@]}"; do
   URL="http://$SERVICE:8080/"
