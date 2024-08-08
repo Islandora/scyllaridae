@@ -7,7 +7,7 @@ cmdByMimeType:
     args:
       - "pdf:-[0]"
       - "%args"
-      - "pdf:-"
+      - "%destination-mime-ext:-"
   default:
     cmd: convert
     args:
