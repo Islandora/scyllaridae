@@ -77,10 +77,10 @@ Now you can apply your kube manifests, being sure to replace `__DOMAIN__` and `_
 DOMAIN=CHANGE-ME.bar.com
 DOCKER_REPOSITORY=CHANGE-ME.docker.io
 KUBE_TLS_SECRET=CHANGE-ME
-sed -e "s/__DOMAIN__/$DOMAIN/g" \
-    -e "s/__DOCKER_REPOSITORY__/$DOCKER_REPOSITORY/g" \
-    -e "s/__KUBE_TLS_SECRET__/$KUBE_TLS_SECRET/g" \
-    ci/k8s/*.yaml \
+sed -e "s|__DOMAIN__|$DOMAIN|" \
+    -e "s|__DOCKER_REPOSITORY__|$DOCKER_REPOSITORY|" \
+    -e "s|__KUBE_TLS_SECRET__|$KUBE_TLS_SECRET|" \
+    *.yaml \
 | kubectl apply -f -
 ```
 
