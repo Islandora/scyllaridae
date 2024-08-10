@@ -15,6 +15,34 @@ spec:
     - host: __DOMAIN__
       http:
         paths:
+          - path: /coverpage(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-coverpage
+                port:
+                  number: 8080
+          - path: /crayfits(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-crayfits
+                port:
+                  number: 8080
+          - path: /homarus(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-ffmpeg
+                port:
+                  number: 8080
+          - path: /houdini(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-imagemagick
+                port:
+                  number: 8080
           - path: /hypercube(/|$)(.*)
             pathType: Prefix
             backend:
