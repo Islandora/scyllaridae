@@ -162,7 +162,7 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 			// replace it with the source mimetype extension
 		} else if a == "%destination-mime-ext" || a == "%destination-mime-ext:-" {
 			dash := false
-			if a == "%destination-mime-ext" {
+			if a == "%destination-mime-ext:-" {
 				dash = true
 			}
 			a, err := GetMimeTypeExtension(message.Attachment.Content.DestinationMimeType)
