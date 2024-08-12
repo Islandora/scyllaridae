@@ -160,12 +160,18 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 			args = append(args, a)
 			// if we have the special value of %destination-mime-ext
 			// replace it with the source mimetype extension
-		} else if a == "%destination-mime-ext" {
+		} else if a == "%destination-mime-ext" || a == "%destination-mime-ext:-" {
+			dash := false
+			if a == "%destination-mime-ext:-" {
+				dash = true
+			}
 			a, err := GetMimeTypeExtension(message.Attachment.Content.DestinationMimeType)
 			if err != nil {
 				return nil, fmt.Errorf("unknown mime extension: %s", message.Attachment.Content.DestinationMimeType)
 			}
-
+			if dash {
+				a = fmt.Sprintf("%s:-", a)
+			}
 			args = append(args, a)
 
 		} else if a == "%target" {
