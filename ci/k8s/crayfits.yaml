@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: islandora-crayfits
+spec:
+  selector:
+    app: islandora-crayfits
+  ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: islandora-crayfits
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: islandora-crayfits
+  template:
+    metadata:
+      labels:
+        app: islandora-crayfits
+    spec:
+      containers:
+        - name: scyllaridae-crayfits
+          image: __DOCKER_REPOSITORY__/scyllaridae-fits:main
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+          ports:
+            - containerPort: 8080
+              hostPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10

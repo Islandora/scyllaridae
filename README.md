@@ -59,6 +59,31 @@ Update your [ISLE docker-compose.yml](https://github.com/Islandora-Devops/isle-s
         <<: [*prod, *fits]
 ```
 
+#### Kubernetes deployment
+
+The demo kubernetes manifests in this repo uses the `ingress-nginx` controller to route requests from a single domain to the proper microservice.
+
+##### Create a the TLS secret
+
+```
+kubectl create secret tls CHANGE-ME --key key.pem --cert cert.pem
+```
+
+#### Apply the kubernetes manifests
+
+Now you can apply your kube manifests, being sure to replace `__DOMAIN__` and `__DOCKER_REPOSITORY__` with the proper valuyes
+
+```
+DOMAIN=CHANGE-ME.bar.com
+DOCKER_REPOSITORY=CHANGE-ME.docker.io
+KUBE_TLS_SECRET=CHANGE-ME
+sed -e "s|__DOMAIN__|$DOMAIN|" \
+    -e "s|__DOCKER_REPOSITORY__|$DOCKER_REPOSITORY|" \
+    -e "s|__KUBE_TLS_SECRET__|$KUBE_TLS_SECRET|" \
+    *.yaml \
+| kubectl apply -f -
+```
+
 ### Configure alpaca and Drupal
 
 Until we define a subscription spec for Islandora Events in this repo, you'll also need to:

@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: islandora-coverpage
+spec:
+  selector:
+    app: islandora-coverpage
+  ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: islandora-coverpage
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: islandora-coverpage
+  template:
+    metadata:
+      labels:
+        app: islandora-coverpage
+    spec:
+      containers:
+        - name: scyllaridae-coverpage
+          image: __DOCKER_REPOSITORY__/scyllaridae-coverpage:main
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
