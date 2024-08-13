@@ -15,7 +15,7 @@ get_latest_version() {
     echo "$LATEST_VERSION"
 }
 
-find . -name 'Dockerfile' | while read -r DOCKERFILE; do
+find . -name 'Dockerfile' | egrep -v '(pandoc|coverpage)' | while read -r DOCKERFILE; do
     echo "Checking $DOCKERFILE"
     grep -s '==' "$DOCKERFILE" > /dev/null || continue
     ggrep -soP '[a-zA-Z0-9_\-]+==[a-zA-Z0-9_\-\.]+' "$DOCKERFILE" | tr -d '\\' | while read -r PACKAGE; do
