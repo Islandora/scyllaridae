@@ -15,11 +15,11 @@ spec:
     - host: __DOMAIN__
       http:
         paths:
-          - path: /coverpage(/|$)(.*)
+          - path: /libreoffice(/|$)(.*)
             pathType: Prefix
             backend:
               service:
-                name: islandora-coverpage
+                name: islandora-libreoffice
                 port:
                   number: 8080
           - path: /crayfits(/|$)(.*)
