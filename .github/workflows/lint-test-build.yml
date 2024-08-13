@@ -60,7 +60,7 @@ jobs:
       - name: Find docker files
         id: images
         run: |
-          dockerFiles=$(find examples -name Dockerfile | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
+          dockerFiles=$(find examples -name Dockerfile | grep -v coverpage | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
           echo "dockerFiles=$dockerFiles" >> $GITHUB_OUTPUT
         env:
           GITHUB_REF: ${{ github.ref }}
@@ -78,8 +78,21 @@ jobs:
       id-token: write
     secrets: inherit
 
-  integration-tests:
+  build-push-dependencies:
     needs: [build-push]
+    strategy:
+      matrix:
+        dockerFile: ["examples/coverpage/Dockerfile"]
+    uses: ./.github/workflows/build-push.yml
+    with:
+      dockerFile: ${{ matrix.dockerFile }}
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+
+  integration-tests:
+    needs: [build-push-dependencies]
     name: Integration tests
     runs-on: ubuntu-latest
     steps:
