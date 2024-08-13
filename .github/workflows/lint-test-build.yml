@@ -92,7 +92,7 @@ jobs:
     secrets: inherit
 
   integration-tests:
-    needs: [build-push-coverpage]
+    needs: [build-push-dependencies]
     name: Integration tests
     runs-on: ubuntu-latest
     steps:
