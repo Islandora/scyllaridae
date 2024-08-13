@@ -1,6 +1,10 @@
-name: lint-test
+name: lint-test-build-push
 on:
   push:
+    paths-ignore:
+      - '*.md'
+      - '.github/**'
+      - 'ci/**'
 
 permissions:
   contents: read
