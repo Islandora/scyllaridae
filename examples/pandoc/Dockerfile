@@ -22,11 +22,13 @@ RUN apk add --no-cache --virtual .gosu-deps \
 	apk del --no-network .gosu-deps && \
 	chmod +x /usr/local/bin/gosu
 
+
 WORKDIR /app
 COPY --from=scyllaridae /app/scyllaridae /app/scyllaridae
 COPY --from=scyllaridae /app/docker-entrypoint.sh /app/docker-entrypoint.sh
 COPY scyllaridae.yml .
 
+RUN adduser -S -G nobody scyllaridae
 
 ENTRYPOINT ["/bin/bash"]
 CMD ["/app/docker-entrypoint.sh"]
