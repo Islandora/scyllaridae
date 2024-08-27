@@ -13,6 +13,4 @@ cmdByMimeType:
     args:
       - "-"
       - "%args"
-      - "-format"
-      - "%destination-mime-ext"
-      - "-"
+      - "%destination-mime-ext:-"
