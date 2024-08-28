@@ -3,13 +3,13 @@ allowedMimeTypes:
   - "image/*"
 cmdByMimeType:
   "application/pdf":
-    cmd: convert
+    cmd: magick
     args:
       - "pdf:-[0]"
       - "%args"
       - "%destination-mime-ext:-"
   default:
-    cmd: convert
+    cmd: magick
     args:
       - "-"
       - "%args"
