@@ -33,8 +33,7 @@ spec:
               memory: "256Mi"
               cpu: "500m"
             limits:
-              memory: "1Gi"
-              nvidia.com/gpu: 1
+              memory: "5Gi"
           ports:
             - containerPort: 8080
           readinessProbe:
