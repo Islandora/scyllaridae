@@ -1,5 +1,3 @@
-queueName: islandora-vtt-whisper
-forwardAuth: true
 allowedMimeTypes:
   - "audio/*"
   - "video/*"
