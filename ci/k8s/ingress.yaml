@@ -50,3 +50,10 @@ spec:
                 name: islandora-tesseract
                 port:
                   number: 8080
+          - path: /whisper(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-whisper
+                port:
+                  number: 8080

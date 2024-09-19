@@ -1,0 +1,6 @@
+allowedMimeTypes:
+  - "audio/*"
+  - "video/*"
+cmdByMimeType:
+  default:
+    cmd: /app/cmd.sh
