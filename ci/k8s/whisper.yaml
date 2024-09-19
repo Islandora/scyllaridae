@@ -26,15 +26,15 @@ spec:
     spec:
       containers:
         - name: scyllaridae-whisper
-          image: __DOCKER_REPOSITORY__/scyllaridae-whisper:whisper
+          image: __DOCKER_REPOSITORY__/scyllaridae-whisper:main
           imagePullPolicy: IfNotPresent
           resources:
             requests:
               memory: "256Mi"
               cpu: "500m"
-              nvidia.com/gpu: 1
             limits:
               memory: "1Gi"
+              nvidia.com/gpu: 1
           ports:
             - containerPort: 8080
           readinessProbe:
