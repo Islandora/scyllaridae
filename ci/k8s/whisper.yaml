@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: islandora-whisper
+spec:
+  selector:
+    app: islandora-whisper
+  ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: islandora-whisper
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: islandora-whisper
+  template:
+    metadata:
+      labels:
+        app: islandora-whisper
+    spec:
+      containers:
+        - name: scyllaridae-whisper
+          image: __DOCKER_REPOSITORY__/scyllaridae-whisper:whisper
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+              nvidia.com/gpu: 1
+            limits:
+              memory: "1Gi"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
