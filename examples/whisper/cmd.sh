@@ -12,7 +12,7 @@ cat > "$input_temp"
   -m /app/models/ggml-base.en.bin \
   --output-vtt \
   -f "$input_temp" \
-  --output-file "$input_temp.vtt" > /dev/null 2>&1
+  --output-file "$input_temp" > /dev/null 2>&1
 
 cat "$input_temp.vtt"
 
