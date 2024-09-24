@@ -14,13 +14,13 @@ cat > "$input_temp"
 
 # make sure we have a 16kHz WAV file
 output_file="${input_temp}_16khz.wav"
-ffmpeg -i "$input_temp" -ar 16000 -ac 1 "$output_file"
+ffmpeg -hide_banner -loglevel error -i "$input_temp" -ar 16000 -ac 1 "$output_file" 
 
 # generate the VTT file
 /app/main \
   -m /app/models/ggml-medium.en.bin \
   --output-vtt \
-  -f "$input_temp" \
+  -f "$output_file" \
   --output-file "$input_temp" > /dev/null 2>&1 || true
 
 # make sure a VTT file was created
