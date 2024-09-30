@@ -11,10 +11,8 @@ cmdByMimeType:
   "image/tiff":
     cmd: magick
     args:
-      - "-"
+      - "-[0]"
       - "%args"
-      - "-define tiff:subfile=0"
-      - "-define tiff:ignore-tags=306,PixelXDimension,PixelYDimension"
       - "%destination-mime-ext:-"
   default:
     cmd: magick
