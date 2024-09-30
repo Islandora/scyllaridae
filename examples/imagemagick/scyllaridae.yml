@@ -8,6 +8,13 @@ cmdByMimeType:
       - "pdf:-[0]"
       - "%args"
       - "%destination-mime-ext:-"
+    cmd: magick
+  "image/tiff":
+    args:
+      - "-"
+      - "%args"
+      - "-define tiff:subfile=0"
+      - "%destination-mime-ext:-"
   default:
     cmd: magick
     args:
