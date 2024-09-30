@@ -25,7 +25,7 @@ RUN adduser -S -G nobody scyllaridae
 
 RUN apk update && \
     apk add --no-cache \
-      curl==8.9.1-r2 \
+      curl==8.10.1-r0 \
       bash==5.2.26-r0 \
       ca-certificates==20240705-r0 \
       openssl==3.3.2-r0
