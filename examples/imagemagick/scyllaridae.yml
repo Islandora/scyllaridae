@@ -8,8 +8,8 @@ cmdByMimeType:
       - "pdf:-[0]"
       - "%args"
       - "%destination-mime-ext:-"
-    cmd: magick
   "image/tiff":
+    cmd: magick
     args:
       - "-"
       - "%args"
