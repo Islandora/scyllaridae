@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"log/slog"
@@ -9,8 +8,8 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -34,20 +33,25 @@ func init() {
 }
 
 func main() {
-	// either subscribe to activemq directly
-	if config.QueueName != "" {
-		subscribed := make(chan bool)
+	if len(config.QueueMiddlewares) > 0 {
 		stopChan := make(chan os.Signal, 1)
 		signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 
-		go RecvStompMessages(config.QueueName, subscribed)
+		var wg sync.WaitGroup
 
-		select {
-		case <-subscribed:
-			slog.Info("Subscription to queue successful")
-		case <-stopChan:
-			slog.Info("Received stop signal, exiting")
-			return
+		for _, middleware := range config.QueueMiddlewares {
+			wg.Add(1)
+			go func(middleware scyllaridae.QueueMiddleware) {
+				defer wg.Done()
+				messageChan := make(chan *stomp.Message, middleware.Consumers)
+
+				// Start the specified number of worker goroutines
+				for i := 0; i < middleware.Consumers; i++ {
+					go worker(messageChan, middleware)
+				}
+
+				RecvStompMessages(middleware.QueueName, messageChan)
+			}(middleware)
 		}
 
 		<-stopChan
@@ -140,22 +144,30 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RecvStompMessages(queueName string, subscribed chan bool) {
-	defer close(subscribed)
+func worker(messageChan <-chan *stomp.Message, middleware scyllaridae.QueueMiddleware) {
+	for msg := range messageChan {
+		handleMessage(msg, middleware)
+	}
+}
+
+func RecvStompMessages(queueName string, messageChan chan<- *stomp.Message) {
 	attempt := 0
 	maxAttempts := 30
 	for attempt = 0; attempt < maxAttempts; attempt += 1 {
-		if err := connectAndSubscribe(queueName, subscribed); err != nil {
-			slog.Error("resubscribing", "error", err)
+		if err := connectAndSubscribe(queueName, messageChan); err != nil {
+			slog.Error("resubscribing", "queue", queueName, "error", err)
 			if err := retryWithExponentialBackoff(attempt, maxAttempts); err != nil {
-				slog.Error("Failed subscribing after too many failed attempts", "attempts", attempt)
+				slog.Error("Failed subscribing after too many failed attempts", "queue", queueName, "attempts", attempt)
 				return
 			}
+		} else {
+			// Subscription was successful
+			break
 		}
 	}
 }
 
-func connectAndSubscribe(queueName string, subscribed chan bool) error {
+func connectAndSubscribe(queueName string, messageChan chan<- *stomp.Message) error {
 	addr := os.Getenv("STOMP_SERVER_ADDR")
 	if addr == "" {
 		addr = "activemq:61613"
@@ -207,61 +219,46 @@ func connectAndSubscribe(queueName string, subscribed chan bool) error {
 		}
 	}()
 	slog.Info("Server subscribed to", "queue", queueName)
-	subscribed <- true
 
 	for msg := range sub.C {
 		if msg == nil || len(msg.Body) == 0 {
-			// if the subscription isn't active return so we can try reconnecting
 			if !sub.Active() {
 				return fmt.Errorf("no longer subscribed to %s", queueName)
 			}
-			// else just try reading again. There's probably just no messages in the queue
 			continue
 		}
-		handleStompMessage(msg)
+		messageChan <- msg // Send the message to the channel
 	}
 
 	return nil
 }
 
-func handleStompMessage(msg *stomp.Message) {
-	message, err := api.DecodeEventMessage(msg.Body)
+func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
+	req, err := http.NewRequest("POST", middleware.Url, bytes.NewReader(msg.Body))
 	if err != nil {
-		slog.Error("could not read the event message", "err", err, "msg", string(msg.Body))
+		slog.Error("Error creating HTTP request", "url", middleware.Url, "err", err)
 		return
 	}
 
-	message.Authorization = msg.Header.Get("Authorization")
-	cmd, err := scyllaridae.BuildExecCommand(message, config)
-	if err != nil {
-		slog.Error("Error building command", "err", err)
-		return
-	}
-
-	runCommand(cmd)
-}
-
-func runCommand(cmd *exec.Cmd) {
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		slog.Error("error creating stdout pipe", "err", err)
-		return
-	}
-	scanner := bufio.NewScanner(stdout)
-	go func() {
-		for scanner.Scan() {
-			slog.Info("cmd output", "stdout", scanner.Text())
+	if middleware.ForwardAuth {
+		auth := msg.Header.Get("Authorization")
+		if auth != "" {
+			req.Header.Set("Authorization", auth)
 		}
-	}()
+	}
 
-	var stdErr bytes.Buffer
-	cmd.Stderr = &stdErr
-	if err := cmd.Start(); err != nil {
-		slog.Error("Error starting command", "cmd", cmd.String(), "err", stdErr.String())
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		slog.Error("Error sending HTTP POST request", "url", middleware.Url, "err", err)
 		return
 	}
-	if err := cmd.Wait(); err != nil {
-		slog.Error("command finished with error", "err", stdErr.String())
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		slog.Info("Successfully delivered message to", "url", middleware.Url, "status", resp.StatusCode)
+	} else {
+		slog.Error("Failed to deliver message", "url", middleware.Url, "status", resp.StatusCode)
 	}
 }
 
