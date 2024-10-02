@@ -1,4 +1,3 @@
-queueName: islandora-cache-warmer
 allowedMimeTypes:
   - "*"
 cmdByMimeType:
