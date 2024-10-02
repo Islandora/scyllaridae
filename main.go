@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"io"
 	"log/slog"
 	"math/rand"
 	"net"
@@ -245,6 +244,7 @@ func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
 		slog.Error("Error creating HTTP request", "url", middleware.Url, "err", err)
 		return
 	}
+
 	req.Header.Set("X-Islandora-Event", base64.StdEncoding.EncodeToString(msg.Body))
 	islandoraMessage, err := api.DecodeEventMessage(msg.Body)
 	if err != nil {
@@ -276,20 +276,9 @@ func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
 		return
 	}
 
-	// Create a pipe to stream the data from resp.Body to the PUT request body
-	pr, pw := io.Pipe()
-	defer pr.Close()
-	defer pw.Close()
-
-	putReq, err := http.NewRequest("PUT", islandoraMessage.Attachment.Content.DestinationURI, pr)
+	putReq, err := http.NewRequest("PUT", islandoraMessage.Attachment.Content.DestinationURI, resp.Body)
 	if err != nil {
 		slog.Error("Error creating HTTP PUT request", "url", islandoraMessage.Attachment.Content.DestinationURI, "err", err)
-		return
-	}
-
-	_, err = io.Copy(pw, resp.Body)
-	if err != nil {
-		slog.Error("Error copying data from GET response to pipe", "err", err)
 		return
 	}
 
@@ -307,6 +296,8 @@ func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
 
 	if putResp.StatusCode >= 299 {
 		slog.Error("Failed to PUT data", "url", islandoraMessage.Attachment.Content.DestinationURI, "status", putResp.StatusCode)
+	} else {
+		slog.Info("Successfully PUT data to", "url", islandoraMessage.Attachment.Content.DestinationURI, "status", putResp.StatusCode)
 	}
 }
 
