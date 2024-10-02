@@ -60,3 +60,17 @@ spec:
                 name: islandora-whisper
                 port:
                   number: 8080
+          - path: /coverpage(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-coverpage
+                port:
+                  number: 8080
+          - path: /cache\-warmer(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-cache-warmer
+                port:
+                  number: 8080
