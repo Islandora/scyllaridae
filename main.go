@@ -62,7 +62,6 @@ func main() {
 	} else {
 		// or make this an available API ala crayfish
 		http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
-			slog.Info("/healthcheck", "method", r.Method, "ip", r.RemoteAddr, "proto", r.Proto)
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintln(w, "OK")
 		})
