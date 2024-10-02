@@ -273,6 +273,10 @@ func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
 		return
 	}
 
+	if middleware.NoPut {
+		return
+	}
+
 	// Create a pipe to stream the data from resp.Body to the PUT request body
 	pr, pw := io.Pipe()
 	defer pr.Close()
