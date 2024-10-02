@@ -25,7 +25,7 @@ type ServerConfig struct {
 	// Label of the server configuration used for identification.
 	//
 	// required: false
-	QueueName string `yaml:"queueName"`
+	QueueMiddlewares []QueueMiddleware `yaml:"queueMiddlewares,omitempty"`
 
 	// HTTP method used for sending data to the destination server.
 	//
@@ -61,6 +61,14 @@ type ServerConfig struct {
 	//
 	// required: false
 	MimeTypeFromDestination bool `yaml:"mimeTypeFromDestination,omitempty"`
+}
+
+type QueueMiddleware struct {
+	QueueName   string `yaml:"queueName"`
+	Url         string `yaml:"url"`
+	Consumers   int    `yaml:"consumers"`
+	ForwardAuth bool   `yaml:"forwardAuth,omitempty"`
+	NoPut       bool   `yaml:"noPut"`
 }
 
 // Command describes the command and arguments to execute for a specific MIME type.

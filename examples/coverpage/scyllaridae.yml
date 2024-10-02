@@ -1,5 +1,3 @@
-queueName: islandora-pdf-coverpage
-forwardAuth: true
 allowedMimeTypes:
   - "application/pdf"
 cmdByMimeType:
@@ -7,6 +5,3 @@ cmdByMimeType:
     cmd: "/app/cmd.sh"
     args:
       - "%canonical"
-      - "%source-uri"
-      - "%file-upload-uri"
-      - "%destination-uri"
