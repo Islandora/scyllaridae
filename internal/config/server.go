@@ -25,7 +25,7 @@ type ServerConfig struct {
 	// Label of the server configuration used for identification.
 	//
 	// required: false
-	QueueMiddlewares []QueueMiddleware `yaml:"queueMiddleware,omitempty"`
+	QueueMiddlewares []QueueMiddleware `yaml:"queueMiddlewares,omitempty"`
 
 	// HTTP method used for sending data to the destination server.
 	//
@@ -66,7 +66,7 @@ type ServerConfig struct {
 type QueueMiddleware struct {
 	QueueName   string `yaml:"queueName"`
 	Url         string `yaml:"url"`
-	Consumers   int    `yaml:"Consumers"`
+	Consumers   int    `yaml:"consumers"`
 	ForwardAuth bool   `yaml:"forwardAuth,omitempty"`
 }
 

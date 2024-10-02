@@ -1,0 +1,4 @@
+queueMiddlewares:
+  - queueName: islandora-pdf-coverpage
+    url: http://coverpage:8080
+    consumers: 3

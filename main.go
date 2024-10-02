@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"log/slog"
 	"math/rand"
 	"net"
@@ -47,6 +49,7 @@ func main() {
 
 				// Start the specified number of worker goroutines
 				for i := 0; i < middleware.Consumers; i++ {
+					slog.Info("Adding consumer", "consumer", i)
 					go worker(messageChan, middleware)
 				}
 
@@ -59,6 +62,7 @@ func main() {
 	} else {
 		// or make this an available API ala crayfish
 		http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
+			slog.Info("/healthcheck", "method", r.Method, "ip", r.RemoteAddr, "proto", r.Proto)
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintln(w, "OK")
 		})
@@ -76,15 +80,18 @@ func main() {
 }
 
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	slog.Info(r.RequestURI, "method", r.Method, "ip", r.RemoteAddr, "proto", r.Proto)
+
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	if r.Header.Get("Apix-Ldp-Resource") == "" {
+	defer r.Body.Close()
+
+	if r.Header.Get("Apix-Ldp-Resource") == "" && r.Header.Get("X-Islandora-Event") == "" {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	// Read the Alpaca message payload
 	auth := ""
@@ -234,9 +241,15 @@ func connectAndSubscribe(queueName string, messageChan chan<- *stomp.Message) er
 }
 
 func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
-	req, err := http.NewRequest("POST", middleware.Url, bytes.NewReader(msg.Body))
+	req, err := http.NewRequest("GET", middleware.Url, nil)
 	if err != nil {
 		slog.Error("Error creating HTTP request", "url", middleware.Url, "err", err)
+		return
+	}
+	req.Header.Set("X-Islandora-Event", base64.StdEncoding.EncodeToString(msg.Body))
+	islandoraMessage, err := api.DecodeEventMessage(msg.Body)
+	if err != nil {
+		slog.Error("Unable to decode event message", "err", err)
 		return
 	}
 
@@ -250,15 +263,47 @@ func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		slog.Error("Error sending HTTP POST request", "url", middleware.Url, "err", err)
+		slog.Error("Error sending HTTP GET request", "url", middleware.Url, "err", err)
 		return
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		slog.Info("Successfully delivered message to", "url", middleware.Url, "status", resp.StatusCode)
-	} else {
+	if resp.StatusCode >= 299 {
 		slog.Error("Failed to deliver message", "url", middleware.Url, "status", resp.StatusCode)
+		return
+	}
+
+	// Create a pipe to stream the data from resp.Body to the PUT request body
+	pr, pw := io.Pipe()
+	defer pr.Close()
+	defer pw.Close()
+
+	putReq, err := http.NewRequest("PUT", islandoraMessage.Attachment.Content.DestinationURI, pr)
+	if err != nil {
+		slog.Error("Error creating HTTP PUT request", "url", islandoraMessage.Attachment.Content.DestinationURI, "err", err)
+		return
+	}
+
+	_, err = io.Copy(pw, resp.Body)
+	if err != nil {
+		slog.Error("Error copying data from GET response to pipe", "err", err)
+		return
+	}
+
+	putReq.Header.Set("Authorization", msg.Header.Get("Authorization"))
+	putReq.Header.Set("Content-Type", islandoraMessage.Attachment.Content.DestinationMimeType)
+	putReq.Header.Set("Content-Location", islandoraMessage.Attachment.Content.FileUploadURI)
+
+	// Send the PUT request
+	putResp, err := client.Do(putReq)
+	if err != nil {
+		slog.Error("Error sending HTTP PUT request", "url", islandoraMessage.Attachment.Content.DestinationURI, "err", err)
+		return
+	}
+	defer putResp.Body.Close()
+
+	if putResp.StatusCode >= 299 {
+		slog.Error("Failed to PUT data", "url", islandoraMessage.Attachment.Content.DestinationURI, "status", putResp.StatusCode)
 	}
 }
 
