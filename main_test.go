@@ -25,18 +25,19 @@ type Test struct {
 }
 
 func TestMessageHandler_MethodNotAllowed(t *testing.T) {
+	testConfig := &scyllaridae.ServerConfig{}
+	server := &Server{Config: testConfig}
+
 	req, err := http.NewRequest("POST", "/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(MessageHandler)
-
+	handler := http.HandlerFunc(server.MessageHandler)
 	handler.ServeHTTP(rr, req)
-
 	if status := rr.Code; status != http.StatusMethodNotAllowed {
-		t.Errorf("handler returned wrong status code: got %v want %v",
+		t.Errorf("Handler returned wrong status code: got %v want %v",
 			status, http.StatusMethodNotAllowed)
 	}
 }
@@ -216,19 +217,20 @@ cmdByMimeType:
 			destinationServer := createMockDestinationServer(t, tt.returnedBody)
 			defer destinationServer.Close()
 
-			sourceServer := createMockSourceServer(t, tt.mimetype, tt.authHeader, destinationServer.URL)
-			defer sourceServer.Close()
-
 			os.Setenv("SCYLLARIDAE_YML", tt.yml)
-			// set the config based on tt.yml
-			config, err = scyllaridae.ReadConfig("")
+			config, err := scyllaridae.ReadConfig("")
+
+			sourceServer := createMockSourceServer(t, config, tt.mimetype, tt.authHeader, destinationServer.URL)
+			defer sourceServer.Close()
 			if err != nil {
 				t.Fatalf("Could not read YML: %v", err)
-				os.Exit(1)
 			}
 
+			// Create a Server instance with the test config
+			server := &Server{Config: config}
+
 			// Configure and start the main server
-			setupServer := httptest.NewServer(http.HandlerFunc(MessageHandler))
+			setupServer := httptest.NewServer(http.HandlerFunc(server.MessageHandler))
 			defer setupServer.Close()
 
 			// Send the mock message to the main server
@@ -260,6 +262,7 @@ cmdByMimeType:
 			}
 		})
 	}
+
 }
 
 func createMockDestinationServer(t *testing.T, content string) *httptest.Server {
@@ -270,7 +273,7 @@ func createMockDestinationServer(t *testing.T, content string) *httptest.Server 
 	}))
 }
 
-func createMockSourceServer(t *testing.T, mimetype, auth, content string) *httptest.Server {
+func createMockSourceServer(t *testing.T, config *scyllaridae.ServerConfig, mimetype, auth, content string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if config.ForwardAuth && r.Header.Get("Authorization") != auth {
 			w.WriteHeader(http.StatusUnauthorized)
