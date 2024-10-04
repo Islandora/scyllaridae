@@ -34,7 +34,7 @@ cmdByMimeType:
 Define the `Dockerfile` to run your microservice. Your service will run the main `scyllaridae` program which is an http service configured by your `scyllaridae.yml`. You just need to install the binaries your yml specifies to ensure the command is in the container when it runs.
 
 ```dockerfile
-FROM jcorall/scyllaridae:main
+FROM lehighlts/scyllaridae:main
 
 RUN apk update && \
     apk add --no-cache curl==8.5.0-r0
@@ -75,7 +75,7 @@ Now you can apply your kube manifests, being sure to replace `__DOMAIN__` and `_
 
 ```
 DOMAIN=CHANGE-ME.bar.com
-DOCKER_REPOSITORY=CHANGE-ME.docker.io
+DOCKER_REPOSITORY=lehighlts
 KUBE_TLS_SECRET=CHANGE-ME
 sed -e "s|__DOMAIN__|$DOMAIN|" \
     -e "s|__DOCKER_REPOSITORY__|$DOCKER_REPOSITORY|" \
