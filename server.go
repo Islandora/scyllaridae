@@ -11,15 +11,18 @@ import (
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
 )
 
-func runHTTPServer(config *scyllaridae.ServerConfig) {
+type Server struct {
+	Config *scyllaridae.ServerConfig
+}
+
+func runHTTPServer(server *Server) {
 	http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "OK")
 	})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		MessageHandler(w, r, config)
-	})
+	// Use the method as the handler
+	http.HandleFunc("/", server.MessageHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -32,7 +35,7 @@ func runHTTPServer(config *scyllaridae.ServerConfig) {
 	}
 }
 
-func MessageHandler(w http.ResponseWriter, r *http.Request, config *scyllaridae.ServerConfig) {
+func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info(r.RequestURI, "method", r.Method, "ip", r.RemoteAddr, "proto", r.Proto)
 
 	if r.Method != http.MethodGet {
@@ -48,7 +51,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request, config *scyllaridae.
 
 	// Read the Alpaca message payload
 	auth := ""
-	if config.ForwardAuth {
+	if s.Config.ForwardAuth {
 		auth = r.Header.Get("Authorization")
 	}
 	message, err := api.DecodeAlpacaMessage(r, auth)
@@ -65,7 +68,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request, config *scyllaridae.
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	if config.ForwardAuth {
+	if s.Config.ForwardAuth {
 		req.Header.Set("Authorization", auth)
 	}
 	sourceResp, err := http.DefaultClient.Do(req)
@@ -81,7 +84,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request, config *scyllaridae.
 		return
 	}
 
-	cmd, err := scyllaridae.BuildExecCommand(message, config)
+	cmd, err := scyllaridae.BuildExecCommand(message, s.Config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
 		http.Error(w, "Bad request", http.StatusBadRequest)
@@ -103,4 +106,3 @@ func MessageHandler(w http.ResponseWriter, r *http.Request, config *scyllaridae.
 		return
 	}
 }
-
