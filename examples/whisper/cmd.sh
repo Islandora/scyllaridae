@@ -4,10 +4,6 @@
 
 set -eou pipefail
 
-if [ ! -f /app/models/ggml-medium.en.bin ]; then
-  bash ./models/download-ggml-model.sh medium.en > /dev/null 2>&1
-fi
-
 # take stdin and buffer it into a temp file
 input_temp=$(mktemp /tmp/whisper-input-XXXXXX)
 cat > "$input_temp"

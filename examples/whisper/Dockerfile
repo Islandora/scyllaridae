@@ -7,6 +7,8 @@ COPY --from=scyllaridae /app /app
 COPY scyllaridae.yml /app
 COPY cmd.sh /app
 
+RUN bash ./models/download-ggml-model.sh medium.en
+
 RUN apt-get update && apt-get install -y gosu=1.14-1 --no-install-recommends \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd -r nobody \
