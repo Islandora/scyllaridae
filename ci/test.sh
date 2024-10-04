@@ -60,7 +60,7 @@ for SERVICE in "${SERVICES[@]}"; do
     echo "PDF OCR as expected"
     rm ocr.txt
   elif [ "$SERVICE" == "whisper" ]; then
-  curl -s -o vtt.txt \
+    curl -s -o vtt.txt \
         --header "Accept: text/plain" \
         --header "Apix-Ldp-Resource: https://github.com/ggerganov/whisper.cpp/raw/master/samples/jfk.wav" \
         "$URL"
