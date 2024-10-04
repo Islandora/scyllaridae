@@ -204,4 +204,3 @@ func retryWithExponentialBackoff(attempt int, maxAttempts int) error {
 	time.Sleep(wait)
 	return nil
 }
-
