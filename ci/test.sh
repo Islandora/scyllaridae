@@ -15,6 +15,7 @@ SERVICES=(
   "imagemagick"
   "crayfits"
   "ffmpeg"
+  "whisper"
 )
 for SERVICE in "${SERVICES[@]}"; do
   URL="http://$SERVICE:8080/"
@@ -58,6 +59,14 @@ for SERVICE in "${SERVICES[@]}"; do
     grep "One time I was ridin' along on the mule" ocr.txt || exit 1
     echo "PDF OCR as expected"
     rm ocr.txt
+  elif [ "$SERVICE" == "whisper" ]; then
+  curl -s -o vtt.txt \
+        --header "Accept: text/plain" \
+        --header "Apix-Ldp-Resource: https://github.com/ggerganov/whisper.cpp/raw/master/samples/jfk.wav" \
+        "$URL"
+    grep "ask not what your country can do for you" vtt.txt || exit 1
+    echo "VTT as expected"
+    rm vtt.txt
   else
     echo "Unknown service"
     exit 1
