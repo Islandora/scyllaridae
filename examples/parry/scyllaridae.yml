@@ -6,3 +6,6 @@ queueMiddlewares:
     url: http://cache-warmer:8080
     consumers: 3
     noPut: true
+  - queueName: islandora-merge-pdf
+    url: http://mergepdf:8080
+    consumers: 3
