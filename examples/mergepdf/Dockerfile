@@ -19,4 +19,6 @@ RUN apk update && \
     tesseract-ocr-data-rus==5.3.4-r0 \
     poppler-utils==24.02.0-r1
 
+COPY . /app
+
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
