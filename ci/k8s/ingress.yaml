@@ -74,3 +74,10 @@ spec:
                 name: islandora-cache-warmer
                 port:
                   number: 8080
+          - path: /mergepdf(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-mergepdf
+                port:
+                  number: 8080
