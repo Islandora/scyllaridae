@@ -8,10 +8,10 @@ I=0
 # iterate over all images in the IIIF manifest
 curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | while read -r URL; do
   # resize image to max 1500px width
-  curl -s "$URL" | convert -[0] -resize 1500x\> "$TMP_DIR/img_$I"
+  curl -s "$URL" | convert -[0] -resize 1500x\> "$TMP_DIR/img_$I" > /dev/null 2>&1
 
   # make an OCR'd PDF from the image
-  tesseract "$TMP_DIR/img_$I" "$TMP_DIR/img_$I" pdf
+  tesseract "$TMP_DIR/img_$I" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
 
   I="$(( I + 1))"
 done
