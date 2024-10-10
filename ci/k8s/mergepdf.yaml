@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: islandora-mergepdf
+spec:
+  selector:
+    app: islandora-mergepdf
+  ports:
+    - protocol: TCP
+      port: 8887
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: islandora-mergepdf
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: islandora-mergepdf
+  template:
+    metadata:
+      labels:
+        app: islandora-mergepdf
+    spec:
+      containers:
+        - name: scyllaridae-mergepdf
+          image: __DOCKER_REPOSITORY__/scyllaridae-mergepdf:main
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+          ports:
+            - containerPort: 8080
+              hostPort: 8887
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
