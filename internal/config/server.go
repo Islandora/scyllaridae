@@ -285,7 +285,7 @@ func GetPassedArgs(args string) ([]string, error) {
 
 func (c *ServerConfig) GetFileStream(r *http.Request, message api.Payload, auth string) (io.ReadCloser, int, error) {
 	if r.Method == http.MethodPost {
-		return r.Body, 200, nil
+		return r.Body, http.StatusOK, nil
 	}
 	req, err := http.NewRequest("GET", message.Attachment.Content.SourceURI, nil)
 	if err != nil {
@@ -305,5 +305,5 @@ func (c *ServerConfig) GetFileStream(r *http.Request, message api.Payload, auth 
 		return nil, http.StatusFailedDependency, fmt.Errorf("failed dependency")
 	}
 
-	return sourceResp.Body, 200, nil
+	return sourceResp.Body, http.StatusOK, nil
 }
