@@ -2,23 +2,28 @@
 
 Any command that takes a file as input and prints a result as output can use scyllaridae.
 
-Both `GET` and `POST` requests are supported.
 
-`GET` supports Islandora's alpaca/event spec, which sends a URL of a file as an HTTP header `Apix-Ldp-Resource` and prints the result. e.g. to create a VTT file from an audio file:
+## Basic overview
+
+This service reads a file, and pipes the file's stream as `stdin` to a command. The `stdout` from that command is then returned as an HTTP response.
+
+Both `GET` and `POST` requests are supported by any scyllaridea service.
+
+`GET` supports Islandora's alpaca/event spec, which sends the URL of a file as an HTTP header `Apix-Ldp-Resource` and prints the result. e.g. to create a VTT file from an audio file:
 
 ```
-curl -H "Apix-Ldp-Resource: https://github.com/ggerganov/whisper.cpp/raw/master/samples/jfk.wav" \
-  http://localhost:8080
+$ curl -H "Apix-Ldp-Resource: https://github.com/ggerganov/whisper.cpp/raw/master/samples/jfk.wav" http://localhost:8080
 WEBVTT
 
 00:00:00.000 --> 00:00:11.000
  And so my fellow Americans, ask not what your country can do for you, ask what you can do for your country.
 ```
 
-`POST` supports directly uploading a file to the service
+`POST` supports directly uploading a file to the service, being sure to include the mimetype of the file in the `Content-Type` HTTP header
 
 ```
-curl -H "Content-Type: audio/x-wav" \
+$ curl \
+  -H "Content-Type: audio/x-wav" \
   --data-binary "@output.wav" \
   http://localhost:8080/
 WEBVTT
@@ -26,6 +31,8 @@ WEBVTT
 00:00:00.000 --> 00:00:02.960
  Lehigh University Library Technology.
 ```
+
+You can see several example implementations using this framework in [examples](./examples). Some examples send the file's contents directly to `stdin` if the command supports reading from that stream e.g. [fits](./examples/fits). For other commands that do not support reading directly from stdin, and instead requiring specifying a file path on disk, a bash script is implemented to act as a wrapper around the command. e.g. [libreoffice](./examples/libreoffice/cmd.sh)
 
 ## Adding a new microservice
 
