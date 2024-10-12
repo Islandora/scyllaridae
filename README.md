@@ -32,7 +32,7 @@ WEBVTT
  Lehigh University Library Technology.
 ```
 
-You can see several example implementations using this framework in [examples](./examples). Some examples send the file's contents directly to `stdin` if the command supports reading from that stream e.g. [fits](./examples/fits). For other commands that do not support reading directly from stdin, and instead requiring specifying a file path on disk, a bash script is implemented to act as a wrapper around the command. e.g. [libreoffice](./examples/libreoffice/cmd.sh)
+You can see several example implementations using this framework in [examples](./examples). Some examples send the file's contents directly to `stdin` if the command supports reading from that stream e.g. [fits](./examples/fits/scyllaridae.yml). For other commands that do not support reading directly from stdin, and instead requiring specifying a file path on disk, a bash script is implemented to act as a wrapper around the command. e.g. [libreoffice](./examples/libreoffice/cmd.sh)
 
 ## Adding a new microservice
 
