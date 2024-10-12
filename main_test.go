@@ -28,7 +28,7 @@ func TestMessageHandler_MethodNotAllowed(t *testing.T) {
 	testConfig := &scyllaridae.ServerConfig{}
 	server := &Server{Config: testConfig}
 
-	req, err := http.NewRequest("POST", "/", nil)
+	req, err := http.NewRequest("PUT", "/", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,9 +69,9 @@ cmdByMimeType:
 			name:                "cURL fail with bad auth",
 			authHeader:          "foo",
 			requestAuth:         "bar",
-			expectedStatus:      http.StatusBadRequest,
+			expectedStatus:      http.StatusFailedDependency,
 			returnedBody:        "foo",
-			expectedBody:        "Bad request\n",
+			expectedBody:        "Failed Dependency\n",
 			expectMismatch:      false,
 			mimetype:            "text/plain",
 			destinationMimeType: "application/xml",

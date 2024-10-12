@@ -6,6 +6,7 @@ require (
 	github.com/go-stomp/stomp/v3 v3.1.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/stretchr/testify v1.9.0
+	golang.org/x/text v0.3.3
 	gopkg.in/yaml.v3 v3.0.1
 )
 

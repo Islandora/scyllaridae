@@ -1,6 +1,6 @@
 # scyllaridae
 
-Any command that takes stdin as input and streams its output to stdout can use scyllaridae.
+Any command that takes some input and prints an output can use scyllaridae.
 
 ## Adding a new microservice
 
