@@ -84,6 +84,18 @@ func DecodeEventMessage(msg []byte) (Payload, error) {
 func DecodeAlpacaMessage(r *http.Request, auth string) (Payload, error) {
 	p := Payload{}
 
+	p.Attachment.Content.Args = r.Header.Get("X-Islandora-Args")
+	p.Attachment.Content.SourceURI = r.Header.Get("Apix-Ldp-Resource")
+	p.Attachment.Content.DestinationMimeType = r.Header.Get("Accept")
+	p.Attachment.Content.SourceMimeType = r.Header.Get("Content-Type")
+	if p.Attachment.Content.DestinationMimeType == "" {
+		p.Attachment.Content.DestinationMimeType = "text/plain"
+	}
+
+	if r.Method == http.MethodPost {
+		return p, nil
+	}
+
 	// if the message was sent in the event header, just read it
 	message := r.Header.Get("X-Islandora-Event")
 	if message != "" {
@@ -92,20 +104,10 @@ func DecodeAlpacaMessage(r *http.Request, auth string) (Payload, error) {
 			slog.Error("Error decoding base64", "err", err)
 			return p, err
 		}
-		slog.Info("Received message", "msg", j)
 		err = json.Unmarshal(j, &p)
 		if err != nil {
 			slog.Error("Error unmarshalling event", "err", err)
 			return p, err
-		}
-		// else if this is a standard alpaca request, get the event from the headers alpaca sends
-	} else {
-		p.Attachment.Content.Args = r.Header.Get("X-Islandora-Args")
-		p.Attachment.Content.SourceURI = r.Header.Get("Apix-Ldp-Resource")
-
-		p.Attachment.Content.DestinationMimeType = r.Header.Get("Accept")
-		if p.Attachment.Content.DestinationMimeType == "" {
-			p.Attachment.Content.DestinationMimeType = "text/plain"
 		}
 	}
 

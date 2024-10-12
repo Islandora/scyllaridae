@@ -1,6 +1,31 @@
 # scyllaridae
 
-Any command that takes stdin as input and streams its output to stdout can use scyllaridae.
+Any command that takes a file as input and prints a result as output can use scyllaridae.
+
+Both `GET` and `POST` requests are supported.
+
+`GET` supports Islandora's alpaca/event spec, which sends a URL of a file as an HTTP header `Apix-Ldp-Resource` and prints the result. e.g. to create a VTT file from an audio file:
+
+```
+curl -H "Apix-Ldp-Resource: https://github.com/ggerganov/whisper.cpp/raw/master/samples/jfk.wav" \
+  http://localhost:8080
+WEBVTT
+
+00:00:00.000 --> 00:00:11.000
+ And so my fellow Americans, ask not what your country can do for you, ask what you can do for your country.
+```
+
+`POST` supports directly uploading a file to the service
+
+```
+curl -H "Content-Type: audio/x-wav" \
+  --data-binary "@output.wav" \
+  http://localhost:8080/
+WEBVTT
+
+00:00:00.000 --> 00:00:02.960
+ Lehigh University Library Technology.
+```
 
 ## Adding a new microservice
 

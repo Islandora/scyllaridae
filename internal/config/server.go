@@ -2,7 +2,10 @@ package config
 
 import (
 	"fmt"
+	"io"
+	"log/slog"
 	"mime"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -278,4 +281,29 @@ func GetPassedArgs(args string) ([]string, error) {
 	}
 
 	return passedArgs, nil
+}
+
+func (c *ServerConfig) GetFileStream(r *http.Request, message api.Payload, auth string) (io.ReadCloser, int, error) {
+	if r.Method == http.MethodPost {
+		return r.Body, http.StatusOK, nil
+	}
+	req, err := http.NewRequest("GET", message.Attachment.Content.SourceURI, nil)
+	if err != nil {
+		slog.Error("Error building request to fetch source file contents", "err", err)
+		return nil, http.StatusBadRequest, fmt.Errorf("bad request")
+	}
+	if c.ForwardAuth {
+		req.Header.Set("Authorization", auth)
+	}
+	sourceResp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		slog.Error("Error fetching source file contents", "err", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("internal error")
+	}
+	if sourceResp.StatusCode != http.StatusOK {
+		slog.Error("SourceURI sent a bad status code", "code", sourceResp.StatusCode, "uri", message.Attachment.Content.SourceURI)
+		return nil, http.StatusFailedDependency, fmt.Errorf("failed dependency")
+	}
+
+	return sourceResp.Body, http.StatusOK, nil
 }

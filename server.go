@@ -9,6 +9,8 @@ import (
 
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type Server struct {
@@ -38,13 +40,13 @@ func runHTTPServer(server *Server) {
 func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info(r.RequestURI, "method", r.Method, "ip", r.RemoteAddr, "proto", r.Proto)
 
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 	defer r.Body.Close()
 
-	if r.Header.Get("Apix-Ldp-Resource") == "" && r.Header.Get("X-Islandora-Event") == "" {
+	if r.Header.Get("Apix-Ldp-Resource") == "" && r.Header.Get("X-Islandora-Event") == "" && r.Method == http.MethodGet {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
@@ -61,36 +63,21 @@ func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Stream the file contents from the source URL
-	req, err := http.NewRequest("GET", message.Attachment.Content.SourceURI, nil)
-	if err != nil {
-		slog.Error("Error creating request to source", "source", message.Attachment.Content.SourceURI, "err", err)
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
-	if s.Config.ForwardAuth {
-		req.Header.Set("Authorization", auth)
-	}
-	sourceResp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		slog.Error("Error fetching source file contents", "err", err)
-		http.Error(w, "Internal error", http.StatusInternalServerError)
-		return
-	}
-	defer sourceResp.Body.Close()
-	if sourceResp.StatusCode != http.StatusOK {
-		slog.Error("SourceURI sent a bad status code", "code", sourceResp.StatusCode, "uri", message.Attachment.Content.SourceURI)
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
-
 	cmd, err := scyllaridae.BuildExecCommand(message, s.Config)
 	if err != nil {
 		slog.Error("Error building command", "err", err)
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	cmd.Stdin = sourceResp.Body
+
+	// Stream the file contents from the source URL or request body
+	fs, errCode, err := s.Config.GetFileStream(r, message, auth)
+	if err != nil {
+		http.Error(w, cases.Title(language.English).String(fmt.Sprint(err)), errCode)
+		return
+	}
+	defer fs.Close()
+	cmd.Stdin = fs
 
 	// Create a buffer to capture stderr
 	var stdErr bytes.Buffer
