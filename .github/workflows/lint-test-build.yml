@@ -3,7 +3,6 @@ on:
   push:
     paths-ignore:
       - '**/*.md'
-      - '.github/**'
       - 'ci/**'
     tags:
       - '*'
