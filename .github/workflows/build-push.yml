@@ -81,8 +81,8 @@ jobs:
           DOCKER_REPOSITORY=us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public
         push: true
         tags: |
-          lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
-          lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}-${{steps.extract_tag.outputs.sha}}
+          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
+          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}-${{steps.extract_tag.outputs.sha}}
 
     - name: Build and push dockerhub
       uses: docker/build-push-action@v5
