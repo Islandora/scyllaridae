@@ -1,0 +1,56 @@
+name: Update Docker Hub Description
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/README.md"
+      - ".github/workflows/dockerhub-descriptions.yml"
+jobs:
+  base-description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Base - Update Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: lehighlts/scyllaridae
+          readme-filepath: ./README.md
+
+  find-example-descriptions:
+    runs-on: ubuntu-latest
+    outputs:
+      readme_paths: ${{ steps.find-readmes.outputs.readme_paths }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find README files
+        id: find-readmes
+        run: |
+          readmes=$(find examples -type f -name README.md)
+          echo "${readmes}"
+          readme_paths=$(echo "$readmes" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "::set-output name=readme_paths::${readme_paths}"
+
+  update-dockerhub:
+    needs: find-example-descriptions
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        readme-path: ${{ fromJson(needs.find-example-descriptions.outputs.readme_paths) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: lehighlts/scyllaridea-${{ matrix.readme-path.split('/')[1] }}
+          readme-filepath: ${{ matrix.readme-path }}

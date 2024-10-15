@@ -3,8 +3,15 @@ on:
   push:
     paths-ignore:
       - '**/*.md'
-      - '.github/**'
       - 'ci/**'
+    tags:
+      - '*'
+    branches:
+      - '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -104,12 +111,16 @@ jobs:
       - name: Extract branch name as docker tag
         shell: bash
         run: |-
-          BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
-          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-        id: extract_branch
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG=$(echo "${GITHUB_REF#refs/tags/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
+          else
+            TAG=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+        id: extract_tag
       - name: Run tests
         id: images
         run: ./ci/run.sh
         env:
           DOCKER_REPOSITORY_BASE: us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/scyllaridae
-          DOCKER_TAG: ${{steps.extract_branch.outputs.branch}}
+          DOCKER_TAG: ${{steps.extract_tag.outputs.tag}}

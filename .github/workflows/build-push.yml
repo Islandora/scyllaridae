@@ -21,18 +21,17 @@ jobs:
         dockerfile: ${{ inputs.dockerFile }}
         verbose: true
 
-    - name: Extract branch name as docker tag
+    - name: Extract branch or tag name as docker tag
       shell: bash
       run: |-
-        BRANCH=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
-        echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-      id: extract_branch
-
-    - name: Extract tag name
-      shell: bash
-      run: |-
-        t=$(echo ${GITHUB_SHA} | cut -c1-7)
-        echo "tag=$t" >> $GITHUB_OUTPUT
+        if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          TAG=$(echo "${GITHUB_REF#refs/tags/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
+        else
+          TAG=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
+        fi
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        SHA=$(echo ${GITHUB_SHA} | cut -c1-7)
+        echo "sha=$SHA" >> $GITHUB_OUTPUT
       id: extract_tag
 
     - name: Setup docker build
@@ -52,28 +51,47 @@ jobs:
 
     - id: 'auth'
       name: 'Authenticate to Google Cloud'
-      uses: 'google-github-actions/auth@v1'
+      uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: ${{ secrets.GCLOUD_OIDC_POOL }}
         create_credentials_file: true
         service_account: ${{ secrets.GSA }}
         token_format: 'access_token'
 
-    - uses: 'docker/login-action@v3'
-      name: 'Docker login'
+    - name: GAR login
+      uses: 'docker/login-action@v3'
       with:
         registry: 'us-docker.pkg.dev'
         username: 'oauth2accesstoken'
         password: '${{ steps.auth.outputs.access_token }}'
 
-    - name: Build and push
+    - name: Docker Hub Login
+      uses: docker/login-action@v3
+      with:
+        registry: 'docker.io'
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push GAR
       uses: docker/build-push-action@v5
       with:
         context: ${{steps.setup.outputs.context}}
         build-args: |
-          TAG=${{steps.extract_branch.outputs.branch}}
+          TAG=${{steps.extract_tag.outputs.tag}}
           DOCKER_REPOSITORY=us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public
         push: true
         tags: |
-          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_branch.outputs.branch}}-${{steps.extract_tag.outputs.tag}}
-          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_branch.outputs.branch}}
+          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
+          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}-${{steps.extract_tag.outputs.sha}}
+
+    - name: Build and push dockerhub
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{steps.setup.outputs.context}}
+        build-args: |
+          TAG=${{steps.extract_tag.outputs.tag}}
+          DOCKER_REPOSITORY=lehighlts
+        push: true
+        tags: |
+          lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
+          lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}-${{steps.extract_tag.outputs.sha}}
