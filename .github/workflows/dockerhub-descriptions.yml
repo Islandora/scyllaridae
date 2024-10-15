@@ -47,10 +47,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Extract Repository Name
+        id: extract-repo
+        run: |
+          repo_name=$(echo "${{ matrix.readme-path }}" | cut -d'/' -f2)
+          echo "::set-output name=repo_name::${repo_name}"
+
       - name: Update Docker Hub Description
         uses: peter-evans/dockerhub-description@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          repository: lehighlts/scyllaridea-${{ matrix.readme-path.split('/')[1] }}
+          repository: lehighlts/scyllaridea-${{ steps.extract-repo.outputs.repo_name }}
           readme-filepath: ${{ matrix.readme-path }}
