@@ -72,16 +72,26 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and push
+    - name: Build and push GAR
       uses: docker/build-push-action@v5
       with:
         context: ${{steps.setup.outputs.context}}
         build-args: |
-          TAG=${{steps.extract_branch.outputs.branch}}
+          TAG=${{steps.extract_tag.outputs.tag}}
           DOCKER_REPOSITORY=us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public
         push: true
         tags: |
-          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}-${{steps.extract_tag.outputs.sha}}
-          us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
+          lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
+          lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}-${{steps.extract_tag.outputs.sha}}
+
+    - name: Build and push dockerhub
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{steps.setup.outputs.context}}
+        build-args: |
+          TAG=${{steps.extract_tag.outputs.tag}}
+          DOCKER_REPOSITORY=lehighlts
+        push: true
+        tags: |
           lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
           lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}-${{steps.extract_tag.outputs.sha}}
