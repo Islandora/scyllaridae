@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: scyllaridae-mergepdf
-          image: __DOCKER_REPOSITORY__/scyllaridae-mergepdf:main
+          image: lehighlts/scyllaridae-mergepdf:main
           imagePullPolicy: IfNotPresent
           resources:
             requests:

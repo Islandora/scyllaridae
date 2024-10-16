@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: scyllaridae-ffmpeg
-          image: __DOCKER_REPOSITORY__/scyllaridae-ffmpeg:main
+          image: lehighlts/scyllaridae-ffmpeg:main
           imagePullPolicy: IfNotPresent
           resources:
             requests:

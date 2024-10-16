@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: scyllaridae-cache-warmer
-          image: __DOCKER_REPOSITORY__/scyllaridae-cache-warmer:main
+          image: lehighlts/scyllaridae-cache-warmer:main
           imagePullPolicy: IfNotPresent
           resources:
             requests:

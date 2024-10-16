@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: scyllaridae-coverpage
-          image: __DOCKER_REPOSITORY__/scyllaridae-coverpage:main
+          image: lehighlts/scyllaridae-coverpage:main
           imagePullPolicy: IfNotPresent
           resources:
             requests:

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+# use sed to find/replace placeholders for nginx-ingress
+
 set -eou pipefail
 
-TARGET="*.yaml"
+TARGET="ingress.yaml"
 if [ $# -eq 1 ]; then
   if [ ! -f "$1" ]; then
     echo "$1 doesn't exit"
@@ -12,11 +14,7 @@ if [ $# -eq 1 ]; then
   TARGET="$1"
 fi
 
-# Use eval to expand the wildcard in the TARGET variable
-eval "set -- $TARGET"
-
 sed -e "s|__DOMAIN__|$DOMAIN|" \
-    -e "s|__DOCKER_REPOSITORY__|$DOCKER_REPOSITORY|" \
     -e "s|__KUBE_TLS_SECRET__|$KUBE_TLS_SECRET|" \
     "$@" \
 | kubectl apply -f -
