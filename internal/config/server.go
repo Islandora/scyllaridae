@@ -287,6 +287,9 @@ func (c *ServerConfig) GetFileStream(r *http.Request, message api.Payload, auth 
 	if r.Method == http.MethodPost {
 		return r.Body, http.StatusOK, nil
 	}
+	if message.Attachment.Content.SourceURI == "" {
+		return nil, http.StatusOK, nil
+	}
 	req, err := http.NewRequest("GET", message.Attachment.Content.SourceURI, nil)
 	if err != nil {
 		slog.Error("Error building request to fetch source file contents", "err", err)

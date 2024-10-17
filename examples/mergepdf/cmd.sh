@@ -16,6 +16,10 @@ curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource.
   I="$(( I + 1))"
 done
 
+# Make the node title the title of the PDF
+TITLE=$(curl -L "$1?_format=json" | jq -r '.title[0].value')
+echo "[ /Title ($TITLE)/DOCINFO pdfmark" >  "$TMP_DIR/metadata.txt"
+
 mapfile -t FILES < <(ls -rt "$TMP_DIR"/img_*.pdf)
 gs -dBATCH \
   -dNOPAUSE \
@@ -25,7 +29,21 @@ gs -dBATCH \
   -dNOOUTERSAVE \
   -dAutoRotatePages=/None \
   -sOutputFile="$TMP_DIR/ocr.pdf" \
-  "${FILES[@]}"
+  "${FILES[@]}" \
+  "$TMP_DIR/metadata.txt"
 
-cat "$TMP_DIR/ocr.pdf"
+# Instead of printing the PDF
+# PUT it to the endpoint
+NID=$(basename "$1")
+BASE_URL=$(dirname "$1" | xargs dirname)
+TID=$(curl "$BASE_URL/term_from_term_name?vocab=islandora_media_use&name=Original+File&_format=json" | jq '.[0].tid[0].value')
+curl \
+  -H "Authorization: $SCYLLARIDAE_AUTH" \
+  -H "Content-Type: application/pdf" \
+  -H "Content-Location: private://derivatives/pc/pdf/$NID.pdf" \
+  -T "$TMP_DIR/ocr.pdf" \
+  "$1/media/document/$TID"
+
 rm -rf "$TMP_DIR"
+
+echo "OK"

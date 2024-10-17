@@ -76,8 +76,10 @@ func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, cases.Title(language.English).String(fmt.Sprint(err)), errCode)
 		return
 	}
-	defer fs.Close()
-	cmd.Stdin = fs
+	if fs != nil {
+		defer fs.Close()
+		cmd.Stdin = fs
+	}
 
 	// Create a buffer to capture stderr
 	var stdErr bytes.Buffer

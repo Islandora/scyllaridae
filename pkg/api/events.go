@@ -91,7 +91,7 @@ func DecodeAlpacaMessage(r *http.Request, auth string) (Payload, error) {
 	if p.Attachment.Content.DestinationMimeType == "" {
 		p.Attachment.Content.DestinationMimeType = "text/plain"
 	}
-
+	p.Authorization = auth
 	if r.Method == http.MethodPost {
 		return p, nil
 	}
@@ -120,6 +120,10 @@ func DecodeAlpacaMessage(r *http.Request, auth string) (Payload, error) {
 }
 
 func (p *Payload) getSourceUri(auth string) error {
+	if p.Attachment.Content.SourceURI == "" {
+		return nil
+	}
+
 	client := &http.Client{}
 
 	req, err := http.NewRequest("HEAD", p.Attachment.Content.SourceURI, nil)
