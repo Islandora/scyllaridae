@@ -1,0 +1,5 @@
+allowedMimeTypes:
+  - "application/pdf"
+cmdByMimeType:
+  default:
+    cmd: /app/cmd.sh
