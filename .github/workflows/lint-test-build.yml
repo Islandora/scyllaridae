@@ -71,7 +71,7 @@ jobs:
       - name: Find docker files
         id: images
         run: |
-          dockerFiles=$(find examples -name Dockerfile | grep -v -E '(mergepdf|coverpage)' | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
+          dockerFiles=$(find examples -name Dockerfile | grep -v -E '(mergepdf|coverpage|ocrpdf)' | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
           echo "dockerFiles=$dockerFiles" >> $GITHUB_OUTPUT
         env:
           GITHUB_REF: ${{ github.ref }}
@@ -93,7 +93,7 @@ jobs:
     needs: [build-push]
     strategy:
       matrix:
-        dockerFile: ["examples/coverpage/Dockerfile", "examples/mergepdf/Dockerfile"]
+        dockerFile: ["examples/coverpage/Dockerfile", "examples/mergepdf/Dockerfile", "examples/ocrpdf/Dockerfile",]
     uses: ./.github/workflows/build-push.yml
     with:
       dockerFile: ${{ matrix.dockerFile }}

@@ -81,3 +81,10 @@ spec:
                 name: islandora-mergepdf
                 port:
                   number: 8080
+          - path: /ocrpdf(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-ocrpdf
+                port:
+                  number: 8080
