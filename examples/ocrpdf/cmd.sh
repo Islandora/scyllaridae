@@ -6,8 +6,15 @@ TMP_DIR=$(mktemp -d)
 
 cd "$TMP_DIR"
 
+cat > input.pdf
+
+# don't process if the PDF already has text
+if pdftotext input.pdf - | grep -q '[a-zA-Z0-9]'; then
+  exit 1
+fi
+
 # split pdf into PNG files
-magick - page-%d.png > /dev/null 2>&1
+magick input.pdf page-%d.png > /dev/null 2>&1
 
 # add OCR to each PNG
 for i in page-*.png; do
