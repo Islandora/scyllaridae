@@ -7,7 +7,7 @@ TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
 
 # split pdf into PNG files
-magick - output-%d.png > /dev/null 2>&1
+magick - page-%d.png > /dev/null 2>&1
 
 # add OCR to each PNG
 for i in page-*.png; do
