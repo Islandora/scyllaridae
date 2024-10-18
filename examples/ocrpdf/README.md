@@ -39,11 +39,11 @@ ALPACA_DERIVATIVE_SYSTEMS=ocrpdf
 You'll also need to define the service in alpaca.properties.tmpl
 
 ```
-derivative.whisper.enabled=true
-derivative.whisper.in.stream=queue:islandora-connector-ocrpdf
+derivative.ocrpdf.enabled=true
+derivative.ocrpdf.in.stream=queue:islandora-connector-ocrpdf
 # this url may be different if deploying via kubernetes
-derivative.whisper.service.url=http://ocrpdf:8080
-derivative.whisper.concurrent-consumers=1
-derivative.whisper.max-concurrent-consumers=-1
-derivative.whisper.async-consumer=true
+derivative.ocrpdf.service.url=http://ocrpdf:8080
+derivative.ocrpdf.concurrent-consumers=1
+derivative.ocrpdf.max-concurrent-consumers=-1
+derivative.ocrpdf.async-consumer=true
 ```
