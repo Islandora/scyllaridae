@@ -8,7 +8,8 @@ MAX_THREADS=7
 PIDS=()
 
 # iterate over all images in the IIIF manifest
-curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | while read -r URL; do
+URLS=$(curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"')
+while read -r URL; do
   # If we have reached the max thread limit, wait for any one job to finish
   if [ "${#PIDS[@]}" -ge "$MAX_THREADS" ]; then
     wait -n
@@ -24,6 +25,11 @@ curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource.
   ) &
   PIDS+=("$!")
   I="$(( I + 1))"
+done <<< "$URLS"
+
+FILES=()
+for index in $(seq 0 $((I - 1))); do
+  FILES+=("$TMP_DIR/img_${index}.pdf")
 done
 
 wait
@@ -32,7 +38,6 @@ wait
 TITLE=$(curl -L "$1?_format=json" | jq -r '.title[0].value')
 echo "[ /Title ($TITLE)/DOCINFO pdfmark" >  "$TMP_DIR/metadata.txt"
 
-mapfile -t FILES < <(ls -rt "$TMP_DIR"/img_*.pdf)
 gs -dBATCH \
   -dNOPAUSE \
   -dQUIET \
