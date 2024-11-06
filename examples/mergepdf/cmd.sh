@@ -4,23 +4,40 @@ set -eou pipefail
 
 TMP_DIR=$(mktemp -d)
 I=0
+MAX_THREADS=7
+PIDS=()
 
 # iterate over all images in the IIIF manifest
-curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | while read -r URL; do
-  # resize image to max 1000px width
-  curl -s "$URL" | magick -[0] -resize 1000x\> "$TMP_DIR/img_$I" > /dev/null 2>&1
+URLS=$(curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"')
+while read -r URL; do
+  # If we have reached the max thread limit, wait for any one job to finish
+  if [ "${#PIDS[@]}" -ge "$MAX_THREADS" ]; then
+    wait -n
+  fi
 
-  # make an OCR'd PDF from the image
-  tesseract "$TMP_DIR/img_$I" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
-
+  # Run each job in the background
+  (
+    # download and resize image to max 1000px width
+    curl -s "$URL" | magick -[0] -resize 1000x\> "$TMP_DIR/img_$I" > /dev/null 2>&1
+    # make an OCR'd PDF from the image
+    tesseract "$TMP_DIR/img_$I" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
+    rm "$TMP_DIR/img_$I"
+  ) &
+  PIDS+=("$!")
   I="$(( I + 1))"
+done <<< "$URLS"
+
+FILES=()
+for index in $(seq 0 $((I - 1))); do
+  FILES+=("$TMP_DIR/img_${index}.pdf")
 done
+
+wait
 
 # Make the node title the title of the PDF
 TITLE=$(curl -L "$1?_format=json" | jq -r '.title[0].value')
 echo "[ /Title ($TITLE)/DOCINFO pdfmark" >  "$TMP_DIR/metadata.txt"
 
-mapfile -t FILES < <(ls -rt "$TMP_DIR"/img_*.pdf)
 gs -dBATCH \
   -dNOPAUSE \
   -dQUIET \

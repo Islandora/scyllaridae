@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/shlex"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // ServerConfig defines server-specific configurations.
