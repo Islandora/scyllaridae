@@ -4,11 +4,11 @@ set -eou pipefail
 
 TMP_DIR=$(mktemp -d)
 I=0
-MAX_THREADS=7
+MAX_THREADS=${MAX_THREADS:-5}
 PIDS=()
 
 # iterate over all images in the IIIF manifest
-URLS=$(curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"')
+URLS=$(curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | awk -F '/' '{print $7}'|sed -e 's/%2F/\//g' -e 's/%3A/:/g')
 while read -r URL; do
   # If we have reached the max thread limit, wait for any one job to finish
   if [ "${#PIDS[@]}" -ge "$MAX_THREADS" ]; then
