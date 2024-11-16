@@ -2,10 +2,10 @@ ARG TAG=main
 ARG DOCKER_REPOSITORY=lehighlts
 FROM ${DOCKER_REPOSITORY}/scyllaridae-pandoc:${TAG}
 
-RUN apk add --no-cache \
-      bash==5.2.21-r0 \
-      curl==8.5.0-r0 \
-      ghostscript==10.04.0-r0 \
-      jq==1.7.1-r0
-
+RUN apt-get update \
+      && apt-get install -y --no-install-recommends \
+      curl=8.5.0-2ubuntu10.4 \
+      ghostscript=10.02.1~dfsg1-0ubuntu7.4 \
+      jq=1.7.1-3build1 \
+      && rm -rf /var/lib/apt/lists/*
 COPY . /app
