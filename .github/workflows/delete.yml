@@ -23,8 +23,7 @@ jobs:
       - name: Find docker files
         id: images
         run: |
-          dockerFiles=$(find examples -name Dockerfile | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
-          images=$(echo "$dockerFiles" | jq -r '.[]' | \
+          images=$(find examples -name Dockerfile | jq -c --raw-input --slurp 'split("\n")| .[0:-1]' | jq -r '.[]' | \
             awk -F'/' '{print "scyllaridae-" $2}' | \
             jq -c -R -s '. | split("\n") | .[0:-1] | . + ["scyllaridae"]')
           echo "images=$images" >> $GITHUB_OUTPUT
