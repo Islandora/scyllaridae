@@ -376,7 +376,7 @@ func MimeToPandoc(mimeType string) (string, error) {
 
 	pandoc, ok := mapping[mimeType]
 	if !ok {
-		return "", fmt.Errorf("unknown mime extension: %s", mimeType)
+		return GetMimeTypeExtension(mimeType)
 	}
 	return pandoc, nil
 }
