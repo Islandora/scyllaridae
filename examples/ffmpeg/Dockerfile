@@ -1,5 +1,5 @@
 ARG TAG=main
-ARG DOCKER_REPOSITORY=local
+ARG DOCKER_REPOSITORY=lehighlts
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 
 RUN apk update && \

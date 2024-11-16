@@ -1,5 +1,5 @@
 ARG TAG=main
-ARG DOCKER_REPOSITORY=local
+ARG DOCKER_REPOSITORY=lehighlts
 FROM islandora/imagemagick:alpine-3.20.2-imagemagick-7.1.1.36-r0 AS imagemagick
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 
