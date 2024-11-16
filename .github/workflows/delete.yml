@@ -16,7 +16,7 @@ jobs:
     name: Find docker images needing deleted
     runs-on: ubuntu-latest
     outputs:
-      dockerFiles: ${{ steps.images.outputs.images }}
+      images: ${{ steps.images.outputs.images }}
     steps:
       - uses: actions/checkout@v4
 
