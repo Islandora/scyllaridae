@@ -16,6 +16,7 @@ SERVICES=(
   "crayfits"
   "ffmpeg"
   "whisper"
+  "pandoc"
 )
 for SERVICE in "${SERVICES[@]}"; do
   URL="http://$SERVICE:8080/"
@@ -67,6 +68,22 @@ for SERVICE in "${SERVICES[@]}"; do
     grep "ask not what your country can do for you" vtt.txt || exit 1
     echo "VTT as expected"
     rm vtt.txt
+  elif [ "$SERVICE" == "pandoc" ]; then
+    curl -o result.tex \
+      -H "Content-Type: text/markdown" \
+      -H "Accept: application/x-latex" \
+      --data-binary "@/fixtures/pandoc/input.md" \
+      "$URL"
+
+    if diff -u result.tex "fixtures/pandoc/output.tex" > diff_output.txt; then
+      echo "Test Passed: Output matches expected."
+    else
+      echo "Test Failed: Differences found."
+      cat diff_output.txt
+      exit 1
+    fi
+
+
   else
     echo "Unknown service"
     exit 1

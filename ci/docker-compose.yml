@@ -4,20 +4,22 @@ services:
     fits:
         image: islandora/fits:main
     crayfits:
-        image: ${DOCKER_REPOSITORY_BASE}-fits:${DOCKER_TAG}
+        image: lehighlts/scyllaridae-fits:${DOCKER_TAG}
     ffmpeg:
-        image: ${DOCKER_REPOSITORY_BASE}-ffmpeg:${DOCKER_TAG}
+        image: lehighlts/scyllaridae-ffmpeg:${DOCKER_TAG}
     imagemagick:
-        image: ${DOCKER_REPOSITORY_BASE}-imagemagick:${DOCKER_TAG}
+        image: lehighlts/scyllaridae-imagemagick:${DOCKER_TAG}
     tesseract:
-        image: ${DOCKER_REPOSITORY_BASE}-tesseract:${DOCKER_TAG}
+        image: lehighlts/scyllaridae-tesseract:${DOCKER_TAG}
     whisper:
-        image: ${DOCKER_REPOSITORY_BASE}-whisper:${DOCKER_TAG}
+        image: lehighlts/scyllaridae-whisper:${DOCKER_TAG}
+    pandoc:
+        image: lehighlts/scyllaridae-pandoc:${DOCKER_TAG}
     test:
         image: alpine
         command: sleep 300
         environment:
-            DOCKER_REPOSITORY_BASE: ${DOCKER_REPOSITORY_BASE}
             DOCKER_TAG: ${DOCKER_TAG}
         volumes:
             - ./test.sh:/test.sh
+            - ./fixtures:/fixtures

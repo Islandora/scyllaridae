@@ -81,6 +81,7 @@ func TestMimeTypes(t *testing.T) {
 		"text/html":       "html",
 		"application/pdf": "pdf",
 		"text/csv":        "csv",
+		"text/markdown":   "md",
 	}
 
 	for mimeType, extension := range mimeTypes {

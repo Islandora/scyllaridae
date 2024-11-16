@@ -1,5 +1,5 @@
 ARG TAG=main
-ARG DOCKER_REPOSITORY=local
+ARG DOCKER_REPOSITORY=lehighlts
 FROM islandora/leptonica:alpine-3.20.2-leptonica-1.84.1-r0 AS leptonica
 FROM ${DOCKER_REPOSITORY}/scyllaridae-imagemagick:${TAG} AS scyllaridae
 

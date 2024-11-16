@@ -122,5 +122,5 @@ jobs:
         id: images
         run: ./ci/run.sh
         env:
-          DOCKER_REPOSITORY_BASE: us-docker.pkg.dev/${{ secrets.GCLOUD_PROJECT }}/public/scyllaridae
+          DOCKER_REPOSITORY_BASE: lehighlts/scyllaridae
           DOCKER_TAG: ${{steps.extract_tag.outputs.tag}}
