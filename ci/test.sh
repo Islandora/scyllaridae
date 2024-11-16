@@ -70,12 +70,12 @@ for SERVICE in "${SERVICES[@]}"; do
     rm vtt.txt
   elif [ "$SERVICE" == "pandoc" ]; then
     curl -o result.tex \
-      -H "Accept: text/x-latex" \
       -H "Content-Type: text/markdown" \
-      --data-binary "@$(pwd)/ci/fixtures/pandoc/input.md" \
+      -H "Accept: text/x-latex" \
+      --data-binary "@/fixtures/pandoc/input.md" \
       "$URL"
 
-    if diff -u result.tex "$(pwd)/ci/fixtures/pandoc/output.tex" > diff_output.txt; then
+    if diff -u result.tex "fixtures/pandoc/output.tex" > diff_output.txt; then
       echo "Test Passed: Output matches expected."
     else
       echo "Test Failed: Differences found."

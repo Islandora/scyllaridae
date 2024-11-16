@@ -1,32 +1,23 @@
-\section{Title}
+\section{Title}\label{title}
 
-\subsection{Subtitle}
+\subsection{Subtitle}\label{subtitle}
 
-This is a \textbf{bold} text and an \textit{italic} text.
+This is a \textbf{bold} text and an \emph{italic} text.
 
-Here is a bullet list:
-\begin{itemize}
-  \item Item 1
-  \item Item 2
-\end{itemize}
+Here is a bullet list: - Item 1 - Item 2
 
-And a numbered list:
-\begin{enumerate}
-  \item First
-  \item Second
-\end{enumerate}
+And a numbered list: 1. First 2. Second
 
-Here is an equation:
-\[
-E = mc^2
-\]
+Here is an equation: {[} E = mc\^{}2 {]}
 
 A table:
 
-\begin{tabular}{|c|c|}
-\hline
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
 Column 1 & Column 2 \\
-\hline
-Data 1   & Data 2   \\
-\hline
-\end{tabular}
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Data 1 & Data 2 \\
+\end{longtable}
