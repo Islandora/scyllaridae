@@ -44,6 +44,6 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
-          DOCKER_REGISTRY: "lehighlts"
+          DOCKER_REPOSITORY: "lehighlts"
           DOCKER_IMAGE: ${{ matrix.image }}
           TAG_PATTERN: "^${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_pattern || github.ref_name }}.*"
