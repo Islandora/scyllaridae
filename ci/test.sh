@@ -71,7 +71,7 @@ for SERVICE in "${SERVICES[@]}"; do
   elif [ "$SERVICE" == "pandoc" ]; then
     curl -o result.tex \
       -H "Content-Type: text/markdown" \
-      -H "Accept: text/x-latex" \
+      -H "Accept: application/x-latex" \
       --data-binary "@/fixtures/pandoc/input.md" \
       "$URL"
 
