@@ -13,6 +13,8 @@ services:
         image: ${DOCKER_REPOSITORY_BASE}-tesseract:${DOCKER_TAG}
     whisper:
         image: ${DOCKER_REPOSITORY_BASE}-whisper:${DOCKER_TAG}
+    pandoc:
+        image: ${DOCKER_REPOSITORY_BASE}-pandoc:${DOCKER_TAG}
     test:
         image: alpine
         command: sleep 300

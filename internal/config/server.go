@@ -249,6 +249,8 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 		"audio/x-realaudio": "ra",
 		"audio/midi":        "mid",
 		"audio/x-wav":       "wav",
+
+		"text/markdown": "md",
 	}
 	cleanMimeType := strings.TrimSpace(strings.ToLower(mimeType))
 	if ext, ok := mimeToExtension[cleanMimeType]; ok {

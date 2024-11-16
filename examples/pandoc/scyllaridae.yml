@@ -1,5 +1,6 @@
 allowedMimeTypes:
-  - "text/csv"
+  - "text/plain"
+  - "text/markdown"
 cmdByMimeType:
   default:
     cmd: /usr/local/bin/pandoc
