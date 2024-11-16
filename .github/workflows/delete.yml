@@ -9,24 +9,23 @@ on:
       tag_pattern:
         description: 'Wildcard pattern for Docker tags to delete'
         required: true
-        default: "^branch-name.*"
+        default: "branch-name"
 
 jobs:
   find-images:
     name: Find docker images needing deleted
     runs-on: ubuntu-latest
     outputs:
-      dockerFiles: ${{ steps.images.outputs.images }}
+      images: ${{ steps.images.outputs.images }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Find docker files
         id: images
         run: |
-          dockerFiles=$(find examples -name Dockerfile | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
-          images=$(echo "$dockerFiles" | jq -r '.[]' | \
+          images=$(find examples -name Dockerfile | jq -c --raw-input --slurp 'split("\n")| .[0:-1]' | jq -r '.[]' | \
             awk -F'/' '{print "scyllaridae-" $2}' | \
-            jq -R -s '. | split("\n") | .[0:-1] | . + ["scyllaridae"]')
+            jq -c -R -s '. | split("\n") | .[0:-1] | . + ["scyllaridae"]')
           echo "images=$images" >> $GITHUB_OUTPUT
 
   delete-docker-tags:
@@ -36,6 +35,7 @@ jobs:
       matrix:
         image: ${{ fromJson(needs.find-images.outputs.images )}}
       max-parallel: 1 # go easy on the dockerhub API
+      fail-fast: false
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
         run: ./ci/delete-tags.sh
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DOCKER_REPOSITORY: "lehighlts"
           DOCKER_IMAGE: ${{ matrix.image }}
           TAG_PATTERN: "^${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag_pattern || github.ref_name }}.*"
