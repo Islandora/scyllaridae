@@ -49,6 +49,6 @@ cmdByMimeType:
     cmd: /usr/local/bin/pandoc
     args:
       - "-f"
-      - "%source-mime-ext"
+      - "%source-mime-pandoc"
       - "-t"
-      - "%destination-mime-ext"
+      - "%destination-mime-pandoc"

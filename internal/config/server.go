@@ -184,6 +184,19 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 				a = fmt.Sprintf("%s:-", a)
 			}
 			args = append(args, a)
+		} else if a == "%source-mime-pandoc" {
+			a, err := MimeToPandoc(message.Attachment.Content.SourceMimeType)
+			if err != nil {
+				return nil, fmt.Errorf("unknown mime extension: %s", message.Attachment.Content.SourceMimeType)
+			}
+
+			args = append(args, a)
+		} else if a == "%destination-mime-pandoc" {
+			a, err := MimeToPandoc(message.Attachment.Content.DestinationMimeType)
+			if err != nil {
+				return nil, fmt.Errorf("unknown mime extension: %s", message.Attachment.Content.DestinationMimeType)
+			}
+			args = append(args, a)
 
 		} else if a == "%target" {
 			args = append(args, message.Target)
@@ -311,4 +324,59 @@ func (c *ServerConfig) GetFileStream(r *http.Request, message api.Payload, auth 
 	}
 
 	return sourceResp.Body, http.StatusOK, nil
+}
+
+func MimeToPandoc(mimeType string) (string, error) {
+	mapping := map[string]string{
+		"text/x-bibtex":                           "bibtex",
+		"text/x-biblatex":                         "biblatex",
+		"application/xml":                         "bits",
+		"text/x-commonmark":                       "commonmark",
+		"text/x-commonmark+extensions":            "commonmark_x",
+		"text/x-creole":                           "creole",
+		"application/vnd.citationstyles.csl+json": "csljson",
+		"text/csv":                                "csv",
+		"text/tab-separated-values":               "tsv",
+		"text/x-djot":                             "djot",
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+		"application/docbook+xml":                 "docbook",
+		"application/xml-dokuwiki":                "dokuwiki",
+		"application/vnd.endnote+xml":             "endnotexml",
+		"application/epub+zip":                    "epub",
+		"application/x-fictionbook+xml":           "fb2",
+		"text/x-gfm":                              "gfm",
+		"text/x-haddock":                          "haddock",
+		"text/html":                               "html",
+		"application/x-ipynb+json":                "ipynb",
+		"application/jats+xml":                    "jats",
+		"text/x-jira":                             "jira",
+		"application/json":                        "json",
+		"application/x-latex":                     "latex",
+		"text/markdown":                           "markdown",
+		"text/markdown+mmd":                       "markdown_mmd",
+		"text/markdown+phpextra":                  "markdown_phpextra",
+		"text/markdown+strict":                    "markdown_strict",
+		"text/x-mediawiki":                        "mediawiki",
+		"application/x-troff-man":                 "man",
+		"text/x-muse":                             "muse",
+		"application/vnd.haskell.native":          "native",
+		"application/vnd.oasis.opendocument.text": "odt",
+		"application/x-opml+xml":                  "opml",
+		"text/x-org":                              "org",
+		"application/x-research-info-systems":     "ris",
+		"application/rtf":                         "rtf",
+		"text/x-rst":                              "rst",
+		"text/x-txt2tags":                         "t2t",
+		"text/x-textile":                          "textile",
+		"text/x-tikiwiki":                         "tikiwiki",
+		"text/x-twiki":                            "twiki",
+		"application/x-typst":                     "typst",
+		"text/x-vimwiki":                          "vimwiki",
+	}
+
+	pandoc, ok := mapping[mimeType]
+	if !ok {
+		return "", fmt.Errorf("unknown mime extension: %s", mimeType)
+	}
+	return pandoc, nil
 }

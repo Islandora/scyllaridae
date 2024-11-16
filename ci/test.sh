@@ -16,6 +16,7 @@ SERVICES=(
   "crayfits"
   "ffmpeg"
   "whisper"
+  "pandoc"
 )
 for SERVICE in "${SERVICES[@]}"; do
   URL="http://$SERVICE:8080/"
@@ -69,7 +70,7 @@ for SERVICE in "${SERVICES[@]}"; do
     rm vtt.txt
   elif [ "$SERVICE" == "pandoc" ]; then
     curl -o result.tex \
-      -H "Accept: text/x-tex" \
+      -H "Accept: text/x-latex" \
       -H "Content-Type: text/markdown" \
       --data-binary "@$(pwd)/ci/fixtures/pandoc/input.md" \
       "$URL"
