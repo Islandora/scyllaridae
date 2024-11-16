@@ -9,7 +9,7 @@ on:
       tag_pattern:
         description: 'Wildcard pattern for Docker tags to delete'
         required: true
-        default: "^branch-name.*"
+        default: "branch-name"
 
 jobs:
   find-images:
