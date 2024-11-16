@@ -35,6 +35,7 @@ jobs:
       matrix:
         image: ${{ fromJson(needs.find-images.outputs.images )}}
       max-parallel: 1 # go easy on the dockerhub API
+      fail-fast: false
     steps:
       - name: checkout
         uses: actions/checkout@v4
