@@ -9,7 +9,7 @@ fi
 
 echo "Deleting tags matching pattern '$TAG_PATTERN' in repository ${DOCKER_IMAGE}"
 
-curl -s -o response.json -u "${DOCKER_USERNAME}:${DOCKER_ACCESS_TOKEN}" "https://hub.docker.com/v2/repositories/${DOCKER_REPOSITORY}/${DOCKER_IMAGE}/tags?page_size=100"
+curl -s -o response.json -u "${DOCKER_USERNAME}:${DOCKER_PASSWORD}" "https://hub.docker.com/v2/repositories/${DOCKER_REPOSITORY}/${DOCKER_IMAGE}/tags?page_size=100"
 TAGS=$(jq -r '.results[].name' response.json)
 if [ -z "$TAGS" ] || [ "$TAGS" = "null" ]; then
   echo "No tags found or failed to retrieve tags."
@@ -18,7 +18,7 @@ fi
 
 curl -s -o token.json -XPOST \
   -H "Content-Type: application/json" \
-  -d '{"username": "'"${DOCKER_USERNAME}"'", "password": "'"${DOCKER_ACCESS_TOKEN}"'"}' \
+  -d '{"username": "'"${DOCKER_USERNAME}"'", "password": "'"${DOCKER_PASSWORD}"'"}' \
   "https://hub.docker.com/v2/users/login"
 
 TOKEN=$(jq -r .token token.json)
