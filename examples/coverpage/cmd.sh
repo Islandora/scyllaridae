@@ -13,7 +13,7 @@ EXISTING_PDF="$TMP_DIR/existing.pdf"
 cat > "${EXISTING_PDF}"
 
 # get the node JSON export
-curl -L -s -o "$TMP_DIR/node.json" "${NODE_JSON_URL}?_format=json"
+curl -L -s -o "$TMP_DIR/node.json" -H "Authorization: $SCYLLARIDAE_AUTH" "${NODE_JSON_URL}?_format=json"
 NODE_JSON=$(cat "$TMP_DIR/node.json")
 
 # extract the title and citation from the node JSON
