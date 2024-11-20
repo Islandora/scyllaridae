@@ -13,12 +13,19 @@ while read -r URL; do
   # If we have reached the max thread limit, wait for any one job to finish
   if [ "${#PIDS[@]}" -ge "$MAX_THREADS" ]; then
     wait -n
+    NEW_PIDS=()
+    for pid in "${PIDS[@]}"; do
+      if kill -0 "$pid" 2>/dev/null; then
+        NEW_PIDS+=("$pid")
+      fi
+    done
+    PIDS=("${NEW_PIDS[@]}")
   fi
 
   # Run each job in the background
   (
     # download and resize image to max 1000px width
-    curl -s "$URL" | magick -[0] -resize 1000x\> "$TMP_DIR/img_$I" > /dev/null 2>&1
+    curl -s "$URL" | magick -[0] -resize 1000x\> "$TMP_DIR/img_$I" || curl -s "$URL" | magick - -resize 1000x\> "$TMP_DIR/img_$I" > /dev/null 2>&1
     # make an OCR'd PDF from the image
     tesseract "$TMP_DIR/img_$I" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
     rm "$TMP_DIR/img_$I"
