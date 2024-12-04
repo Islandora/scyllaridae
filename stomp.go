@@ -88,8 +88,7 @@ func RecvAndProcessMessage(queueName string, middleware scyllaridae.QueueMiddlew
 			slog.Error("Problem disconnecting from STOMP server", "err", err)
 		}
 	}()
-
-	sub, err := conn.Subscribe(queueName, stomp.AckAuto)
+	sub, err := conn.Subscribe(queueName, stomp.AckClient)
 	if err != nil {
 		slog.Error("Cannot subscribe to queue", "queue", queueName, "err", err.Error())
 		return err
@@ -103,11 +102,11 @@ func RecvAndProcessMessage(queueName string, middleware scyllaridae.QueueMiddlew
 			slog.Error("Problem unsubscribing", "err", err)
 		}
 	}()
-
 	slog.Info("Subscribed to queue", "queue", queueName)
 
 	// Process one message at a time
-	for msg := range sub.C {
+	for {
+		msg := <-sub.C // Blocking read for one message
 		if msg == nil || len(msg.Body) == 0 {
 			if !sub.Active() {
 				return fmt.Errorf("no longer subscribed to %s", queueName)
@@ -115,8 +114,14 @@ func RecvAndProcessMessage(queueName string, middleware scyllaridae.QueueMiddlew
 			continue
 		}
 
-		// Process the message synchronously
+		// Process the message
 		handleMessage(msg, middleware)
+
+		// Acknowledge the message after successful processing
+		err := msg.Conn.Ack(msg)
+		if err != nil {
+			slog.Error("Failed to acknowledge message", "queue", queueName, "error", err)
+		}
 	}
 
 	return nil
