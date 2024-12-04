@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -28,46 +27,32 @@ func runStompSubscribers(config *scyllaridae.ServerConfig) {
 		wg.Add(1)
 		go func(middleware scyllaridae.QueueMiddleware) {
 			defer wg.Done()
-			messageChan := make(chan *stomp.Message, middleware.Consumers)
 
-			// Start the specified number of worker goroutines
-			for i := 0; i < middleware.Consumers; i++ {
-				slog.Info("Adding consumer", "consumer", i)
-				go worker(messageChan, middleware)
+			for {
+				select {
+				case <-stopChan:
+					slog.Info("Stopping subscriber for queue", "queue", middleware.QueueName)
+					return
+				default:
+					// Process one message at a time
+					err := RecvAndProcessMessage(middleware.QueueName, middleware)
+					if err != nil {
+						slog.Error("Error processing message", "queue", middleware.QueueName, "error", err)
+					}
+				}
 			}
-
-			RecvStompMessages(middleware.QueueName, messageChan)
 		}(middleware)
 	}
 
+	// Wait for a termination signal
 	<-stopChan
-	slog.Info("Shutting down message listener")
+	slog.Info("Shutting down message listeners")
+
+	// Wait for all subscribers to gracefully stop
+	wg.Wait()
 }
 
-func worker(messageChan <-chan *stomp.Message, middleware scyllaridae.QueueMiddleware) {
-	for msg := range messageChan {
-		handleMessage(msg, middleware)
-	}
-}
-
-func RecvStompMessages(queueName string, messageChan chan<- *stomp.Message) {
-	attempt := 0
-	maxAttempts := 30
-	for attempt = 0; attempt < maxAttempts; attempt++ {
-		if err := connectAndSubscribe(queueName, messageChan); err != nil {
-			slog.Error("Resubscribing", "queue", queueName, "error", err)
-			if err := retryWithExponentialBackoff(attempt, maxAttempts); err != nil {
-				slog.Error("Failed subscribing after too many failed attempts", "queue", queueName, "attempts", attempt)
-				return
-			}
-		} else {
-			// Subscription was successful
-			break
-		}
-	}
-}
-
-func connectAndSubscribe(queueName string, messageChan chan<- *stomp.Message) error {
+func RecvAndProcessMessage(queueName string, middleware scyllaridae.QueueMiddleware) error {
 	addr := os.Getenv("STOMP_SERVER_ADDR")
 	if addr == "" {
 		addr = "activemq:61613"
@@ -103,8 +88,7 @@ func connectAndSubscribe(queueName string, messageChan chan<- *stomp.Message) er
 			slog.Error("Problem disconnecting from STOMP server", "err", err)
 		}
 	}()
-
-	sub, err := conn.Subscribe(queueName, stomp.AckAuto)
+	sub, err := conn.Subscribe(queueName, stomp.AckClient)
 	if err != nil {
 		slog.Error("Cannot subscribe to queue", "queue", queueName, "err", err.Error())
 		return err
@@ -118,19 +102,27 @@ func connectAndSubscribe(queueName string, messageChan chan<- *stomp.Message) er
 			slog.Error("Problem unsubscribing", "err", err)
 		}
 	}()
-	slog.Info("Server subscribed to", "queue", queueName)
+	slog.Info("Subscribed to queue", "queue", queueName)
 
-	for msg := range sub.C {
+	// Process one message at a time
+	for {
+		msg := <-sub.C // Blocking read for one message
 		if msg == nil || len(msg.Body) == 0 {
 			if !sub.Active() {
 				return fmt.Errorf("no longer subscribed to %s", queueName)
 			}
 			continue
 		}
-		messageChan <- msg // Send the message to the channel
-	}
 
-	return nil
+		// Process the message
+		handleMessage(msg, middleware)
+
+		// Acknowledge the message after successful processing
+		err := msg.Conn.Ack(msg)
+		if err != nil {
+			slog.Error("Failed to acknowledge message", "queue", queueName, "error", err)
+		}
+	}
 }
 
 func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
@@ -194,13 +186,4 @@ func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
 	} else {
 		slog.Info("Successfully PUT data to", "url", islandoraMessage.Attachment.Content.DestinationURI, "status", putResp.StatusCode)
 	}
-}
-
-func retryWithExponentialBackoff(attempt int, maxAttempts int) error {
-	if attempt >= maxAttempts {
-		return fmt.Errorf("maximum retry attempts reached")
-	}
-	wait := time.Duration(rand.Intn(1<<attempt)) * time.Second
-	time.Sleep(wait)
-	return nil
 }
