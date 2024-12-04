@@ -123,8 +123,6 @@ func RecvAndProcessMessage(queueName string, middleware scyllaridae.QueueMiddlew
 			slog.Error("Failed to acknowledge message", "queue", queueName, "error", err)
 		}
 	}
-
-	return nil
 }
 
 func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {
