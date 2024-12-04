@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: scyllaridae-tesseract
-          image: lehighlts/scyllaridae-tesseract:main
+          image: lehighlts/scyllaridae-tesseract:main-14b2276
           imagePullPolicy: IfNotPresent
           resources:
             requests:
