@@ -20,7 +20,7 @@ RUN --mount=type=bind,from=leptonica,source=/packages,target=/packages \
         tesseract-ocr-data-deu==5.3.4-r0 \
         tesseract-ocr-data-jpn==5.3.4-r0 \
         tesseract-ocr-data-rus==5.3.4-r0 \
-        poppler-utils==24.02.0-r1
+        poppler-utils==24.02.0-r2
 
 COPY . /app
 
