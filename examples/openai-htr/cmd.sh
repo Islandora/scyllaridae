@@ -24,5 +24,5 @@ curl https://api.openai.com/v1/chat/completions \
         ]
       }
     ],
-    "max_tokens": 50
+    "max_tokens": '"$MAX_TOKENS"'
   }' | jq -r .choices[0].message.content
