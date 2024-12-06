@@ -9,6 +9,3 @@ queueMiddlewares:
   - queueName: islandora-merge-pdf
     url: http://mergepdf:8080
     consumers: 3
-  - queueName: islandora-openai-htr
-    url: http://openai-htr:8080
-    consumers: 3

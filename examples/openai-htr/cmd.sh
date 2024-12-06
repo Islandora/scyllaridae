@@ -2,6 +2,13 @@
 
 set -eou pipefail
 
+TMP_DIR=$(mktemp -d)
+
+# convert service file to jpg
+magick - "$TMP_DIR/img.jpg"
+
+BASE64_IMAGE=$(base64 -w 0 "$TMP_DIR/img.jpg")
+
 curl https://api.openai.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $OPENAI_API_KEY" \
@@ -18,7 +25,7 @@ curl https://api.openai.com/v1/chat/completions \
           {
             "type": "image_url",
             "image_url": {
-              "url": "'"$1"'"
+              "url": "data:image/jpeg;base64,'"$BASE64_IMAGE"'"
             }
           }
         ]
