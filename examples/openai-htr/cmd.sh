@@ -18,7 +18,7 @@ curl https://api.openai.com/v1/chat/completions \
           {
             "type": "image_url",
             "image_url": {
-              "url": "$1"
+              "url": "'"$1"'"
             }
           }
         ]
