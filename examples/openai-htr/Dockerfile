@@ -8,12 +8,12 @@ SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 # hadolint ignore=DL3018
 RUN --mount=type=bind,from=imagemagick,source=/packages,target=/packages \
     --mount=type=bind,from=imagemagick,source=/etc/apk/keys,target=/etc/apk/keys \
-    apk add --no-cache /packages/imagemagick-*.apk
+    apk add --no-cache /packages/imagemagick-*.apk jq==1.7.1-r0
 
 RUN magick -list format | grep "JPEG-2000"
 
 ENV OPENAI_MODEL=gpt-4o-mini \
-    PROMPT="Transcribe this image that contains handwritten text. Include all text you see in the image. In your response, say absolutely nothing except the text from the image" \
+    PROMPT="Transcribe this image that contains handwritten text. Include all text you see in the image. In your response, say absolutely nothing except the text from the image." \
     MAX_TOKENS=300
 
 COPY scyllaridae.yml /app/scyllaridae.yml
