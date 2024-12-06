@@ -1,0 +1,7 @@
+allowedMimeTypes:
+  - "image/*"
+cmdByMimeType:
+  default:
+    cmd: /app/cmd.sh
+    args:
+      - "%source-uri"

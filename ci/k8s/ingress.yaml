@@ -88,3 +88,10 @@ spec:
                 name: islandora-ocrpdf
                 port:
                   number: 8080
+          - path: /openai\-htr(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-openai-htr
+                port:
+                  number: 8080

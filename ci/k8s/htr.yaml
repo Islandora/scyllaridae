@@ -1,0 +1,52 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: islandora-openai-htr
+spec:
+  selector:
+    app: islandora-openai-htr
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: islandora-openai-htr
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: islandora-openai-htr
+  template:
+    metadata:
+      labels:
+        app: islandora-openai-htr
+    spec:
+      containers:
+        - name: scyllaridae-tesseract
+          image: lehighlts/scyllaridae-openai-htr:main
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: OPENAI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: openai
+                key: api-key
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+          ports:
+            - hostPort: 8001
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
