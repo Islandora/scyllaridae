@@ -6,7 +6,7 @@ Use OpenAI ChatGPT to transcribe handwritten text.
 
 Requires an environment variable `OPENAI_API_KEY`
 
-If deploying this in kubernetes, you can create the secret via
+If [deploying this in kubernetes](../../ci/k8s/htr.yaml), you can create the secret via
 
 ```
  kubectl create secret generic openai \
