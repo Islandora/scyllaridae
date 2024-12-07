@@ -34,11 +34,10 @@ BASE_URL=$(dirname "$NODE_URL" | xargs dirname)
 TID=$(curl -s "$BASE_URL/term_from_term_name?vocab=islandora_media_use&name=Service+File&_format=json" | jq '.[0].tid[0].value')
 
 curl -s \
-  -X PUT \
   -H "Authorization: $SCYLLARIDAE_AUTH" \
   -H "Content-Type: application/gzip" \
   -H "Content-Location: private://derivatives/hls/$NID/hls.tar.gz" \
-  --data-binary "@$TMP_DIR/hls.tar.gz" \
+  -T "$TMP_DIR/hls.tar.gz" \
   "$NODE_URL/media/file/$TID"
 
 rm -rf "$TMP_DIR"
