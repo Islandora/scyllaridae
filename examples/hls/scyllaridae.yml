@@ -1,0 +1,10 @@
+forwardAuth: true
+allowedMimeTypes:
+  - "audio/*"
+  - "video/*"
+cmdByMimeType:
+  default:
+    cmd: /app/cmd.sh
+    args:
+      - "%source-mime-ext"
+      - "%canonical"

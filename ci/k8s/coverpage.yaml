@@ -8,7 +8,7 @@ spec:
     app: islandora-coverpage
   ports:
     - protocol: TCP
-      port: 8888
+      port: 8082
       targetPort: 8080
 ---
 apiVersion: apps/v1
@@ -37,7 +37,7 @@ spec:
               memory: "1Gi"
           ports:
             - containerPort: 8080
-              hostPort: 8888
+              hostPort: 8082
           readinessProbe:
             httpGet:
               path: /healthcheck

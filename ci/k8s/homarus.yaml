@@ -8,7 +8,8 @@ spec:
     app: islandora-ffmpeg
   ports:
     - protocol: TCP
-      port: 8080
+      port: 8086
+      targetPort: 8080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,7 +36,8 @@ spec:
             limits:
               memory: "4Gi"
           ports:
-            - containerPort: 8080
+            - hostPort: 8086
+              containerPort: 8080
           readinessProbe:
             httpGet:
               path: /healthcheck
