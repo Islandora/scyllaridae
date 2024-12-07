@@ -26,7 +26,7 @@ spec:
         app: islandora-openai-htr
     spec:
       containers:
-        - name: scyllaridae-tesseract
+        - name: scyllaridae-htr
           image: lehighlts/scyllaridae-openai-htr:main
           imagePullPolicy: IfNotPresent
           env:
