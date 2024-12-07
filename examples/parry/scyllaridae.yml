@@ -9,3 +9,6 @@ queueMiddlewares:
   - queueName: islandora-merge-pdf
     url: http://mergepdf:8080
     consumers: 3
+  - queueName: islandora-hls
+    url: http://hls:8080
+    consumers: 3
