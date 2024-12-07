@@ -8,3 +8,4 @@ RUN apk update && \
       jq==1.7.1-r0
 
 COPY scyllaridae.yml /app/scyllaridae.yml
+COPY cmd.sh /app/cmd.sh

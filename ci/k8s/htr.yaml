@@ -8,7 +8,7 @@ spec:
     app: islandora-openai-htr
   ports:
     - protocol: TCP
-      port: 8001
+      port: 8087
       targetPort: 8080
 ---
 apiVersion: apps/v1
@@ -42,7 +42,7 @@ spec:
             limits:
               memory: "1Gi"
           ports:
-            - hostPort: 8001
+            - hostPort: 8087
               containerPort: 8080
           readinessProbe:
             httpGet:

@@ -1,3 +1,4 @@
+forwardAuth: true
 allowedMimeTypes:
   - "audio/*"
   - "video/*"

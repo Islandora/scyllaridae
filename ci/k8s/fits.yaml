@@ -8,7 +8,8 @@ spec:
     app: fits
   ports:
     - protocol: TCP
-      port: 8080
+      port: 8084
+      targetPort: 8080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,6 +42,7 @@ spec:
               memory: "2Gi"
           ports:
             - containerPort: 8080
+              hostPort: 8084
           readinessProbe:
             httpGet:
               path: /fits/version

@@ -8,7 +8,7 @@ spec:
     app: islandora-ocrpdf
   ports:
     - protocol: TCP
-      port: 8886
+      port: 8089
       targetPort: 8080
 ---
 apiVersion: apps/v1
@@ -37,7 +37,7 @@ spec:
               memory: "2Gi"
           ports:
             - containerPort: 8080
-              hostPort: 8886
+              hostPort: 8089
           readinessProbe:
             httpGet:
               path: /healthcheck
