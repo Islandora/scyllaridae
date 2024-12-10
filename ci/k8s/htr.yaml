@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: scyllaridae-htr
-          image: lehighlts/scyllaridae-openai-htr:main
+          image: lehighlts/scyllaridae-openai-htr:main-7b401ec
           imagePullPolicy: IfNotPresent
           env:
           - name: OPENAI_API_KEY
@@ -40,7 +40,7 @@ spec:
               memory: "128Mi"
               cpu: "250m"
             limits:
-              memory: "1Gi"
+              memory: "2Gi"
           ports:
             - hostPort: 8087
               containerPort: 8080
