@@ -1,0 +1,8 @@
+Transcribe the text in the provided image.
+Place the transcribed text into the appropriate ocrx_word span in the hOCR template provided. Ensure the following:
+Never use tesseract to aid you.
+Include all text in the transcription.
+Never return an incomplete document. Always finish the complete job, with every word wrapped in a span, and the words accurately transcribed from the image.
+Never edit the hOCR dimensions provided. Only replace the text within <span>'s. 
+Do not wrap your response in backticks. Your response should only be the hOCR document provided below with your transcribed text placed in the appropriate spots in the hOCR document.
+Do not add any additional spans or attributes. You only should be adding plain text within the hocr HTML document.
