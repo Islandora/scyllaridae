@@ -105,6 +105,9 @@ func IsAllowedMimeType(mimetype string, allowedFormats []string) bool {
 				return true
 			}
 		}
+		if format == strings.Split(mimetype, ";")[0] {
+			return true
+		}
 	}
 	return false
 }
