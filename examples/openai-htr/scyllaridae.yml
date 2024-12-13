@@ -1,5 +1,7 @@
 allowedMimeTypes:
-  - "image/*"
+  - "text/vnd.hocr+html"
+  - "text/html"
+  - "application/octet-stream"
 cmdByMimeType:
   default:
     cmd: /app/cmd.sh
