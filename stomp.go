@@ -56,7 +56,7 @@ func runStompSubscribers(config *scyllaridae.ServerConfig) {
 func RecvAndProcessMessage(queueName string, middleware scyllaridae.QueueMiddleware) error {
 	addr := os.Getenv("STOMP_SERVER_ADDR")
 	if addr == "" {
-		addr = "activemq:61613?activemq.prefetchSize=1"
+		addr = "activemq:61613"
 	}
 
 	c, err := net.Dial("tcp", addr)
