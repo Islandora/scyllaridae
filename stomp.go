@@ -89,7 +89,7 @@ func RecvAndProcessMessage(queueName string, middleware scyllaridae.QueueMiddlew
 			slog.Error("Problem disconnecting from STOMP server", "err", err)
 		}
 	}()
-	sub, err := conn.Subscribe(queueName, stomp.AckClient, stomp.SubscribeOpt.Prefetch(1))
+	sub, err := conn.Subscribe(queueName, stomp.AckClient)
 	if err != nil {
 		slog.Error("Cannot subscribe to queue", "queue", queueName, "err", err.Error())
 		return err
