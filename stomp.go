@@ -24,31 +24,32 @@ func runStompSubscribers(config *scyllaridae.ServerConfig) {
 	var wg sync.WaitGroup
 
 	for _, middleware := range config.QueueMiddlewares {
-		wg.Add(1)
-		go func(middleware scyllaridae.QueueMiddleware) {
-			defer wg.Done()
+		numConsumers := middleware.Consumers
+		for i := 0; i < numConsumers; i++ {
+			wg.Add(1)
+			go func(middleware scyllaridae.QueueMiddleware, consumerID int) {
+				defer wg.Done()
 
-			for {
-				select {
-				case <-stopChan:
-					slog.Info("Stopping subscriber for queue", "queue", middleware.QueueName)
-					return
-				default:
-					// Process one message at a time
-					err := RecvAndProcessMessage(middleware.QueueName, middleware)
-					if err != nil {
-						slog.Error("Error processing message", "queue", middleware.QueueName, "error", err)
+				slog.Info("Starting subscriber", "queue", middleware.QueueName, "consumer", consumerID)
+
+				for {
+					select {
+					case <-stopChan:
+						slog.Info("Stopping subscriber", "queue", middleware.QueueName, "consumer", consumerID)
+						return
+					default:
+						err := RecvAndProcessMessage(middleware.QueueName, middleware)
+						if err != nil {
+							slog.Error("Error processing message", "queue", middleware.QueueName, "consumer", consumerID, "error", err)
+						}
 					}
 				}
-			}
-		}(middleware)
+			}(middleware, i)
+		}
 	}
 
-	// Wait for a termination signal
 	<-stopChan
-	slog.Info("Shutting down message listeners")
-
-	// Wait for all subscribers to gracefully stop
+	slog.Info("Shutting down all message listeners")
 	wg.Wait()
 }
 
