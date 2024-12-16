@@ -1,7 +1,7 @@
 ARG TAG=main
 ARG DOCKER_REPOSITORY=lehighlts
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG} AS scyllaridae
-FROM pandoc/latex:3.5.0-ubuntu AS pandoc
+FROM pandoc/latex:3.6-ubuntu AS pandoc
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
