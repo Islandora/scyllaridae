@@ -5,7 +5,7 @@
 set -eou pipefail
 
 BASE_URL=$(echo "$1" | xargs dirname)
-
+input_temp=$(mktemp /tmp/whisper-input-XXXXXX)
 output_file="${input_temp}_16khz.wav"
 
 # replace relative *.ts URLs with the absolute URL to them
