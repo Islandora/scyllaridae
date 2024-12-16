@@ -4,13 +4,13 @@
 
 set -eou pipefail
 
-# take stdin and buffer it into a temp file
+BASE_URL=$(echo "$1" | xargs dirname)
 input_temp=$(mktemp /tmp/whisper-input-XXXXXX)
-cat > "$input_temp"
-
-# make sure we have a 16kHz WAV file
 output_file="${input_temp}_16khz.wav"
-ffmpeg -hide_banner -loglevel error -i "$input_temp" -ar 16000 -ac 1 "$output_file" 
+
+# replace relative *.ts URLs with the absolute URL to them
+cat | sed 's|^\([^#].*\)|'"$BASE_URL"'/\1|' \
+  | ffmpeg -hide_banner -loglevel error -protocol_whitelist https,fd,tls,tcp,pipe -f hls -i - -vn -acodec pcm_s16le -ar 16000 -ac 2 "$output_file" > /dev/null 2>&1
 
 # generate the VTT file
 /app/main \
