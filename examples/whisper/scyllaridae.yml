@@ -4,3 +4,5 @@ allowedMimeTypes:
 cmdByMimeType:
   default:
     cmd: /app/cmd.sh
+    args:
+      - "%source-mime-uri"
