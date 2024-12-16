@@ -24,31 +24,32 @@ func runStompSubscribers(config *scyllaridae.ServerConfig) {
 	var wg sync.WaitGroup
 
 	for _, middleware := range config.QueueMiddlewares {
-		wg.Add(1)
-		go func(middleware scyllaridae.QueueMiddleware) {
-			defer wg.Done()
+		numConsumers := middleware.Consumers
+		for i := 0; i < numConsumers; i++ {
+			wg.Add(1)
+			go func(middleware scyllaridae.QueueMiddleware, consumerID int) {
+				defer wg.Done()
 
-			for {
-				select {
-				case <-stopChan:
-					slog.Info("Stopping subscriber for queue", "queue", middleware.QueueName)
-					return
-				default:
-					// Process one message at a time
-					err := RecvAndProcessMessage(middleware.QueueName, middleware)
-					if err != nil {
-						slog.Error("Error processing message", "queue", middleware.QueueName, "error", err)
+				slog.Info("Starting subscriber", "queue", middleware.QueueName, "consumer", consumerID)
+
+				for {
+					select {
+					case <-stopChan:
+						slog.Info("Stopping subscriber", "queue", middleware.QueueName, "consumer", consumerID)
+						return
+					default:
+						err := RecvAndProcessMessage(middleware.QueueName, middleware)
+						if err != nil {
+							slog.Error("Error processing message", "queue", middleware.QueueName, "consumer", consumerID, "error", err)
+						}
 					}
 				}
-			}
-		}(middleware)
+			}(middleware, i)
+		}
 	}
 
-	// Wait for a termination signal
 	<-stopChan
-	slog.Info("Shutting down message listeners")
-
-	// Wait for all subscribers to gracefully stop
+	slog.Info("Shutting down all message listeners")
 	wg.Wait()
 }
 
@@ -76,53 +77,66 @@ func RecvAndProcessMessage(queueName string, middleware scyllaridae.QueueMiddlew
 		slog.Error("Cannot set keepalive period", "err", err.Error())
 		return err
 	}
-
-	conn, err := stomp.Connect(tcpConn, stomp.ConnOpt.HeartBeat(10*time.Second, 0*time.Second))
-	if err != nil {
-		slog.Error("Cannot connect to STOMP server", "err", err.Error())
-		return err
-	}
-	defer func() {
-		err := conn.Disconnect()
-		if err != nil {
-			slog.Error("Problem disconnecting from STOMP server", "err", err)
-		}
-	}()
-	sub, err := conn.Subscribe(queueName, stomp.AckClient)
-	if err != nil {
-		slog.Error("Cannot subscribe to queue", "queue", queueName, "err", err.Error())
-		return err
-	}
-	defer func() {
-		if !sub.Active() {
-			return
-		}
-		err := sub.Unsubscribe()
-		if err != nil {
-			slog.Error("Problem unsubscribing", "err", err)
-		}
-	}()
-	slog.Info("Subscribed to queue", "queue", queueName)
-
-	// Process one message at a time
 	for {
-		msg := <-sub.C // Blocking read for one message
-		if msg == nil || len(msg.Body) == 0 {
-			if !sub.Active() {
-				return fmt.Errorf("no longer subscribed to %s", queueName)
-			}
-			continue
-		}
-
-		// Process the message
-		handleMessage(msg, middleware)
-
-		// Acknowledge the message after successful processing
-		err := msg.Conn.Ack(msg)
+		conn, err := stomp.Connect(tcpConn,
+			stomp.ConnOpt.HeartBeat(10*time.Second, 10*time.Second),
+			stomp.ConnOpt.HeartBeatGracePeriodMultiplier(1.5),
+			stomp.ConnOpt.HeartBeatError(60*time.Second),
+		)
 		if err != nil {
-			slog.Error("Failed to acknowledge message", "queue", queueName, "error", err)
+			slog.Error("Cannot connect to STOMP server", "err", err.Error())
+			return err
+		}
+		defer func() {
+			err := conn.Disconnect()
+			if err != nil {
+				slog.Error("Problem disconnecting from STOMP server", "err", err)
+			}
+		}()
+		sub, err := conn.Subscribe(queueName, stomp.AckClient)
+		if err != nil {
+			slog.Error("Cannot subscribe to queue", "queue", queueName, "err", err.Error())
+			return err
+		}
+		defer func() {
+			if !sub.Active() {
+				return
+			}
+			err := sub.Unsubscribe()
+			if err != nil {
+				slog.Error("Problem unsubscribing", "err", err)
+			}
+		}()
+		slog.Info("Subscribed to queue", "queue", queueName)
+
+		// Process one message at a time
+		for {
+			// Wait for the next message (blocks if the channel is empty)
+			msg, ok := <-sub.C
+			if !ok {
+				// Subscription is no longer active
+				return fmt.Errorf("subscription to %s is closed", queueName)
+			}
+
+			// Check for an empty or nil message
+			if msg == nil || len(msg.Body) == 0 {
+				if !sub.Active() {
+					return fmt.Errorf("no longer subscribed to %s", queueName)
+				}
+				continue
+			}
+
+			// Process the message synchronously
+			handleMessage(msg, middleware)
+
+			// Acknowledge the message after successful processing
+			err := msg.Conn.Ack(msg)
+			if err != nil {
+				slog.Error("Failed to acknowledge message", "queue", queueName, "error", err)
+			}
 		}
 	}
+
 }
 
 func handleMessage(msg *stomp.Message, middleware scyllaridae.QueueMiddleware) {

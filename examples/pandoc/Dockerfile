@@ -1,12 +1,15 @@
 ARG TAG=main
 ARG DOCKER_REPOSITORY=lehighlts
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG} AS scyllaridae
-FROM pandoc/latex:3.5.0-ubuntu AS pandoc
+FROM pandoc/latex:3.6-ubuntu AS pandoc
 
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        curl \
         bash=5.2.21-2ubuntu4 \
         gosu=1.17-1ubuntu0.24.04.2 \
+        jq=1.7.1-3build1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
