@@ -1,6 +1,5 @@
 allowedMimeTypes:
-  - "audio/*"
-  - "video/*"
+  - "application/vnd.apple.mpegurl"
 cmdByMimeType:
   default:
     cmd: /app/cmd.sh
