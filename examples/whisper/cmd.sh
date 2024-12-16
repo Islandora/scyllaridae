@@ -10,7 +10,7 @@ output_file="${input_temp}_16khz.wav"
 
 # replace relative *.ts URLs with the absolute URL to them
 cat | sed 's|^\([^#].*\)|'"$BASE_URL"'/\1|' \
-  | ffmpeg -protocol_whitelist https,fd,tls,tcp,pipe -f hls -i - -vn -acodec pcm_s16le -ar 16000 -ac 2 "$output_file" > /dev/null 2>&1
+  | ffmpeg -hide_banner -loglevel error -protocol_whitelist https,fd,tls,tcp,pipe -f hls -i - -vn -acodec pcm_s16le -ar 16000 -ac 2 "$output_file" > /dev/null 2>&1
 
 # generate the VTT file
 /app/main \
