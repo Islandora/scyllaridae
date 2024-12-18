@@ -39,9 +39,6 @@ process_url() {
 # if we just need to warm the cache for a single node, do that then bail
 if [ "$#" -eq 1 ] && [ "$1" != "all" ]; then
   process_url "$1?cache-warmer=1"
-  process_url "$DRUPAL_URL/browse?cache-warmer=1"
-  process_url "$DRUPAL_URL/collections?cache-warmer=1"
-
   exit 0
 fi
 
