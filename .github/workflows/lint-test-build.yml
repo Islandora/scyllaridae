@@ -3,6 +3,7 @@ on:
   push:
     paths-ignore:
       - '**/*.md'
+      - 'ci/**'
       - '.github/workflows/delete.yml'
     tags:
       - '*'
