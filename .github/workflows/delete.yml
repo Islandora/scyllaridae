@@ -45,7 +45,8 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "BRANCH_NAME=${{ github.event.inputs.tag_pattern }}" >> $GITHUB_ENV
           else
-            echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+            BRANCH_NAME="${{ github.event.ref }}"
+            echo "BRANCH_NAME=${BRANCH_NAME#refs/heads/}" >> $GITHUB_ENV
           fi
 
       - name: Delete Docker Tags
