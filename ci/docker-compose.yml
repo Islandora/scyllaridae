@@ -2,7 +2,7 @@ networks:
     default:
 services:
     fits:
-        image: islandora/fits:main
+        image: islandora/fits:main@sha256:2e8500ea08822935e7958fade7647c1ed080d43c6aae730511fe51ae9690b6a0
     crayfits:
         image: lehighlts/scyllaridae-fits:${DOCKER_TAG}
     ffmpeg:
@@ -16,7 +16,7 @@ services:
     pandoc:
         image: lehighlts/scyllaridae-pandoc:${DOCKER_TAG}
     test:
-        image: alpine
+        image: alpine@sha256:21dc6063fd678b478f57c0e13f47560d0ea4eeba26dfc947b2a4f81f686b9f45
         command: sleep 300
         environment:
             DOCKER_TAG: ${DOCKER_TAG}
