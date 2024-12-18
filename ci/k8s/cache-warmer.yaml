@@ -27,8 +27,11 @@ spec:
     spec:
       containers:
         - name: scyllaridae-cache-warmer
-          image: lehighlts/scyllaridae-cache-warmer:main
+          image: lehighlts/scyllaridae-cache-warmer:main-a21c0d2
           imagePullPolicy: IfNotPresent
+          env:
+          - name: "DRUPAL_URL"
+            value: "https://preserve.lehigh.edu"
           resources:
             requests:
               memory: "32Mi"
