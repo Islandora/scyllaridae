@@ -22,7 +22,7 @@ jobs:
   lint-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: check valid yml
         run: yq . ./examples/*/scyllaridae.yml
@@ -30,12 +30,12 @@ jobs:
       - name: check valid sh
         run: shellcheck examples/*/*.sh
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5
         with:
           go-version: '>=1.22.2'
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@971e284b6050e8a5849b72094c50ab08da042db8 # v6
         with:
           version: latest
       
@@ -68,7 +68,7 @@ jobs:
     outputs:
       dockerFiles: ${{ steps.images.outputs.dockerFiles }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Find docker files
         id: images
         run: |
@@ -108,7 +108,7 @@ jobs:
     name: Integration tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - name: Extract branch name as docker tag
         shell: bash
         run: |-
