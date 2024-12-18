@@ -63,10 +63,11 @@ for SERVICE in "${SERVICES[@]}"; do
   elif [ "$SERVICE" == "whisper" ]; then
     curl -s -o vtt.txt \
         --header "Accept: text/plain" \
+        --header "Content-Type: application/vnd.apple.mpegurl" \
         --header "Apix-Ldp-Resource: https://preserve.lehigh.edu/sites/default/files/derivatives/hls/node/8157/11230.m3u8" \
+        --data-binary "@/fixtures/whisper/hls.m3u8"
         "$URL"
-    cat vtt.txt
-    grep -i "Lehigh Business Blog" vtt.txt || exit 1
+    grep -i "This podcast is brought to you by Illuminate" vtt.txt || exit 1
     echo "VTT as expected"
     rm vtt.txt
   elif [ "$SERVICE" == "pandoc" ]; then
