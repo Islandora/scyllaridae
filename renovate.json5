@@ -1,0 +1,67 @@
+{
+  extends: [
+    'config:best-practices',
+    ':rebaseStalePrs',
+    'customManagers:dockerfileVersions',
+  ],
+  packageRules: [
+    {
+      matchUpdateTypes: [
+        'minor',
+        'patch',
+        'digest',
+      ],
+      groupName: 'all non-major dependencies',
+      schedule: [
+        'after 10pm on Friday',
+      ],
+      matchPackageNames: [
+        '*',
+      ],
+    },
+    {
+      matchManagers: [
+        'gomod',
+      ],
+      postUpdateOptions: [
+        'gomodTidy',
+      ],
+      groupName: 'gomod updates',
+    },
+    {
+      matchManagers: [
+        'dockerfile',
+      ],
+      groupName: 'Dockerfile updates',
+    },
+    {
+      matchManagers: [
+        'github-actions',
+      ],
+      groupName: 'GitHub Actions updates',
+      schedule: [
+        'after 10pm on Friday',
+      ],
+    },
+    {
+      matchUpdateTypes: [
+        'major',
+      ],
+      groupName: 'all major updates',
+      schedule: [
+        'after 10pm on the first day of the month',
+      ],
+      matchPackageNames: [
+        '*',
+      ],
+    },
+  ],
+  labels: [
+    'dependencies',
+  ],
+  osvVulnerabilityAlerts: true,
+  dependencyDashboardOSVVulnerabilitySummary: 'unresolved',
+  vulnerabilityAlerts: {
+    enabled: true,
+  },
+}
