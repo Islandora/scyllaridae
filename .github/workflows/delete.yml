@@ -46,6 +46,7 @@ jobs:
             echo "BRANCH_NAME=${{ github.event.inputs.tag_pattern }}" >> $GITHUB_ENV
           else
             BRANCH_NAME="${{ github.event.ref }}"
+            BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
             echo "BRANCH_NAME=${BRANCH_NAME#refs/heads/}" >> $GITHUB_ENV
           fi
 
