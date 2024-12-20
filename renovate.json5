@@ -4,6 +4,9 @@
     ':rebaseStalePrs',
     'customManagers:dockerfileVersions',
   ],
+  dockerfile: {
+    fileMatch: ["^(Dockerfile|examples/.+/Dockerfile)$"]
+  },
   packageRules: [
     {
       matchUpdateTypes: [
@@ -32,7 +35,6 @@
       matchManagers: [
         'dockerfile',
       ],
-      fileMatch: ["^(Dockerfile|examples/.+/Dockerfile)$"],
       groupName: 'Dockerfile updates',
     },
     {
