@@ -5,7 +5,7 @@
     'customManagers:dockerfileVersions',
   ],
   dockerfile: {
-    fileMatch: ["examples/.+/Dockerfile$"]
+    fileMatch: [".*/Dockerfile$"]
   },
   packageRules: [
     {
