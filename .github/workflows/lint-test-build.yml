@@ -5,6 +5,7 @@ on:
       - '**/*.md'
       - 'ci/**'
       - '.github/workflows/delete.yml'
+      - 'renovate.json5'
     tags:
       - '*'
     branches:
