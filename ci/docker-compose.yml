@@ -2,7 +2,7 @@ networks:
     default:
 services:
     fits:
-        image: islandora/fits:main@sha256:2e8500ea08822935e7958fade7647c1ed080d43c6aae730511fe51ae9690b6a0
+        image: islandora/fits:main@sha256:80c5830ce7541d6be045e91bd8c9c5d7709916a94f6977e8b771fb803ba35b8c
     crayfits:
         image: lehighlts/scyllaridae-fits:${DOCKER_TAG}
     ffmpeg:
