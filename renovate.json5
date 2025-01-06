@@ -2,18 +2,15 @@
   extends: [
     'config:best-practices',
     ':rebaseStalePrs',
+    'customManagers:dockerfileVersions',
   ],
-  dockerfile: {
-      fileMatch: [".*Dockerfile$"],
-  },
-  customManagers: [
-    {
-      customType: "regex",
-      fileMatch: [".*Dockerfile$"],
-      matchStrings: [
-        "# renovate: datasource=(?<datasource>[a-z-.]+?) depName=(?<depName>[^\\s]+?)(?: (lookupName|packageName)=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?(?: extractVersion=(?<extractVersion>[^\\s]+?))?(?: registryUrl=(?<registryUrl>[^\\s]+?))?\\s(?:ENV|ARG)\\s+[A-Za-z0-9_]+?_VERSION[ =][\"']?(?<currentValue>.+?)[\"']?\\s"
-      ]
-    }
+  ignorePaths: [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/__tests__/**",
+    "**/tests/**",
+    "**/__fixtures__/**"
   ],
   packageRules: [
     {
