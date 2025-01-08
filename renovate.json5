@@ -63,6 +63,13 @@
         '*',
       ],
     },
+    {
+      description: "Don't pin scyllaridae image SHAs",
+      matchPackageNames: [
+        'lehighlts/scyllaridae.*?',
+      ],
+      pinDigests: false,
+    },
   ],
   labels: [
     'dependencies',
