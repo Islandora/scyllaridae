@@ -6,9 +6,29 @@ TMP_DIR=$(mktemp -d)
 I=0
 MAX_THREADS=${MAX_THREADS:-5}
 PIDS=()
+RETRIES=3
 
-# iterate over all images in the IIIF manifest
-URLS=$(curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | awk -F '/' '{print $7}'|sed -e 's/%2F/\//g' -e 's/%3A/:/g')
+# Function to download and process the image with retries
+download_and_process() {
+  local url="$1"
+  local output_file="$2"
+  local attempt=0
+
+  while (( attempt < RETRIES )); do
+    if curl -s "$url" | magick - -resize 1000x\> "$output_file" > /dev/null 2>&1; then
+      return 0
+    fi
+    attempt=$(( attempt + 1 ))
+    echo "Retrying ($attempt/$RETRIES) for $url..."
+    sleep 1
+  done
+
+  echo "Failed to process $url after $RETRIES attempts." >&2
+  return 1
+}
+
+# Iterate over all images in the IIIF manifest
+URLS=$(curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | awk -F '/' '{print $7}' | sed -e 's/%2F/\//g' -e 's/%3A/:/g')
 while read -r URL; do
   # If we have reached the max thread limit, wait for any one job to finish
   if [ "${#PIDS[@]}" -ge "$MAX_THREADS" ]; then
@@ -24,11 +44,16 @@ while read -r URL; do
 
   # Run each job in the background
   (
-    # download and resize image to max 1000px width
-    curl -s "$URL" | magick -[0] -resize 1000x\> "$TMP_DIR/img_$I" || curl -s "$URL" | magick - -resize 1000x\> "$TMP_DIR/img_$I" > /dev/null 2>&1
-    # make an OCR'd PDF from the image
-    tesseract "$TMP_DIR/img_$I" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
-    rm "$TMP_DIR/img_$I"
+    local_img="$TMP_DIR/img_$I"
+
+    # Download and resize the image with retry logic
+    if ! download_and_process "$URL" "$local_img"; then
+      exit 1
+    fi
+
+    # Make an OCR'd PDF from the image
+    tesseract "$local_img" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
+    rm "$local_img"
   ) &
   PIDS+=("$!")
   I="$(( I + 1))"
