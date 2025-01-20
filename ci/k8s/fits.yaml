@@ -8,8 +8,7 @@ spec:
     app: fits
   ports:
     - protocol: TCP
-      port: 8084
-      targetPort: 8080
+      port: 8080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -27,7 +26,7 @@ spec:
     spec:
       containers:
         - name: fits
-          image: islandora/fits:3.4
+          image: islandora/fits:3.4.12
           imagePullPolicy: IfNotPresent
           env:
             - name: FITS_MAX_REQUEST_SIZE
@@ -39,10 +38,9 @@ spec:
               memory: "256Mi"
               cpu: "250m"
             limits:
-              memory: "2Gi"
+              memory: "4Gi"
           ports:
             - containerPort: 8080
-              hostPort: 8084
           readinessProbe:
             httpGet:
               path: /fits/version

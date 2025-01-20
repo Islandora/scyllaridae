@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: scyllaridae-mergepdf
-          image: lehighlts/scyllaridae-mergepdf:main-14b2276
+          image: lehighlts/scyllaridae-mergepdf:main-4a2d8ca
           imagePullPolicy: IfNotPresent
           env:
             - name: MAX_THREADS
@@ -37,7 +37,7 @@ spec:
               memory: "128Mi"
               cpu: "500m"
             limits:
-              memory: "4Gi"
+              memory: "24Gi"
           ports:
             - containerPort: 8080
               hostPort: 8088
