@@ -8,7 +8,8 @@ spec:
     app: islandora-imagemagick
   ports:
     - protocol: TCP
-      port: 8080
+      port: 8090
+      targetPort: 8080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -26,16 +27,17 @@ spec:
     spec:
       containers:
         - name: scyllaridae-imagemagick
-          image: lehighlts/scyllaridae-imagemagick:main-dff1880
+          image: lehighlts/scyllaridae-imagemagick:main-8a5b743
           imagePullPolicy: IfNotPresent
           resources:
             requests:
-              memory: "128Mi"
+              memory: "256Mi"
               cpu: "100m"
             limits:
-              memory: "2Gi"
+              memory: "10Gi"
           ports:
             - containerPort: 8080
+              hostPort: 8090
           readinessProbe:
             httpGet:
               path: /healthcheck
