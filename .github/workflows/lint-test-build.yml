@@ -128,4 +128,3 @@ jobs:
         env:
           DOCKER_REPOSITORY_BASE: lehighlts/scyllaridae
           DOCKER_TAG: ${{steps.extract_tag.outputs.tag}}
-          SKIP_JWT_VERIFY: "true"
