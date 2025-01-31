@@ -68,7 +68,7 @@ jobs:
         if [[ "${{steps.setup.outputs.image}}" == "scyllaridae-whisper" ]]; then
           echo "DOCKER_PLATFORMS=linux/amd64" >> $GITHUB_ENV
         else
-          echo "DOCKER_PLATFORMS=linux/amd64,linux/arm64" >> $GITHUB_ENV
+          echo "DOCKER_PLATFORMS=linux/amd64" >> $GITHUB_ENV
         fi
 
     - name: Build and push dockerhub
