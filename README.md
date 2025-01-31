@@ -1,5 +1,10 @@
 # scyllaridae
 
+[![Documentation](https://img.shields.io/static/v1?label=documentation&message=reference&color=blue)](https://lehigh-university-libraries.github.io/scyllaridae/)
+[![integration-test](https://github.com/lehigh-university-libraries/scyllaridae/actions/workflows//lint-test-build.yml/badge.svg)](https://github.com/lehigh-university-libraries/scyllaridae/actions/workflows//lint-test-build.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/lehigh-university-libraries/scyllaridae)](https://goreportcard.com/report/github.com/lehigh-university-libraries/scyllaridae)
+[![Go Reference](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue)](https://pkg.go.dev/github.com/lehigh-university-libraries/scyllaridae)
+
 Any command that takes a file as input and prints a result as output can use scyllaridae.
 
 Documentation is available at https://lehigh-university-libraries.github.io/scyllaridae/
