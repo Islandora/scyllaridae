@@ -5,3 +5,4 @@ scyllaridae
 gha-creds-*.json
 ci
 fixtures
+docs

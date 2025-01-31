@@ -4,6 +4,8 @@ on:
     paths-ignore:
       - '**/*.md'
       - 'ci/**'
+      - 'docs/**'
+      - '.github/workflows/deploy-docs.yml'
       - '.github/workflows/delete.yml'
       - 'renovate.json5'
     tags:

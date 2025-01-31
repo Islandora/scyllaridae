@@ -1,0 +1,14 @@
+site_name: scyllaridae
+site_url: https://lehigh-university-libraries.github.io/scyllaridae/
+
+repo_url: https://github.com/lehigh-university-libraries/scyllaridae
+edit_uri: 'edit/main/docs/'
+
+theme: material
+plugins:
+  - search
+  - social
+  - tags
+
+nav:
+  - Home: index.md
