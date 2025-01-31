@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -88,7 +89,8 @@ func JWTAuthMiddleware(next http.Handler) http.Handler {
 
 		if os.Getenv("SKIP_JWT_VERIFY") != "true" {
 			tokenString := a[7:]
-			err := verifyJWT(tokenString)
+			message := r.Context().Value(msgKey).(api.Payload)
+			err := verifyJWT(tokenString, message)
 			if err != nil {
 				slog.Error("JWT verification failed", "err", err)
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -100,8 +102,8 @@ func JWTAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func verifyJWT(tokenString string) error {
-	keySet, err := fetchJWKS()
+func verifyJWT(tokenString string, message api.Payload) error {
+	keySet, err := fetchJWKS(message)
 	if err != nil {
 		return fmt.Errorf("unable to fetch JWKS: %v", err)
 	}
@@ -127,10 +129,21 @@ func verifyJWT(tokenString string) error {
 }
 
 // fetchJWKS fetches the JSON Web Key Set (JWKS) from the given URI
-func fetchJWKS() (jwk.Set, error) {
+func fetchJWKS(message api.Payload) (jwk.Set, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	jwksURI := os.Getenv("JWKS_URI")
+	// if the JWKS_URI isn't provided
+	// try grabbing the JWKS from the default islandora URI
+	if jwksURI == "" {
+		parsedURL, err := url.Parse(message.Attachment.Content.SourceURI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing source URI: %v", err)
+		}
+
+		jwksURI = fmt.Sprintf("%s://%s/oauth/discovery/keys", parsedURL.Scheme, parsedURL.Host)
+	}
+
 	return jwk.Fetch(ctx, jwksURI)
 }
