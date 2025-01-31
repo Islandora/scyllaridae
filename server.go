@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
 
+	"github.com/gorilla/mux"
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
 	"golang.org/x/text/cases"
@@ -17,14 +19,30 @@ type Server struct {
 	Config *scyllaridae.ServerConfig
 }
 
-func runHTTPServer(server *Server) {
-	http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
+func (server *Server) SetupRouter() *mux.Router {
+	r := mux.NewRouter()
+	r.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "OK")
-	})
+	}).Methods("GET")
 
-	// Use the method as the handler
-	http.HandleFunc("/", server.MessageHandler)
+	// create the main route with logging and JWT auth middleware
+	authRouter := r.PathPrefix("/").Subrouter()
+	authRouter.Use(server.LoggingMiddleware, JWTAuthMiddleware)
+	authRouter.HandleFunc("/", server.MessageHandler).Methods("GET", "POST")
+
+	// make sure 404s get logged
+	notFoundHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Connection", "close")
+		http.Error(w, "404 Not Found", http.StatusNotFound)
+	})
+	authRouter.NotFoundHandler = server.LoggingMiddleware(notFoundHandler)
+
+	return r
+}
+
+func runHTTPServer(server *Server) {
+	r := server.SetupRouter()
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -32,43 +50,24 @@ func runHTTPServer(server *Server) {
 	}
 
 	slog.Info("Server listening", "port", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	if err := http.ListenAndServe(":"+port, r); err != nil {
 		panic(err)
 	}
 }
 
 func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
-	slog.Info(r.RequestURI, "method", r.Method, "ip", r.RemoteAddr, "proto", r.Proto)
-
-	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
 	defer r.Body.Close()
 
 	if r.Header.Get("Apix-Ldp-Resource") == "" && r.Header.Get("X-Islandora-Event") == "" && r.Method == http.MethodGet {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-
-	// Read the Alpaca message payload
 	auth := ""
 	if s.Config.ForwardAuth {
 		auth = r.Header.Get("Authorization")
 	}
-	message, err := api.DecodeAlpacaMessage(r, auth)
-	if err != nil {
-		slog.Error("Error decoding alpaca message", "err", err)
-		http.Error(w, "Internal error", http.StatusInternalServerError)
-		return
-	}
-
-	cmd, err := scyllaridae.BuildExecCommand(message, s.Config)
-	if err != nil {
-		slog.Error("Error building command", "err", err)
-		http.Error(w, "Bad request", http.StatusBadRequest)
-		return
-	}
+	cmd := r.Context().Value(cmdKey).(*exec.Cmd)
+	message := r.Context().Value(msgKey).(api.Payload)
 
 	// Stream the file contents from the source URL or request body
 	fs, errCode, err := s.Config.GetFileStream(r, message, auth)
@@ -87,8 +86,6 @@ func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Send stdout to the ResponseWriter stream
 	cmd.Stdout = w
-
-	slog.Info("Running command", "cmd", cmd.String())
 	if err := cmd.Run(); err != nil {
 		slog.Error("Error running command", "cmd", cmd.String(), "err", stdErr.String())
 		http.Error(w, "Internal error", http.StatusInternalServerError)

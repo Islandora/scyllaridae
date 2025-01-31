@@ -21,6 +21,8 @@ RUN apk add --no-cache --virtual .gosu-deps \
 
 WORKDIR /app
 
+ENV SKIP_JWT_VERIFY=""
+
 RUN adduser -S -G nobody scyllaridae
 
 RUN apk update && \

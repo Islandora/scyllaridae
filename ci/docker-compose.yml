@@ -5,16 +5,28 @@ services:
         image: islandora/fits:main@sha256:38ee3fe6ce2ad0ff43b3dc7bdb2587300fcd696431395c2963ef706f7e7d00b6
     crayfits:
         image: lehighlts/scyllaridae-fits:${DOCKER_TAG}
+        environment:
+            SKIP_JWT_VERIFY: "true"
     ffmpeg:
         image: lehighlts/scyllaridae-ffmpeg:${DOCKER_TAG}
+        environment:
+            SKIP_JWT_VERIFY: "true"
     imagemagick:
         image: lehighlts/scyllaridae-imagemagick:${DOCKER_TAG}
+        environment:
+            SKIP_JWT_VERIFY: "true"
     tesseract:
         image: lehighlts/scyllaridae-tesseract:${DOCKER_TAG}
+        environment:
+            SKIP_JWT_VERIFY: "true"
     whisper:
         image: lehighlts/scyllaridae-whisper:${DOCKER_TAG}
+        environment:
+            SKIP_JWT_VERIFY: "true"
     pandoc:
         image: lehighlts/scyllaridae-pandoc:${DOCKER_TAG}
+        environment:
+            SKIP_JWT_VERIFY: "true"
     test:
         image: alpine@sha256:56fa17d2a7e7f168a043a2712e63aed1f8543aeafdcee47c58dcffe38ed51099
         command: sleep 300
