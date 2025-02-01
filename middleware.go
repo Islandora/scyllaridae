@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -89,8 +88,7 @@ func (s *Server) JWTAuthMiddleware(next http.Handler) http.Handler {
 
 		if os.Getenv("SKIP_JWT_VERIFY") != "true" {
 			tokenString := a[7:]
-			message := r.Context().Value(msgKey).(api.Payload)
-			err := s.verifyJWT(tokenString, message)
+			err := s.verifyJWT(tokenString)
 			if err != nil {
 				slog.Error("JWT verification failed", "err", err)
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -102,8 +100,8 @@ func (s *Server) JWTAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) verifyJWT(tokenString string, message api.Payload) error {
-	keySet, err := s.fetchJWKS(message)
+func (s *Server) verifyJWT(tokenString string) error {
+	keySet, err := s.fetchJWKS()
 	if err != nil {
 		return fmt.Errorf("unable to fetch JWKS: %v", err)
 	}
@@ -135,39 +133,12 @@ func (s *Server) verifyJWT(tokenString string, message api.Payload) error {
 }
 
 // fetchJWKS fetches the JSON Web Key Set (JWKS) from the given URI
-func (s *Server) fetchJWKS(message api.Payload) (jwk.Set, error) {
+func (s *Server) fetchJWKS() (jwk.Set, error) {
 	var err error
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	jwksURI := os.Getenv("JWKS_URI")
-	// if the JWKS_URI isn't provided
-	// try grabbing the JWKS from the default islandora URI
-	if jwksURI == "" {
-		jwksURI = message.Attachment.Content.SourceURI
-		if jwksURI == "" {
-			if message.Target != "" {
-				jwksURI = message.Target
-			} else {
-				for _, l := range message.Object.URL {
-					if l.Rel == "canonical" {
-						jwksURI = l.Href
-						break
-					}
-				}
-			}
-		}
-		if jwksURI == "" {
-			return nil, fmt.Errorf("no known JWKS_URI: %v", message)
-		}
-
-		parsedURL, err := url.Parse(jwksURI)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing source URI: %v", err)
-		}
-
-		jwksURI = fmt.Sprintf("%s://%s/oauth/discovery/keys", parsedURL.Scheme, parsedURL.Host)
-	}
 	ks, ok := s.KeySets.Get(jwksURI)
 	if ok {
 		return ks, nil

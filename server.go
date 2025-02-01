@@ -25,6 +25,11 @@ type Server struct {
 }
 
 func (server *Server) SetupRouter() *mux.Router {
+	if os.Getenv("JWKS_URI") == "" && os.Getenv("SKIP_JWT_VERIFY") != "true" {
+		slog.Error("Need to provide your JWKS URI in the JWKS_URI e.g. JWKS_URI=https://islandora.dev/oauth/discovery/keys")
+		os.Exit(1)
+	}
+
 	server.KeySets = lru.NewLRU[string, jwk.Set](25, nil, time.Minute*15)
 
 	r := mux.NewRouter()
