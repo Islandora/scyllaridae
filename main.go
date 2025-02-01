@@ -17,7 +17,9 @@ func main() {
 	if len(config.QueueMiddlewares) > 0 {
 		runStompSubscribers(config)
 	} else {
-		server := &Server{Config: config}
+		server := &Server{
+			Config: config,
+		}
 		runHTTPServer(server)
 	}
 }

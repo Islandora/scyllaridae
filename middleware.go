@@ -13,9 +13,9 @@ import (
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
 
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwk"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwk"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
 type contextKey string
@@ -77,7 +77,7 @@ func (s *Server) LoggingMiddleware(next http.Handler) http.Handler {
 }
 
 // JWTAuthMiddleware validates a JWT token and adds claims to the context
-func JWTAuthMiddleware(next http.Handler) http.Handler {
+func (s *Server) JWTAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		a := r.Header.Get("Authorization")
 		if a == "" || len(a) <= 7 || !strings.EqualFold(a[:7], "bearer ") {
@@ -90,7 +90,7 @@ func JWTAuthMiddleware(next http.Handler) http.Handler {
 		if os.Getenv("SKIP_JWT_VERIFY") != "true" {
 			tokenString := a[7:]
 			message := r.Context().Value(msgKey).(api.Payload)
-			err := verifyJWT(tokenString, message)
+			err := s.verifyJWT(tokenString, message)
 			if err != nil {
 				slog.Error("JWT verification failed", "err", err)
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -102,19 +102,22 @@ func JWTAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func verifyJWT(tokenString string, message api.Payload) error {
-	keySet, err := fetchJWKS(message)
+func (s *Server) verifyJWT(tokenString string, message api.Payload) error {
+	keySet, err := s.fetchJWKS(message)
 	if err != nil {
 		return fmt.Errorf("unable to fetch JWKS: %v", err)
+	}
+	key, ok := keySet.Key(0)
+	if !ok {
+		return fmt.Errorf("no key in key set")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	token, err := jwt.Parse([]byte(tokenString),
-		jwt.WithKeySet(keySet),
+		jwt.WithKey(jwa.RS256, key),
 		jwt.WithContext(ctx),
-		jwt.WithVerify(jwa.RS256, keySet),
 	)
 	if err != nil {
 		return fmt.Errorf("unable to parse token: %v", err)
@@ -129,7 +132,7 @@ func verifyJWT(tokenString string, message api.Payload) error {
 }
 
 // fetchJWKS fetches the JSON Web Key Set (JWKS) from the given URI
-func fetchJWKS(message api.Payload) (jwk.Set, error) {
+func (s *Server) fetchJWKS(message api.Payload) (jwk.Set, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -144,6 +147,22 @@ func fetchJWKS(message api.Payload) (jwk.Set, error) {
 
 		jwksURI = fmt.Sprintf("%s://%s/oauth/discovery/keys", parsedURL.Scheme, parsedURL.Host)
 	}
+	ks, ok := s.KeySets.Get(jwksURI)
+	if ok {
+		return ks, nil
+	}
+	c := jwk.NewCache(ctx)
+	c.Register(jwksURI, jwk.WithMinRefreshInterval(15*time.Minute))
+	_, err := c.Refresh(ctx, jwksURI)
+	if err != nil {
+		return nil, err
+	}
 
-	return jwk.Fetch(ctx, jwksURI)
+	cached := jwk.NewCachedSet(c, jwksURI)
+	evicted := s.KeySets.Add(jwksURI, cached)
+	if evicted {
+		slog.Warn("server jwks cache is too small")
+	}
+
+	return cached, nil
 }
