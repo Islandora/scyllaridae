@@ -144,7 +144,24 @@ func (s *Server) fetchJWKS(message api.Payload) (jwk.Set, error) {
 	// if the JWKS_URI isn't provided
 	// try grabbing the JWKS from the default islandora URI
 	if jwksURI == "" {
-		parsedURL, err := url.Parse(message.Attachment.Content.SourceURI)
+		jwksURI = message.Attachment.Content.SourceURI
+		if jwksURI == "" {
+			if message.Target != "" {
+				jwksURI = message.Target
+			} else {
+				for _, l := range message.Object.URL {
+					if l.Rel == "canonical" {
+						jwksURI = l.Href
+						break
+					}
+				}
+			}
+		}
+		if jwksURI == "" {
+			return nil, fmt.Errorf("no known JWKS_URI: %v", message)
+		}
+
+		parsedURL, err := url.Parse(jwksURI)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing source URI: %v", err)
 		}
