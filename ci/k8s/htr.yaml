@@ -35,6 +35,9 @@ spec:
               secretKeyRef:
                 name: openai
                 key: api-key
+          env:
+          - name: "JWKS_URI"
+            value: "https://preserve.lehigh.edu/oauth/discovery/keys"
           resources:
             requests:
               memory: "128Mi"

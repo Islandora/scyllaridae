@@ -30,8 +30,10 @@ spec:
           image: lehighlts/scyllaridae-mergepdf:main-1c3a177
           imagePullPolicy: IfNotPresent
           env:
-            - name: MAX_THREADS
-              value: "7"
+          - name: MAX_THREADS
+            value: "7"
+          - name: "JWKS_URI"
+            value: "https://preserve.lehigh.edu/oauth/discovery/keys"
           resources:
             requests:
               memory: "128Mi"

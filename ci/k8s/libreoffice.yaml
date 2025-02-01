@@ -28,6 +28,9 @@ spec:
         - name: scyllaridae-libreoffice
           image: lehighlts/scyllaridae-libreoffice:main
           imagePullPolicy: IfNotPresent
+          env:
+          - name: "JWKS_URI"
+            value: "https://preserve.lehigh.edu/oauth/discovery/keys"
           resources:
             requests:
               memory: "128Mi"

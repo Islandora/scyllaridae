@@ -29,6 +29,9 @@ spec:
         - name: scyllaridae-ocrpdf
           image: lehighlts/scyllaridae-ocrpdf:main
           imagePullPolicy: IfNotPresent
+          env:
+          - name: "JWKS_URI"
+            value: "https://preserve.lehigh.edu/oauth/discovery/keys"
           resources:
             requests:
               memory: "128Mi"

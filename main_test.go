@@ -48,6 +48,7 @@ type Test struct {
 }
 
 func TestMessageHandler_MethodNotAllowed(t *testing.T) {
+	os.Setenv("SKIP_JWT_VERIFY", "true")
 	testConfig := &scyllaridae.ServerConfig{}
 	server := &Server{Config: testConfig}
 
