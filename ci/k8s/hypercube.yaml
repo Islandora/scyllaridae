@@ -29,6 +29,9 @@ spec:
         - name: scyllaridae-tesseract
           image: lehighlts/scyllaridae-tesseract:main-14b2276
           imagePullPolicy: IfNotPresent
+          env:
+          - name: "JWKS_URI"
+            value: "https://preserve.lehigh.edu/oauth/discovery/keys"
           resources:
             requests:
               memory: "128Mi"

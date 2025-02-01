@@ -28,6 +28,9 @@ spec:
         - name: scyllaridae-whisper
           image: lehighlts/scyllaridae-whisper:main-14a4905
           imagePullPolicy: IfNotPresent
+          env:
+          - name: "JWKS_URI"
+            value: "https://preserve.lehigh.edu/oauth/discovery/keys"
           resources:
             requests:
               memory: "2Gi"

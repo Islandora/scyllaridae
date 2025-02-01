@@ -29,6 +29,9 @@ spec:
         - name: scyllaridae-crayfits
           image: lehighlts/scyllaridae-fits:main-14a4905
           imagePullPolicy: IfNotPresent
+          env:
+          - name: "JWKS_URI"
+            value: "https://preserve.lehigh.edu/oauth/discovery/keys"
           resources:
             requests:
               memory: "32Mi"

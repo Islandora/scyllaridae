@@ -29,6 +29,9 @@ spec:
         - name: scyllaridae-imagemagick
           image: lehighlts/scyllaridae-imagemagick:main-8a5b743
           imagePullPolicy: IfNotPresent
+          env:
+          - name: "JWKS_URI"
+            value: "https://preserve.lehigh.edu/oauth/discovery/keys"
           resources:
             requests:
               memory: "256Mi"
