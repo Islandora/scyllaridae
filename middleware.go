@@ -107,9 +107,12 @@ func (s *Server) verifyJWT(tokenString string, message api.Payload) error {
 	if err != nil {
 		return fmt.Errorf("unable to fetch JWKS: %v", err)
 	}
+
+	// islandora will only ever provide a single key to sign JWTs
+	// so just use the one key in JWKS
 	key, ok := keySet.Key(0)
 	if !ok {
-		return fmt.Errorf("no key in key set")
+		return fmt.Errorf("no key in jwks")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
