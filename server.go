@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/gorilla/mux"
-	lru "github.com/hashicorp/golang-lru/v2"
+
+	lru "github.com/hashicorp/golang-lru/v2/expirable"
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
 	"github.com/lestrrat-go/jwx/v2/jwk"
@@ -19,17 +21,11 @@ import (
 
 type Server struct {
 	Config  *scyllaridae.ServerConfig
-	KeySets *lru.Cache[string, jwk.Set]
+	KeySets *lru.LRU[string, jwk.Set]
 }
 
 func (server *Server) SetupRouter() *mux.Router {
-	var err error
-
-	server.KeySets, err = lru.New[string, jwk.Set](25)
-	if err != nil {
-		slog.Error("Unable to create LRU cache for JWKS sets", "err", err)
-		os.Exit(1)
-	}
+	server.KeySets = lru.NewLRU[string, jwk.Set](25, nil, time.Minute*15)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {

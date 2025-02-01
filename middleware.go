@@ -133,6 +133,7 @@ func (s *Server) verifyJWT(tokenString string, message api.Payload) error {
 
 // fetchJWKS fetches the JSON Web Key Set (JWKS) from the given URI
 func (s *Server) fetchJWKS(message api.Payload) (jwk.Set, error) {
+	var err error
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -151,18 +152,16 @@ func (s *Server) fetchJWKS(message api.Payload) (jwk.Set, error) {
 	if ok {
 		return ks, nil
 	}
-	c := jwk.NewCache(ctx)
-	c.Register(jwksURI, jwk.WithMinRefreshInterval(15*time.Minute))
-	_, err := c.Refresh(ctx, jwksURI)
+
+	ks, err = jwk.Fetch(ctx, jwksURI)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to fetch jwks: %v", err)
 	}
 
-	cached := jwk.NewCachedSet(c, jwksURI)
-	evicted := s.KeySets.Add(jwksURI, cached)
+	evicted := s.KeySets.Add(jwksURI, ks)
 	if evicted {
 		slog.Warn("server jwks cache is too small")
 	}
 
-	return cached, nil
+	return ks, nil
 }

@@ -1,8 +1,6 @@
 module github.com/lehigh-university-libraries/scyllaridae
 
-go 1.22.6
-
-toolchain go1.23.4
+go 1.23.4
 
 require (
 	github.com/go-stomp/stomp/v3 v3.1.0
