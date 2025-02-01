@@ -7,19 +7,26 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/gorilla/mux"
+
+	lru "github.com/hashicorp/golang-lru/v2/expirable"
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
+	"github.com/lestrrat-go/jwx/v2/jwk"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
 
 type Server struct {
-	Config *scyllaridae.ServerConfig
+	Config  *scyllaridae.ServerConfig
+	KeySets *lru.LRU[string, jwk.Set]
 }
 
 func (server *Server) SetupRouter() *mux.Router {
+	server.KeySets = lru.NewLRU[string, jwk.Set](25, nil, time.Minute*15)
+
 	r := mux.NewRouter()
 	r.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -28,7 +35,7 @@ func (server *Server) SetupRouter() *mux.Router {
 
 	// create the main route with logging and JWT auth middleware
 	authRouter := r.PathPrefix("/").Subrouter()
-	authRouter.Use(server.LoggingMiddleware, JWTAuthMiddleware)
+	authRouter.Use(server.LoggingMiddleware, server.JWTAuthMiddleware)
 	authRouter.HandleFunc("/", server.MessageHandler).Methods("GET", "POST")
 
 	// make sure 404s get logged
