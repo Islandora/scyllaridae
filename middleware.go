@@ -116,10 +116,18 @@ func (s *Server) verifyJWT(tokenString string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	token, err := jwt.Parse([]byte(tokenString),
-		jwt.WithKey(jwa.RS256, key),
-		jwt.WithContext(ctx),
-	)
+	var token jwt.Token
+	if keySet.Len() > 1 {
+		token, err = jwt.Parse([]byte(tokenString),
+			jwt.WithContext(ctx),
+			jwt.WithKeySet(keySet),
+		)
+	} else {
+		token, err = jwt.Parse([]byte(tokenString),
+			jwt.WithContext(ctx),
+			jwt.WithKey(jwa.RS256, key),
+		)
+	}
 	if err != nil {
 		return fmt.Errorf("unable to parse token: %v", err)
 	}

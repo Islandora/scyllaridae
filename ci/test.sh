@@ -10,6 +10,21 @@ hash() {
   fi
 }
 
+apk update && apk add jq
+
+echo "Fetching GitHub OIDC token"
+TOKEN=$(curl -s \
+    -H "Accept: application/json; api-version=2.0" \
+    -H "Content-Type: application/json" -d "{}"  \
+    -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+    "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -er '.value')
+
+# add some buffer to avoid iat issues
+sleep 5
+
+echo "Triggering tests"
+echo "${TOKEN}" | jq -rR 'split(".") | .[1] | @base64d | fromjson | .aud'
+
 SERVICES=(
   "tesseract"
   "imagemagick"
@@ -35,6 +50,7 @@ for SERVICE in "${SERVICES[@]}"; do
         --header "X-Islandora-Args: -ss 00:00:45.000 -frames 1 -vf scale=720:-2" \
         --header "Accept: image/jpeg" \
         --header "Apix-Ldp-Resource: http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" \
+        --header "Authorization: Bearer ${TOKEN}" \
         "$URL"
     hash image.jpg | grep fe7dd57460dbaf50faa38affde54b694
     rm image.jpg
@@ -42,6 +58,7 @@ for SERVICE in "${SERVICES[@]}"; do
     curl -s -o image.png \
         --header "Accept: image/png" \
         --header "Apix-Ldp-Resource: https://preserve.lehigh.edu/_flysystem/fedora/2024-01/384659.pdf" \
+        --header "Authorization: Bearer ${TOKEN}" \
         "$URL"
     file image.png | grep -q PNG && echo "PNG thumbnail created from PDF"
     rm image.png
@@ -49,6 +66,7 @@ for SERVICE in "${SERVICES[@]}"; do
     curl -s -o ocr.txt \
         --header "Accept: text/plain" \
         --header "Apix-Ldp-Resource: https://preserve.lehigh.edu/sites/default/files/2023-12/285660.jpg" \
+        --header "Authorization: Bearer ${TOKEN}" \
         "$URL"
     grep -q Pyrases ocr.txt || exit 1
     echo "Image OCR as expected"
@@ -56,6 +74,7 @@ for SERVICE in "${SERVICES[@]}"; do
     curl -s -o ocr.txt \
         --header "Accept: text/plain" \
         --header "Apix-Ldp-Resource: https://preserve.lehigh.edu/_flysystem/fedora/2024-01/384659.pdf" \
+        --header "Authorization: Bearer ${TOKEN}" \
         "$URL"
     grep "One time I was ridin' along on the mule" ocr.txt || exit 1
     echo "PDF OCR as expected"
@@ -74,6 +93,7 @@ for SERVICE in "${SERVICES[@]}"; do
     curl -o result.tex \
       -H "Content-Type: text/markdown" \
       -H "Accept: application/x-latex" \
+      --header "Authorization: Bearer ${TOKEN}" \
       --data-binary "@/fixtures/pandoc/input.md" \
       "$URL"
 
