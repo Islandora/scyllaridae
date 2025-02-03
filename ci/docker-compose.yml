@@ -6,19 +6,19 @@ services:
     crayfits:
         image: lehighlts/scyllaridae-fits:${DOCKER_TAG}
         environment:
-            SKIP_JWT_VERIFY: "true"
+            JWKS_URI: "https://token.actions.githubusercontent.com/.well-known/jwks"
     ffmpeg:
         image: lehighlts/scyllaridae-ffmpeg:${DOCKER_TAG}
         environment:
-            SKIP_JWT_VERIFY: "true"
+            JWKS_URI: "https://token.actions.githubusercontent.com/.well-known/jwks"
     imagemagick:
         image: lehighlts/scyllaridae-imagemagick:${DOCKER_TAG}
         environment:
-            SKIP_JWT_VERIFY: "true"
+            JWKS_URI: "https://token.actions.githubusercontent.com/.well-known/jwks"
     tesseract:
         image: lehighlts/scyllaridae-tesseract:${DOCKER_TAG}
         environment:
-            SKIP_JWT_VERIFY: "true"
+            JWKS_URI: "https://token.actions.githubusercontent.com/.well-known/jwks"
     whisper:
         image: lehighlts/scyllaridae-whisper:${DOCKER_TAG}
         environment:
@@ -26,12 +26,14 @@ services:
     pandoc:
         image: lehighlts/scyllaridae-pandoc:${DOCKER_TAG}
         environment:
-            SKIP_JWT_VERIFY: "true"
+            JWKS_URI: "https://token.actions.githubusercontent.com/.well-known/jwks"
     test:
         image: alpine@sha256:56fa17d2a7e7f168a043a2712e63aed1f8543aeafdcee47c58dcffe38ed51099
         command: sleep 300
         environment:
             DOCKER_TAG: ${DOCKER_TAG}
+            ACTIONS_ID_TOKEN_REQUEST_URL: ${ACTIONS_ID_TOKEN_REQUEST_URL}
+            ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}
         volumes:
             - ./test.sh:/test.sh
             - ./fixtures:/fixtures
