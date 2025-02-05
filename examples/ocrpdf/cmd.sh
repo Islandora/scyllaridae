@@ -8,11 +8,6 @@ cd "$TMP_DIR"
 
 cat > input.pdf
 
-# don't process if the PDF already has text
-if pdftotext input.pdf - | grep -q '[a-zA-Z0-9]'; then
-  exit 1
-fi
-
 # split pdf into PNG files
 magick input.pdf page-%d.png > /dev/null 2>&1
 
