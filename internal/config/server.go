@@ -20,30 +20,10 @@ import (
 //
 // swagger:model ServerConfig
 type ServerConfig struct {
-	// Label of the server configuration used for identification.
-	//
-	// required: true
-	Label string `yaml:"label"`
-
-	// Label of the server configuration used for identification.
+	// For stomp subsriber, the queues to subscribe to.
 	//
 	// required: false
 	QueueMiddlewares []QueueMiddleware `yaml:"queueMiddlewares,omitempty"`
-
-	// HTTP method used for sending data to the destination server.
-	//
-	// required: false
-	DestinationHTTPMethod string `yaml:"destinationHttpMethod"`
-
-	// Header name for the file resource.
-	//
-	// required: false
-	FileHeader string `yaml:"fileHeader,omitempty"`
-
-	// Header name for additional arguments passed to the command.
-	//
-	// required: false
-	ArgHeader string `yaml:"argHeader,omitempty"`
 
 	// Indicates whether the authentication header should be forwarded.
 	//
