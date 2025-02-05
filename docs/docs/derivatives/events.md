@@ -66,4 +66,4 @@ curl \
   http://example.com/your/micro/service
 ```
 
-The microservice then reads those headers, downloads the file represented in the URI found in the `Apix-Ldp-Resource` header.
+The microservice then reads those headers, downloads the file represented in the URI found in the `Apix-Ldp-Resource` header, sends the file to a command that generates a derivate of the file, and prints the derivative file contents to stdout. Alpaca then handles uploading that derivative to Drupal.
