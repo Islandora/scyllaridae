@@ -95,3 +95,10 @@ spec:
                 name: islandora-openai-htr
                 port:
                   number: 8080
+          - path: /cleanpdf(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: islandora-cleanpdf
+                port:
+                  number: 8080
