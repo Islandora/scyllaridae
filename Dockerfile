@@ -4,7 +4,7 @@ SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 ENV GOSU_VERSION=1.17
 RUN apk add --no-cache --virtual .gosu-deps \
-		ca-certificates==20240705-r0 \
+		ca-certificates==20241121-r1 \
 		dpkg==1.22.6-r1 \
 		gnupg==2.4.5-r0 && \
 	dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" && \
@@ -29,7 +29,7 @@ RUN apk update && \
     apk add --no-cache \
       curl==8.11.1-r0 \
       bash==5.2.26-r0 \
-      ca-certificates==20240705-r0 \
+      ca-certificates==20241121-r1 \
       openssl==3.3.2-r1
 
 COPY . ./
