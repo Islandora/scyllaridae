@@ -1,0 +1,17 @@
+allowedMimeTypes:
+  - "application/pdf"
+cmdByMimeType:
+  default:
+    cmd: gs
+    args:
+      - "-o"
+      - "-"
+      - "-sDEVICE=pdfwrite"
+      - "dPDFSETTINGS=/prepress"
+      - "dNOPAUSE"
+      - "dBATCH"
+      - "dQUIET"
+      - "dNoOutputFonts"
+      - "-dDetectDuplicateImages"
+      - "-dPrinted"
+      - "-"
