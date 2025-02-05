@@ -9,6 +9,22 @@ plugins:
   - search
   - social
   - tags
+  - mermaid2
 
 nav:
   - Home: index.md
+  - Creating a new microservice:
+    - Gather requirements: requirements.md
+    - Derivatives:
+      - Understanding Islandora Events: derivatives/events.md
+      - Implement your derivative microservice: derivatives/create.md
+      - Testing your derivative microservice: derivatives/test.md
+      - Wire everything up: derivatives/config.md
+    - Indexing:
+      - Understanding Islandora Events: index/events.md
+    - The Whole Shebang:
+      - Understanding Islandora Events: all/events.md
+extra_css:
+    - css/extra.css
+extra_javascript:
+    - js/extra.js

@@ -34,47 +34,6 @@ WEBVTT
 
 You can see several example implementations using this framework in [examples](./examples). Some examples send the file's contents directly to `stdin` if the command supports reading from that stream e.g. [fits](./examples/fits/scyllaridae.yml). For other commands that do not support reading directly from stdin, and instead requiring specifying a file path on disk, a bash script is implemented to act as a wrapper around the command. e.g. [libreoffice](./examples/libreoffice/cmd.sh)
 
-## Adding a new microservice
-
-### Create the microservice
-
-Define the service's behavior in `scyllaridae.yml`.
-
-You can specify which mimetypes the service can act on in `allowedMimeTypes`
-
-And specify different commands for different mimetypes in `cmdByMimeType`, or set the default command to run for all mimetypes with the `default` key.
-
-```yaml
-allowedMimeTypes:
-  - "*"
-cmdByMimeType:
-  default:
-    cmd: "curl"
-    args:
-      - "-X"
-      - "POST"
-      # read the source media file in from stdin
-      - "-F"
-      - "datafile=@-"
-      # send the media file to FITS which will return the XML to stdout
-      - "http://fits:8080/fits/examine"
-```
-
-<sup><sub>Here's another more [complex example YML](./scyllaridae.complex.yml).</sub></sup>
-
-
-Define the `Dockerfile` to run your microservice. Your service will run the main `scyllaridae` program which is an http service configured by your `scyllaridae.yml`. You just need to install the binaries your yml specifies to ensure the command is in the container when it runs.
-
-```dockerfile
-FROM lehighlts/scyllaridae:main
-
-RUN apk update && \
-    apk add --no-cache curl==8.5.0-r0
-
-COPY scyllaridae.yml /app/scyllaridae.yml
-```
-
-
 ### Deploy your new microservice
 
 Update your [ISLE docker-compose.yml](https://github.com/Islandora-Devops/isle-site-template/blob/main/docker-compose.yml) to deploy the service's docker image defined above
