@@ -38,8 +38,8 @@ echo "$NODE_JSON" | jq -r '.citation[0].value' | \
 
 # The title and citation could contain MathML and other non-standard unicode characters
 # so have pandoc convert them to LaTex
-pandoc "$TMP_DIR/title.html" -o "$TMP_DIR/title-latex.tex" --lua-filter=/app/urldecode.lua
-pandoc "$TMP_DIR/citation.html" -o "$TMP_DIR/citation-latex.tex" --lua-filter=/app/urldecode.lua
+pandoc "$TMP_DIR/title.html" -o "$TMP_DIR/title-latex.tex" --lua-filter=/app/urldecode.lua > /dev/null 2>&1
+pandoc "$TMP_DIR/citation.html" -o "$TMP_DIR/citation-latex.tex" --lua-filter=/app/urldecode.lua > /dev/null 2>&1
 
 # replace new lines with a space
 # and put the file in the location our main coverpage.tex will insert from
@@ -55,10 +55,10 @@ MERGED_PDF="$TMP_DIR/merged.pdf"
 cp coverpage.tex "$TMP_FILE"
 
 # Generate the cover page from LaTex to PDF
-xelatex -output-directory="$TMP_DIR" "$TMP_FILE" > /dev/null
+xelatex -output-directory="$TMP_DIR" "$TMP_FILE" > /dev/null 2>&1
 
 # Merge the cover page with the existing PDF using ghostscript
-gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="${MERGED_PDF}" "$PDF_FILE" "$EXISTING_PDF"
+gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="${MERGED_PDF}" "$PDF_FILE" "$EXISTING_PDF" > /dev/null 2>&1
 
 cat "$MERGED_PDF"
 
