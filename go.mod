@@ -3,14 +3,14 @@ module github.com/lehigh-university-libraries/scyllaridae
 go 1.23.4
 
 require (
-	github.com/go-stomp/stomp/v3 v3.1.0
+	github.com/go-stomp/stomp/v3 v3.1.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/lestrrat-go/jwx/v2 v2.1.3
-	github.com/stretchr/testify v1.9.0
-	golang.org/x/text v0.21.0
+	github.com/stretchr/testify v1.10.0
+	golang.org/x/text v0.22.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
