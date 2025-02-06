@@ -101,7 +101,7 @@ cmdByMimeType:
       - "image:-"
 ```
 
-## Command arguments
+### Command arguments
 
 There are some special strings you can use in your `.cmdByMimeType[*].args`:
 
@@ -112,7 +112,7 @@ There are some special strings you can use in your `.cmdByMimeType[*].args`:
 - `"%destination-mime-pandoc"` - the destination file mimetype, converted to what pandoc understands
 - `"%source-uri"` - the URL of the file as derivative is being created for
 
-### Not available if using alpaca
+#### Not available if using alpaca
 
 As we noted in [the Islandora Events overview](../events/), alpaca only sends a subset of the event attributes to a microservice. If you need access to this parameters in your microservice, you'll need to use [the more complex setup](../../all/events) for your microservice
 
@@ -121,7 +121,7 @@ As we noted in [the Islandora Events overview](../events/), alpaca only sends a 
 - `"%canonical"` - the canonical link to the node
 
 
-## On stdin/stdout
+### On stdin/stdout
 
 If your command/software has flags to handle reading from stdin and writing to stdout, you can use those. Both examples above are using software (i.e. `curl` and `magick`) that allow reading from stdin and writing to stdout.
 
