@@ -4,6 +4,6 @@ FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 
 RUN apk update && \
     apk add --no-cache \
-        ghostscript==10.04.0-r0
+        qpdf==11.9.1-r0
 
 COPY . /app
