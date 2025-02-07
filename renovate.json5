@@ -28,30 +28,6 @@
       ],
     },
     {
-      matchManagers: [
-        'gomod',
-      ],
-      postUpdateOptions: [
-        'gomodTidy',
-      ],
-      groupName: 'gomod updates',
-    },
-    {
-      matchManagers: [
-        'dockerfile',
-      ],
-      groupName: 'Dockerfile updates',
-    },
-    {
-      matchManagers: [
-        'github-actions',
-      ],
-      groupName: 'GitHub Actions updates',
-      schedule: [
-        'after 10pm on Friday',
-      ],
-    },
-    {
       matchUpdateTypes: [
         'major',
       ],
