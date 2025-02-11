@@ -6,7 +6,7 @@ FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG} AS scyllaridae
 ENV OPENJDK_VERSION="17.0.13_p11-r0"
 # renovate: datasource=repology depName=alpine_3_20/libreoffice
 ENV LIBREOFFICE_VERSION="7.6.7.2-r0"
-# renovate: datasource=repology depName=alpine_3_20/ttf-dejavu
+# renovate: datasource=repology depName=alpine_3_20/font-dejavu
 ENV TTF_DEJAVU_VERSION="2.37-r5"
 
 COPY scyllaridae.yml /app/
