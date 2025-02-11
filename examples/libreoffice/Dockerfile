@@ -3,7 +3,7 @@ ARG DOCKER_REPOSITORY=lehighlts
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG} AS scyllaridae
 
 # renovate: datasource=repology depName=alpine_3_20/openjdk17-jre
-ENV OPENJDK_VERSION="17.0.13_p11-r0"
+ENV OPENJDK_VERSION="17.0.14_p7-r0"
 # renovate: datasource=repology depName=alpine_3_20/libreoffice
 ENV LIBREOFFICE_VERSION="7.6.7.2-r0"
 # renovate: datasource=repology depName=alpine_3_20/font-dejavu
