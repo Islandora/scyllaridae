@@ -9,11 +9,11 @@ ENV DPKG_VERSION="1.22.6-r1"
 # renovate: datasource=repology depName=alpine_3_20/gnupg
 ENV GNUPG_VERSION="2.4.5-r0"
 # renovate: datasource=repology depName=alpine_3_20/curl
-ENV CURL_VERSION="8.11.1-r0"
+ENV CURL_VERSION="8.11.1-r1"
 # renovate: datasource=repology depName=alpine_3_20/bash
 ENV BASH_VERSION="5.2.26-r0"
 # renovate: datasource=repology depName=alpine_3_20/openssl
-ENV OPENSSL_VERSION="3.3.2-r1"
+ENV OPENSSL_VERSION="3.3.2-r2"
 
 ENV GOSU_VERSION=1.17
 RUN apk add --no-cache --virtual .gosu-deps \
