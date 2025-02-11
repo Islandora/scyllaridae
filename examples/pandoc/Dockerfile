@@ -3,13 +3,21 @@ ARG DOCKER_REPOSITORY=lehighlts
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG} AS scyllaridae
 FROM pandoc/latex:3.6-ubuntu@sha256:d1d86dcfa549528bc07ecd467ee99ac7ae35f073cec90ae493a2cc1c61c78d58 AS pandoc
 
-# hadolint ignore=DL3008
+# renovate: datasource=repology depName=ubuntu_24_04/gosu
+ENV CURL_VERSION="8.5.0-2ubuntu10.6"
+# renovate: datasource=repology depName=ubuntu_24_04/gosu
+ENV BASH_VERSION="5.2.21-2ubuntu4"
+# renovate: datasource=repology depName=ubuntu_24_04/gosu
+ENV GOSU_VERSION="1.17-1ubuntu0.24.04.2"
+# renovate: datasource=repology depName=ubuntu_24_04/jq
+ENV JQ_VERSION="1.7.1-3build1"
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        curl \
-        bash=5.2.21-2ubuntu4 \
-        gosu=1.17-1ubuntu0.24.04.2 \
-        jq=1.7.1-3build1 \
+        curl="${CURL_VERSION}" \
+        bash="${BASH_VERSION}" \
+        gosu="${GOSU_VERSION}" \
+        jq="${JQ_VERSION}" \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
