@@ -1,7 +1,7 @@
 ARG TAG=main
 ARG DOCKER_REPOSITORY=lehighlts
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG} AS scyllaridae
-FROM pandoc/latex:3.6-ubuntu@sha256:e9bacab9b10564213fffdb66fc539ddc11d52e1e7d538b1ee356020cb28fa081 AS pandoc
+FROM pandoc/latex:3.6-ubuntu@sha256:d1d86dcfa549528bc07ecd467ee99ac7ae35f073cec90ae493a2cc1c61c78d58 AS pandoc
 
 # hadolint ignore=DL3008
 RUN apt-get update \
