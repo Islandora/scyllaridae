@@ -25,12 +25,21 @@ ENV SKIP_JWT_VERIFY=""
 
 RUN adduser -S -G nobody scyllaridae
 
+# renovate: datasource=repology depName=alpine_3_20/curl versioning=loose
+ENV CURL_VERSION="8.11.1-r0"
+# renovate: datasource=repology depName=alpine_3_20/bash versioning=loose
+ENV BASH_VERSION="5.2.26-r0"
+# renovate: datasource=repology depName=alpine_3_20/ca-certificates versioning=loose
+ENV CA_CERTIFICATES_VERSION="20241121-r1"
+# renovate: datasource=repology depName=alpine_3_20/openssl versioning=loose
+ENV OPENSSL_VERSION="3.3.2-r1"
+
 RUN apk update && \
     apk add --no-cache \
-      curl==8.11.1-r0 \
-      bash==5.2.26-r0 \
-      ca-certificates==20241121-r1 \
-      openssl==3.3.2-r1
+      curl=="${CURL_VERSION}" \
+      bash=="${BASH_VERSION}" \
+      ca-certificates=="${CA_CERTIFICATES_VERSION}" \
+      openssl=="${OPENSSL_VERSION}"
 
 COPY . ./
 
