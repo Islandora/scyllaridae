@@ -2,11 +2,24 @@ FROM golang:1.23-alpine3.20@sha256:22caeb4deced0138cb4ae154db260b22d1b2ef893dde7
 
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
+# renovate: datasource=repology depName=alpine_3_20/ca-certificates
+ENV CA_CERTIFICATES_VERSION="20241121-r1"
+# renovate: datasource=repology depName=alpine_3_20/dpkg
+ENV DPKG_VERSION="1.22.6-r1"
+# renovate: datasource=repology depName=alpine_3_20/gnupg
+ENV GNUPG_VERSION="2.4.5-r0"
+# renovate: datasource=repology depName=alpine_3_20/curl
+ENV CURL_VERSION="8.11.1-r0"
+# renovate: datasource=repology depName=alpine_3_20/bash
+ENV BASH_VERSION="5.2.26-r0"
+# renovate: datasource=repology depName=alpine_3_20/openssl
+ENV OPENSSL_VERSION="3.3.2-r1"
+
 ENV GOSU_VERSION=1.17
 RUN apk add --no-cache --virtual .gosu-deps \
-		ca-certificates==20241121-r1 \
-		dpkg==1.22.6-r1 \
-		gnupg==2.4.5-r0 && \
+    ca-certificates=="${CA_CERTIFICATES_VERSION}" \
+    dpkg=="${DPKG_VERSION}" \
+    gnupg=="${GNUPG_VERSION}" && \
 	dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" && \
 	wget -q -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch" && \
 	wget -q -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc" && \
@@ -24,15 +37,6 @@ WORKDIR /app
 ENV SKIP_JWT_VERIFY=""
 
 RUN adduser -S -G nobody scyllaridae
-
-# renovate: datasource=repology depName=alpine_3_20/curl versioning=loose
-ENV CURL_VERSION="8.11.1-r0"
-# renovate: datasource=repology depName=alpine_3_20/bash versioning=loose
-ENV BASH_VERSION="5.2.26-r0"
-# renovate: datasource=repology depName=alpine_3_20/ca-certificates versioning=loose
-ENV CA_CERTIFICATES_VERSION="20241121-r1"
-# renovate: datasource=repology depName=alpine_3_20/openssl versioning=loose
-ENV OPENSSL_VERSION="3.3.2-r1"
 
 RUN apk update && \
     apk add --no-cache \

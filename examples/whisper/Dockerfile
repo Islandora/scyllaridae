@@ -9,7 +9,9 @@ COPY cmd.sh /app
 
 RUN bash ./models/download-ggml-model.sh medium.en
 
-RUN apt-get update && apt-get install -y gosu=1.14-1 --no-install-recommends \
+RUN apt-get update \
+  && apt-get install -y  --no-install-recommends \
+    gosu=1.14-1 \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd -r nobody \
   && useradd -r -g nobody scyllaridae \
