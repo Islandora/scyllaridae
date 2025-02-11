@@ -3,21 +3,26 @@ ARG DOCKER_REPOSITORY=lehighlts
 FROM islandora/leptonica:alpine-3.20.2-leptonica-1.84.1-r0@sha256:9e9e46a328d8b55a61a352a6b06ff175f98e40cd5773c9bf93aac58fb56b65f7 AS leptonica
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG}
 
+# renovate: datasource=repology depName=alpine_3_20/tesseract
+ENV TESSERACT_VERSION="5.3.4-r0"
+# renovate: datasource=repology depName=alpine_3_20/poppler-utils
+ENV POPPLER_VERSION="24.02.0-r2"
+
 RUN --mount=type=bind,from=leptonica,source=/packages,target=/packages \
     --mount=type=bind,from=leptonica,source=/etc/apk/keys,target=/etc/apk/keys \
     apk update && \
     apk add --no-cache \
         /packages/leptonica-*.apk \
-        tesseract-ocr==5.3.4-r0 \
-        tesseract-ocr-data-eng==5.3.4-r0 \
-        tesseract-ocr-data-fra==5.3.4-r0 \
-        tesseract-ocr-data-spa==5.3.4-r0 \
-        tesseract-ocr-data-ita==5.3.4-r0 \
-        tesseract-ocr-data-por==5.3.4-r0 \
-        tesseract-ocr-data-hin==5.3.4-r0 \
-        tesseract-ocr-data-deu==5.3.4-r0 \
-        tesseract-ocr-data-jpn==5.3.4-r0 \
-        tesseract-ocr-data-rus==5.3.4-r0 \
-        poppler-utils==24.02.0-r2
+        tesseract-ocr=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-eng=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-fra=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-spa=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-ita=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-por=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-hin=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-deu=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-jpn=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-rus=="${TESSERACT_VERSION}" \
+        poppler-utils=="${POPPLER_VERSION}"
 
 COPY scyllaridae.yml /app/scyllaridae.yml
