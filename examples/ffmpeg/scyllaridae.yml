@@ -31,36 +31,8 @@ cmdByMimeType:
       - "-vcodec"
       - "png"
       - "-"
-  "video/mp4":
-    cmd: ffmpeg
-    args:
-      - "-f"
-      - "%source-mime-ext"
-      - "-i"
-      - "-"
-      - "%args"
-      - "-vcodec"
-      - "libx264"
-      - "-preset"
-      - "medium"
-      - "-acodec"
-      - "aac"
-      - "-strict"
-      - "-2"
-      - "-ab"
-      - "128k"
-      - "-ac"
-      - "2"
-      - "-async"
-      - "1"
-      - "-movflags"
-      - "faststart"
-      - "-y"
-      - "-f"
-      - "%destination-mime-ext"
-      - "-"
   default:
-    cmd: ffmpeg
+    cmd: /app/cmd.sh "%source-mime-ext" "%destination-mime-ext"  "%args"
     args:
       - "-f"
       - "%source-mime-ext"
