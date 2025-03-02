@@ -9,3 +9,4 @@ RUN apk update && \
     apk add --no-cache ffmpeg=="${FFMPEG_VERSION}"
 
 COPY scyllaridae.yml /app/scyllaridae.yml
+COPY cmd.sh /app/cmd.sh
