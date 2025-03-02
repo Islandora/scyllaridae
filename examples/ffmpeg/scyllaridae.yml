@@ -32,13 +32,8 @@ cmdByMimeType:
       - "png"
       - "-"
   default:
-    cmd: /app/cmd.sh "%source-mime-ext" "%destination-mime-ext"  "%args"
+    cmd: /app/cmd.sh
     args:
-      - "-f"
       - "%source-mime-ext"
-      - "-i"
-      - "-"
-      - "%args"
-      - "-f"
       - "%destination-mime-ext"
-      - "-"
+      - "%args"
