@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
+	"github.com/lehigh-university-libraries/scyllaridae/internal/config"
 	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
@@ -51,7 +51,7 @@ func (s *Server) LoggingMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		cmd, err := scyllaridae.BuildExecCommand(message, s.Config)
+		cmd, err := config.BuildExecCommand(message, s.Config)
 		if err != nil {
 			slog.Error("Error building command", "err", err)
 			http.Error(w, "Bad request", http.StatusBadRequest)

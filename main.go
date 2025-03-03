@@ -4,22 +4,18 @@ import (
 	"log/slog"
 	"os"
 
-	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
+	"github.com/lehigh-university-libraries/scyllaridae/internal/config"
+	"github.com/lehigh-university-libraries/scyllaridae/internal/server"
 )
 
 func main() {
-	config, err := scyllaridae.ReadConfig("scyllaridae.yml")
+	config, err := config.ReadConfig("scyllaridae.yml")
 	if err != nil {
 		slog.Error("Could not read YML", "err", err)
 		os.Exit(1)
 	}
-
-	if len(config.QueueMiddlewares) > 0 {
-		runStompSubscribers(config)
-	} else {
-		server := &Server{
-			Config: config,
-		}
-		runHTTPServer(server)
+	s := &server.Server{
+		Config: config,
 	}
+	server.RunHTTPServer(s)
 }
