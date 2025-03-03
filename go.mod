@@ -3,7 +3,6 @@ module github.com/lehigh-university-libraries/scyllaridae
 go 1.23.4
 
 require (
-	github.com/go-stomp/stomp/v3 v3.1.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gorilla/mux v1.8.1
@@ -29,4 +28,5 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

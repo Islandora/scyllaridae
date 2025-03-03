@@ -52,6 +52,7 @@ type QueueMiddleware struct {
 	Consumers   int    `yaml:"consumers"`
 	ForwardAuth bool   `yaml:"forwardAuth,omitempty"`
 	NoPut       bool   `yaml:"noPut"`
+	PutFile     bool   `yaml:"putFile"`
 }
 
 // Command describes the command and arguments to execute for a specific MIME type.

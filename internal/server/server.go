@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"bytes"
@@ -22,6 +22,20 @@ import (
 type Server struct {
 	Config  *scyllaridae.ServerConfig
 	KeySets *lru.LRU[string, jwk.Set]
+}
+
+func RunHTTPServer(server *Server) {
+	r := server.SetupRouter()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	slog.Info("Server listening", "port", port)
+	if err := http.ListenAndServe(":"+port, r); err != nil {
+		panic(err)
+	}
 }
 
 func (server *Server) SetupRouter() *mux.Router {
@@ -51,20 +65,6 @@ func (server *Server) SetupRouter() *mux.Router {
 	authRouter.NotFoundHandler = server.LoggingMiddleware(notFoundHandler)
 
 	return r
-}
-
-func runHTTPServer(server *Server) {
-	r := server.SetupRouter()
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	slog.Info("Server listening", "port", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
-		panic(err)
-	}
 }
 
 func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
