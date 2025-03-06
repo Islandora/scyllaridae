@@ -30,8 +30,6 @@ jobs:
           TAG=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
         fi
         echo "tag=$TAG" >> $GITHUB_OUTPUT
-        SHA=$(echo ${GITHUB_SHA} | cut -c1-7)
-        echo "sha=$SHA" >> $GITHUB_OUTPUT
       id: extract_tag
 
     - name: Set up QEMU
@@ -81,4 +79,3 @@ jobs:
         push: true
         tags: |
           lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
-          lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}-${{steps.extract_tag.outputs.sha}}
