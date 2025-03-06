@@ -10,6 +10,12 @@ MAX_THREADS=${MAX_THREADS:-5}
 PIDS=()
 RETRIES=3
 
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+
+trap cleanup EXIT
+
 # Function to download and process the image with retries
 download_and_process() {
   local url="$1"
@@ -94,7 +100,5 @@ curl \
   -H "Content-Location: private://derivatives/pc/pdf/$NID.pdf" \
   -T "$TMP_DIR/ocr.pdf" \
   "$1/media/document/$TID"
-
-rm -rf "$TMP_DIR"
 
 echo "OK"
