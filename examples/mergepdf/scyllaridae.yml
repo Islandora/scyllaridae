@@ -6,3 +6,4 @@ cmdByMimeType:
     cmd: /app/cmd.sh
     args:
       - "%canonical"
+      - "%args"

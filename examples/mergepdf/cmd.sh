@@ -2,6 +2,7 @@
 
 set -eou pipefail
 
+LANGUAGE=${1:-eng}
 TMP_DIR=$(mktemp -d)
 I=0
 MAX_THREADS=${MAX_THREADS:-5}
@@ -52,7 +53,7 @@ while read -r URL; do
     fi
 
     # Make an OCR'd PDF from the image
-    tesseract "$local_img" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
+    tesseract -l "$LANGUAGE" "$local_img" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
     rm "$local_img"
   ) &
   PIDS+=("$!")
