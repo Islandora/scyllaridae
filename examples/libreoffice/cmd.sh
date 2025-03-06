@@ -5,12 +5,15 @@
 set -eou pipefail
 
 input_temp=$(mktemp /tmp/libreoffice-input-XXXXXX)
+PDF="/app/$(basename "$input_temp").pdf"
+
+cleanup() {
+  rm -rf "$input_temp" "$PDF"
+}
+trap cleanup EXIT
 
 cat > "$input_temp"
 
 libreoffice --headless --convert-to pdf "$input_temp" > /dev/null 2>&1
 
-PDF="/app/$(basename "$input_temp").pdf"
 cat "$PDF"
-
-rm "$input_temp" "$PDF"
