@@ -3,6 +3,10 @@
 set -eou pipefail
 
 export LOCK_FILE="/tmp/scyllaridae-cache.lock"
+cleanup() {
+  rm -f "$LOCK_FILE" links.xml pc.json
+}
+trap cleanup EXIT
 
 # how many cURL commands to run in parallel for /node/\d+
 if [ ! -v NODE_PARALLEL_EXECUTIONS ] || [ "$NODE_PARALLEL_EXECUTIONS" = "" ]; then
@@ -13,13 +17,6 @@ fi
 if [ ! -v IIIF_PARALLEL_EXECUTIONS ] || [ "$IIIF_PARALLEL_EXECUTIONS" = "" ]; then
   IIIF_PARALLEL_EXECUTIONS=3
 fi
-
-
-handle_error() {
-  rm -f "$LOCK_FILE"
-  exit 1
-}
-trap 'handle_error' ERR
 
 # curl wrapper function so on 302 we can forward the cache-warmer paramater
 process_url() {
@@ -93,8 +90,6 @@ while true; do
   fi
 done
 
-rm -f links.xml
-
 # now that the sitemap is warm, get all the IIIF paged content manifests warm
 curl -s "$DRUPAL_URL/api/v1/paged-content" > pc.json
 mapfile -t NIDS < <(jq -r '.[]' pc.json)
@@ -116,7 +111,3 @@ for NID in "${NIDS[@]}"; do
     wait "$job_id" || echo "One job failed, but continuing anyway"
   done
 done
-
-rm -f pc.json
-
-rm "$LOCK_FILE"
