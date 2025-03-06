@@ -2,7 +2,8 @@
 
 set -eou pipefail
 
-LANGUAGE=${1:-eng}
+URL="$1/book-manifest"
+LANGUAGE=${2:-eng}
 TMP_DIR=$(mktemp -d)
 I=0
 MAX_THREADS=${MAX_THREADS:-5}
@@ -29,7 +30,7 @@ download_and_process() {
 }
 
 # Iterate over all images in the IIIF manifest
-URLS=$(curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | awk -F '/' '{print $7}' | sed -e 's/%2F/\//g' -e 's/%3A/:/g')
+URLS=$(curl -s "$URL" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | awk -F '/' '{print $7}' | sed -e 's/%2F/\//g' -e 's/%3A/:/g')
 while read -r URL; do
   # If we have reached the max thread limit, wait for any one job to finish
   if [ "${#PIDS[@]}" -ge "$MAX_THREADS" ]; then
