@@ -7,6 +7,11 @@ NODE_URL="$2"
 NID=$(basename "$NODE_URL")
 TMP_DIR=$(mktemp -d)
 
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
 ffmpeg \
   -f "$SOURCE_MIMETYPE" \
   -i - \
@@ -39,5 +44,3 @@ curl -s \
   -H "Content-Location: private://derivatives/hls/$NID/hls.tar.gz" \
   -T "$TMP_DIR/hls.tar.gz" \
   "$NODE_URL/media/file/$TID"
-
-rm -rf "$TMP_DIR"

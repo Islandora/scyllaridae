@@ -2,11 +2,19 @@
 
 set -eou pipefail
 
+URL="$1/book-manifest"
+LANGUAGE=${2:-eng}
 TMP_DIR=$(mktemp -d)
 I=0
 MAX_THREADS=${MAX_THREADS:-5}
 PIDS=()
 RETRIES=3
+
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+
+trap cleanup EXIT
 
 # Function to download and process the image with retries
 download_and_process() {
@@ -28,7 +36,7 @@ download_and_process() {
 }
 
 # Iterate over all images in the IIIF manifest
-URLS=$(curl -s "$1/book-manifest" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | awk -F '/' '{print $7}' | sed -e 's/%2F/\//g' -e 's/%3A/:/g')
+URLS=$(curl -s "$URL" | jq -r '.sequences[0].canvases[].images[0].resource."@id"' | awk -F '/' '{print $7}' | sed -e 's/%2F/\//g' -e 's/%3A/:/g')
 while read -r URL; do
   # If we have reached the max thread limit, wait for any one job to finish
   if [ "${#PIDS[@]}" -ge "$MAX_THREADS" ]; then
@@ -52,7 +60,7 @@ while read -r URL; do
     fi
 
     # Make an OCR'd PDF from the image
-    tesseract "$local_img" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
+    tesseract -l "$LANGUAGE" "$local_img" "$TMP_DIR/img_$I" pdf > /dev/null 2>&1
     rm "$local_img"
   ) &
   PIDS+=("$!")
@@ -92,7 +100,5 @@ curl \
   -H "Content-Location: private://derivatives/pc/pdf/$NID.pdf" \
   -T "$TMP_DIR/ocr.pdf" \
   "$1/media/document/$TID"
-
-rm -rf "$TMP_DIR"
 
 echo "OK"

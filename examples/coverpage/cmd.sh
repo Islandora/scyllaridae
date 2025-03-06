@@ -9,6 +9,12 @@ fi
 
 NODE_JSON_URL="$1"
 TMP_DIR=$(mktemp -d)
+
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
 EXISTING_PDF="$TMP_DIR/existing.pdf"
 cat > "${EXISTING_PDF}"
 
@@ -62,5 +68,3 @@ gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="${MERGED_PDF}" "$PDF_FIL
 
 cat "$MERGED_PDF"
 
-# Cleanup
-rm -r "$TMP_DIR" || echo "Could not cleanup temporary files"
