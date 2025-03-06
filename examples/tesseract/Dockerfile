@@ -23,6 +23,7 @@ RUN --mount=type=bind,from=leptonica,source=/packages,target=/packages \
         tesseract-ocr-data-deu=="${TESSERACT_VERSION}" \
         tesseract-ocr-data-jpn=="${TESSERACT_VERSION}" \
         tesseract-ocr-data-rus=="${TESSERACT_VERSION}" \
+        tesseract-ocr-data-chi_tra=="${TESSERACT_VERSION}" \
         poppler-utils=="${POPPLER_VERSION}"
 
 COPY scyllaridae.yml /app/scyllaridae.yml
