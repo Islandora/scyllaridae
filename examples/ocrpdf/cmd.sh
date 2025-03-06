@@ -4,6 +4,13 @@ set -eou pipefail
 
 TMP_DIR=$(mktemp -d)
 
+cleanup() {
+  cd /app
+  rm -rf "$TMP_DIR"
+}
+
+trap cleanup EXIT
+
 cd "$TMP_DIR"
 
 cat > input.pdf
@@ -25,6 +32,3 @@ pdfinfo output.pdf > /dev/null || exit 1
 # print the results to stdout
 cat output.pdf
 
-# cleanup
-cd /app
-rm -rf "$TMP_DIR"
