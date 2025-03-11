@@ -11,6 +11,7 @@ fi
 
 output_temp=$(mktemp /tmp/output-XXXXXX)
 
+# shellcheck disable=SC2317
 cleanup() {
   rm -rf "$output_temp"
 }
