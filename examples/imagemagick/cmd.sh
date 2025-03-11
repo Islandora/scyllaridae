@@ -20,10 +20,10 @@ INPUT="-"
 if [ "$SOURCE_EXT" = "pdf" ]; then
   INPUT="pdf:-[0]"
 elif [ "$SOURCE_EXT" = "tiff" ]; then
-  INPUT=""-[0]"
+  INPUT="-[0]"
 fi
 
-magick "$INPUT" "${ARGS[@]}" "$DEST_EXT" > $output_temp
+magick "$INPUT" "${ARGS[@]}" "$DEST_EXT" > "$output_temp"
 
 EXIT_CODE=0
 timeout 5 identify -verbose "$output_temp" > /dev/null 2>&1 || EXIT_CODE=$?
