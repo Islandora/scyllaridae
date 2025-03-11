@@ -26,7 +26,7 @@ fi
 magick "$INPUT" "${ARGS[@]}" "$DEST_EXT" > $output_temp
 
 EXIT_CODE=0
-timeout 1 identify -verbose "$output_temp" > /dev/null 2>&1 || EXIT_CODE=$?
+timeout 5 identify -verbose "$output_temp" > /dev/null 2>&1 || EXIT_CODE=$?
 if [ $EXIT_CODE != 1 ]; then
   cat "$output_temp"
   exit 0
