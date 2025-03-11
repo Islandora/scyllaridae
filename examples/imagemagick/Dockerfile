@@ -13,3 +13,4 @@ RUN --mount=type=bind,from=imagemagick,source=/packages,target=/packages \
 RUN magick -list format | grep "JPEG-2000"
 
 COPY scyllaridae.yml /app/scyllaridae.yml
+COPY cmd.sh /app/cmd.sh

@@ -2,21 +2,9 @@ allowedMimeTypes:
   - "application/pdf"
   - "image/*"
 cmdByMimeType:
-  "application/pdf":
-    cmd: magick
-    args:
-      - "pdf:-[0]"
-      - "%args"
-      - "%destination-mime-ext:-"
-  "image/tiff":
-    cmd: magick
-    args:
-      - "-[0]"
-      - "%args"
-      - "%destination-mime-ext:-"
   default:
-    cmd: magick
+    cmd: /app/cmd.sh
     args:
-      - "-"
+      - "%source-mime-ext"
+      - "%destination-mime-ext"
       - "%args"
-      - "%destination-mime-ext:-"
