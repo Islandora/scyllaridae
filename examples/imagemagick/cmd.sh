@@ -8,7 +8,8 @@ if [ "$#" -eq 3 ]; then
   IFS=' ' read -r -a ARGS <<< "$3"
 fi
 
-OUTPUT=$(mktemp /tmp/output-XXXXXX."$DEST_EXT")
+OUTPUT=$(mktemp -u /tmp/output-XXXXXX)
+OUTPUT="$OUTPUT.$DEST_EXT"
 
 # shellcheck disable=SC2317
 cleanup() {
@@ -33,4 +34,3 @@ if [ $EXIT_CODE != 1 ]; then
 fi
 
 exit "$EXIT_CODE"
-
