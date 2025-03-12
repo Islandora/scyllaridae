@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: write
     steps:
 
     - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4
@@ -77,5 +78,7 @@ jobs:
         build-args: |
           TAG=${{steps.extract_tag.outputs.tag}}
         push: true
+          cache-from: type=registry,ref=ghcr.io/lehigh-university-libraries/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
+          cache-to: type=registry,ref=ghcr.io/lehigh-university-libraries/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}},mode=max
         tags: |
           lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
