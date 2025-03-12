@@ -61,6 +61,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: write
     secrets: inherit
 
   find-images:
