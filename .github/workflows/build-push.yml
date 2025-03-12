@@ -32,6 +32,7 @@ jobs:
           TAG=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
           echo "branch=$TAG" >> $GITHUB_OUTPUT
         fi
+
         echo "tag=$TAG" >> $GITHUB_OUTPUT
       id: extract_tag
 
@@ -59,8 +60,14 @@ jobs:
         fi
 
         DIR=$(dirname "${{ inputs.dockerFile }}")
-        echo "image=scyllaridae-$(basename $DIR)" >> $GITHUB_OUTPUT
+        IMAGE="scyllaridae-$(basename $DIR)"
+        echo "image=$IMAGE" >> $GITHUB_OUTPUT
         echo "context=$DIR" >> $GITHUB_OUTPUT
+        if [ "${{steps.extract_tag.outputs.branch}}" = "main" ]; then
+          echo "cache-to=type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-$IMAGE-main,mode=max" >> $GITHUB_OUTPUT
+        else
+          echo "cache-to=[]" >> $GITHUB_OUTPUT
+        fi
       id: setup
 
     - name: Docker Hub Login
@@ -88,6 +95,6 @@ jobs:
           TAG=${{steps.extract_tag.outputs.tag}}
         push: true
         cache-from: type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-${{steps.setup.outputs.image}}-main
-        cache-to: type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-${{steps.setup.outputs.image}}-${{steps.extract_tag.outputs.branch}},mode=max
+        cache-to: ${{ steps.setup.outputs.cache-to }}
         tags: |
           lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
