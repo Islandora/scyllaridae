@@ -27,8 +27,10 @@ jobs:
       run: |-
         if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
           TAG=$(echo "${GITHUB_REF#refs/tags/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
+          echo "branch=main" >> $GITHUB_OUTPUT
         else
           TAG=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
+          echo "branch=$TAG" >> $GITHUB_OUTPUT
         fi
         echo "tag=$TAG" >> $GITHUB_OUTPUT
       id: extract_tag
@@ -85,7 +87,7 @@ jobs:
         build-args: |
           TAG=${{steps.extract_tag.outputs.tag}}
         push: true
-        cache-from: type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-${{steps.setup.outputs.image}}-${{steps.extract_tag.outputs.tag}}
-        cache-to: type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-${{steps.setup.outputs.image}}-${{steps.extract_tag.outputs.tag}},mode=max
+        cache-from: type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-${{steps.setup.outputs.image}}-${{steps.extract_tag.outputs.branch}}
+        cache-to: type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-${{steps.setup.outputs.image}}-${{steps.extract_tag.outputs.branch}},mode=max
         tags: |
           lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
