@@ -78,7 +78,7 @@ jobs:
         build-args: |
           TAG=${{steps.extract_tag.outputs.tag}}
         push: true
-          cache-from: type=registry,ref=ghcr.io/lehigh-university-libraries/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
-          cache-to: type=registry,ref=ghcr.io/lehigh-university-libraries/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}},mode=max
+        cache-from: type=registry,ref=ghcr.io/lehigh-university-libraries/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
+        cache-to: type=registry,ref=ghcr.io/lehigh-university-libraries/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}},mode=max
         tags: |
           lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
