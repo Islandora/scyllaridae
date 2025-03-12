@@ -15,6 +15,7 @@ ENV BASH_VERSION="5.2.26-r0"
 # renovate: datasource=repology depName=alpine_3_20/openssl
 ENV OPENSSL_VERSION="3.3.3-r0"
 
+# renovate: datasource=github-releases depName=gosu packageName=tianon/gosu
 ENV GOSU_VERSION=1.17
 RUN apk add --no-cache --virtual .gosu-deps \
     ca-certificates=="${CA_CERTIFICATES_VERSION}" \
