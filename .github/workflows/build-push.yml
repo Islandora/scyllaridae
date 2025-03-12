@@ -87,7 +87,7 @@ jobs:
         build-args: |
           TAG=${{steps.extract_tag.outputs.tag}}
         push: true
-        cache-from: type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-${{steps.setup.outputs.image}}-${{steps.extract_tag.outputs.branch}}
+        cache-from: type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-${{steps.setup.outputs.image}}-main
         cache-to: type=registry,ref=ghcr.io/lehigh-university-libraries/scyllaridae:cache-${{steps.setup.outputs.image}}-${{steps.extract_tag.outputs.branch}},mode=max
         tags: |
           lehighlts/${{steps.setup.outputs.image}}:${{steps.extract_tag.outputs.tag}}
