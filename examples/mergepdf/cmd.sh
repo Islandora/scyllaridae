@@ -52,7 +52,7 @@ while read -r URL; do
 
   # Run each job in the background
   (
-    local_img="$TMP_DIR/img_$I"
+    local_img="$TMP_DIR/img_$I.jpg"
 
     # Download and resize the image with retry logic
     if ! download_and_process "$URL" "$local_img"; then
