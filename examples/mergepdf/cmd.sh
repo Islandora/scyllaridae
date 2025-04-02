@@ -75,7 +75,7 @@ done
 wait
 
 # Make the node title the title of the PDF
-TITLE=$(curl -L "$1?_format=json" | jq -r '.title[0].value')
+TITLE=$(curl -L "$1?_format=json" | jq -r '.title[0].value' | sed 's/(/\\(/g; s/)/\\)/g')
 echo "[ /Title ($TITLE)/DOCINFO pdfmark" >  "$TMP_DIR/metadata.txt"
 
 gs -dBATCH \
