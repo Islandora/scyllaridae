@@ -9,7 +9,7 @@ on:
       - '.github/workflows/delete.yml'
       - 'renovate.json5'
     tags:
-    branches:
+      - '*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
