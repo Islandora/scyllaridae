@@ -1,3 +1,4 @@
+forwardAuth: true
 mimeTypeFromDestination: true
 allowedMimeTypes:
   - "audio/*"
