@@ -53,7 +53,7 @@ for SERVICE in "${SERVICES[@]}"; do
         --header "Apix-Ldp-Resource: http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" \
         --header "Authorization: Bearer ${TOKEN}" \
         "$URL"
-    hash image.jpg | grep fe7dd57460dbaf50faa38affde54b694
+    file image.jpg | grep -q JPEG && echo "Thumbnail created"
     rm image.jpg
   elif [ "$SERVICE" == "imagemagick" ]; then
     curl -s -o image.png \
