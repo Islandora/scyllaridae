@@ -57,7 +57,8 @@ for SERVICE in "${SERVICES[@]}"; do
   elif [ "$SERVICE" == "imagemagick" ]; then
     curl -s -o image.png \
         --header "Accept: image/png" \
-        --header "Apix-Ldp-Resource: https://preserve.lehigh.edu/_flysystem/fedora/2024-01/384659.pdf" \
+        --header "Content-Type: application/pdf" \
+        --data-binary "@/fixtures/tesseract/test.pdf"
         --header "Authorization: Bearer ${TOKEN}" \
         "$URL"
     file image.png | grep -q PNG && echo "PNG thumbnail created from PDF"
@@ -73,7 +74,8 @@ for SERVICE in "${SERVICES[@]}"; do
 
     curl -s -o ocr.txt \
         --header "Accept: text/plain" \
-        --header "Apix-Ldp-Resource: https://preserve.lehigh.edu/_flysystem/fedora/2024-01/384659.pdf" \
+        --header "Content-Type: application/pdf" \
+        --data-binary "@/fixtures/tesseract/test.pdf" \
         --header "Authorization: Bearer ${TOKEN}" \
         "$URL"
     grep "One time I was ridin' along on the mule" ocr.txt || exit 1
