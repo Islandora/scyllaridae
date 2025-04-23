@@ -125,7 +125,7 @@ func (s *Server) verifyJWT(tokenString string) error {
 	} else {
 		token, err = jwt.Parse([]byte(tokenString),
 			jwt.WithContext(ctx),
-			jwt.WithKey(jwa.RS256, key),
+			jwt.WithKey(jwa.RS256(), key),
 		)
 	}
 	if err != nil {
