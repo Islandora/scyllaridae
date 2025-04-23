@@ -15,8 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jws"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -347,37 +349,53 @@ func TestJwtAuth(t *testing.T) {
 		Keys: []JWK{jwk},
 	}
 
-	claims := jwt.MapClaims{
-		"sub":  "1234567890",
-		"name": "foo",
-		"iat":  time.Now().Unix(),
-		"exp":  time.Now().Add(time.Hour * 1).Unix(),
+	token, err := jwt.NewBuilder().
+		Subject("1234567890").
+		Claim("name", "foo").
+		IssuedAt(time.Now()).
+		Expiration(time.Now().Add(1 * time.Hour)).
+		Build()
+	if err != nil {
+		t.Fatal("Error building JWT:", err)
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = kid
-	signedToken, err := token.SignedString(goodPrivateKey)
+	hdr := jws.NewHeaders()
+	err = hdr.Set(jws.KeyIDKey, kid)
+	if err != nil {
+		t.Fatal("Error setting 'kid' header:", err)
+	}
+	signedToken, err := jwt.Sign(token,
+		jwt.WithKey(jwa.RS256(), goodPrivateKey, jws.WithProtectedHeaders(hdr)),
+	)
 	if err != nil {
 		t.Fatal("Error signing JWT:", err)
 	}
 
-	badToken, err := token.SignedString(badPrivateKey)
+	badToken, err := jwt.Sign(token,
+		jwt.WithKey(jwa.RS256(), badPrivateKey, jws.WithProtectedHeaders(hdr)),
+	)
 	if err != nil {
 		t.Fatal("Error signing JWT:", err)
 	}
 
-	staleClaims := jwt.MapClaims{
-		"sub":  "1234567890",
-		"name": "foo",
-		"iat":  time.Now().Unix() - 86400,
-		"exp":  time.Now().Unix() - 86000,
+	iat := time.Now().Add(-24 * time.Hour)
+	exp := time.Now().Add(-23*time.Hour + -20*time.Minute) // 86000 seconds ago
+
+	token, err = jwt.NewBuilder().
+		Subject("1234567890").
+		Claim("name", "foo").
+		IssuedAt(iat).
+		Expiration(exp).
+		Build()
+	if err != nil {
+		t.Fatal("Error building stale JWT:", err)
 	}
 
-	stale := jwt.NewWithClaims(jwt.SigningMethodRS256, staleClaims)
-	stale.Header["kid"] = kid
-	staleToken, err := stale.SignedString(goodPrivateKey)
+	staleToken, err := jwt.Sign(token,
+		jwt.WithKey(jwa.RS256(), goodPrivateKey, jws.WithProtectedHeaders(hdr)),
+	)
 	if err != nil {
-		t.Fatal("Error signing JWT:", err)
+		t.Fatal("Error signing stale JWT:", err)
 	}
 
 	tests := []Test{
