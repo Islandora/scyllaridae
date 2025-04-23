@@ -40,7 +40,8 @@ for SERVICE in "${SERVICES[@]}"; do
   if [ "$SERVICE" == "crayfits" ]; then
     curl -s -o fits.xml \
         --header "Accept: application/xml" \
-        --header "Apix-Ldp-Resource: https://preserve.lehigh.edu/_flysystem/fedora/2024-01/384659.pdf" \
+        --header "Content-Type: application/pdf" \
+        --data-binary "@/fixtures/tesseract/test.pdf" \
         "$URL"
     # check the md5 of that file exists in the FITS XML
     grep c4b7c84671428767e3b0d9193c9c444b fits.xml | grep -q md5checksum && echo "FITS ran successfully"
