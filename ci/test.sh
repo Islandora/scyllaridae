@@ -58,7 +58,7 @@ for SERVICE in "${SERVICES[@]}"; do
     curl -s -o image.png \
         --header "Accept: image/png" \
         --header "Content-Type: application/pdf" \
-        --data-binary "@/fixtures/tesseract/test.pdf"
+        --data-binary "@/fixtures/tesseract/test.pdf" \
         --header "Authorization: Bearer ${TOKEN}" \
         "$URL"
     file image.png | grep -q PNG && echo "PNG thumbnail created from PDF"
