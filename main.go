@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	config, err := config.ReadConfig("scyllaridae.yml")
+	config, err := config.ReadConfig()
 	if err != nil {
 		slog.Error("Could not read YML", "err", err)
 		os.Exit(1)

@@ -245,7 +245,7 @@ cmdByMimeType:
 
 			os.Setenv("SKIP_JWT_VERIFY", "true")
 			os.Setenv("SCYLLARIDAE_YML", tt.yml)
-			config, err := scyllaridae.ReadConfig("")
+			config, err := scyllaridae.ReadConfig()
 
 			sourceServer := createMockSourceServer(t, config, tt.mimetype, tt.authHeader, destinationServer.URL)
 			defer sourceServer.Close()
@@ -500,7 +500,7 @@ cmdByMimeType:
 			defer destinationServer.Close()
 
 			os.Setenv("SCYLLARIDAE_YML", tt.yml)
-			config, err := scyllaridae.ReadConfig("")
+			config, err := scyllaridae.ReadConfig()
 
 			sourceServer := createMockSourceServer(t, config, tt.mimetype, tt.authHeader, destinationServer.URL)
 			defer sourceServer.Close()
