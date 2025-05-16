@@ -93,7 +93,7 @@ func IsAllowedMimeType(mimetype string, allowedFormats []string) bool {
 	return false
 }
 
-func ReadConfig(yp string) (*ServerConfig, error) {
+func ReadConfig() (*ServerConfig, error) {
 	var (
 		y   []byte
 		err error
@@ -102,6 +102,10 @@ func ReadConfig(yp string) (*ServerConfig, error) {
 	if yml != "" {
 		y = []byte(yml)
 	} else {
+		yp := os.Getenv("SCYLLARIDAE_YML_PATH")
+		if yp == "" {
+			return nil, errors.New("need to specify the path to scyllaridae.yml with the environment variable SCYLLARIDAE_YML_PATH")
+		}
 		y, err = os.ReadFile(yp)
 		if err != nil {
 			return nil, err

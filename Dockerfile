@@ -35,7 +35,9 @@ RUN apk add --no-cache --virtual .gosu-deps \
 
 WORKDIR /app
 
-ENV SKIP_JWT_VERIFY=""
+ENV \
+  SKIP_JWT_VERIFY="" \
+  SCYLLARIDAE_YML_PATH="/app/scyllaridae.yml"
 
 RUN adduser -S -G nobody scyllaridae
 
