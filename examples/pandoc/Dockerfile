@@ -1,7 +1,7 @@
 ARG TAG=main
 ARG DOCKER_REPOSITORY=lehighlts
 FROM ${DOCKER_REPOSITORY}/scyllaridae:${TAG} AS scyllaridae
-FROM pandoc/latex:3.6-ubuntu@sha256:cb4085a2fa62e5b075e6382a8462d32a9b0a19d4e36243f2bac424117cf49630 AS pandoc
+FROM pandoc/latex:3.7-ubuntu@sha256:e9d942e2fe212b9f10fda299fd9f2fe43ccbb57adf125d44296c70998bb9045d AS pandoc
 
 # renovate: datasource=repology depName=ubuntu_24_04/gosu
 ENV CURL_VERSION="8.5.0-2ubuntu10.6"
