@@ -30,7 +30,6 @@ SERVICES=(
   "imagemagick"
   "crayfits"
   "ffmpeg"
-  "whisper"
   "pandoc"
 )
 for SERVICE in "${SERVICES[@]}"; do
