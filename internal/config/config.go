@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -112,8 +113,10 @@ func ReadConfig() (*ServerConfig, error) {
 		}
 	}
 
+	expanded := os.ExpandEnv(string(y))
+
 	var c ServerConfig
-	err = yaml.Unmarshal(y, &c)
+	err = yaml.Unmarshal([]byte(expanded), &c)
 	if err != nil {
 		return nil, err
 	}
