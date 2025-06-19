@@ -2,18 +2,19 @@ FROM golang:1.24-alpine3.20@sha256:9f98e9893fbc798c710f3432baa1e0ac6127799127c31
 
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
-# renovate: datasource=repology depName=alpine_3_20/ca-certificates
-ENV CA_CERTIFICATES_VERSION="20241121-r1"
-# renovate: datasource=repology depName=alpine_3_20/dpkg
-ENV DPKG_VERSION="1.22.6-r1"
-# renovate: datasource=repology depName=alpine_3_20/gnupg
-ENV GNUPG_VERSION="2.4.5-r0"
-# renovate: datasource=repology depName=alpine_3_20/curl
-ENV CURL_VERSION="8.12.1-r0"
-# renovate: datasource=repology depName=alpine_3_20/bash
-ENV BASH_VERSION="5.2.26-r0"
-# renovate: datasource=repology depName=alpine_3_20/openssl
-ENV OPENSSL_VERSION="3.3.3-r0"
+ARG \
+  # renovate: datasource=repology depName=alpine_3_20/ca-certificates
+  CA_CERTIFICATES_VERSION="20241121-r1" \
+  # renovate: datasource=repology depName=alpine_3_20/dpkg
+  DPKG_VERSION="1.22.6-r1" \
+  # renovate: datasource=repology depName=alpine_3_20/gnupg
+  GNUPG_VERSION="2.4.5-r0" \
+  # renovate: datasource=repology depName=alpine_3_20/curl
+  CURL_VERSION="8.12.1-r0" \
+  # renovate: datasource=repology depName=alpine_3_20/bash
+ BASH_VERSION="5.2.26-r0" \
+  # renovate: datasource=repology depName=alpine_3_20/openssl
+ OPENSSL_VERSION="3.3.3-r0"
 
 # renovate: datasource=github-releases depName=gosu packageName=tianon/gosu
 ENV GOSU_VERSION=1.17

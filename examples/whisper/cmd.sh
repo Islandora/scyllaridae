@@ -18,20 +18,22 @@ trap cleanup EXIT
 cat | sed 's|^\([^#].*\)|'"$BASE_URL"'/\1|' \
   | ffmpeg -hide_banner -loglevel error -protocol_whitelist https,fd,tls,tcp,pipe -f hls -i - -vn -acodec pcm_s16le -ar 16000 -ac 2 "$output_file" > /dev/null 2>&1
 
-# select the CUDA device with the most memory available
+# select the CUDA device(s) with the most memory available
 best_gpu=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits | \
-  awk '{print $1}' | nl -v 0 | sort -k2 -nr | head -n1 | awk '{print $1}')
+  awk '{print $1}' | nl -v 0 | sort -k2 -nr | head -n"$WHISPER_PROCESSORS" | awk '{print $1}' | tr '\n' ',' | sed 's/,$/\n/')
 export CUDA_VISIBLE_DEVICES=$best_gpu
 
 # generate the VTT file
 /app/main \
+  -t "$WHISPER_THREADS" \
+  -p "$WHISPER_PROCESSORS" \
   -m /app/models/ggml-medium.en.bin \
   --output-vtt \
   -f "$output_file" \
   --output-file "$input_temp" > /dev/null 2>&1 || true
 
 # make sure a VTT file was created
-STATUS=$(head -1  "$input_temp.vtt" | grep WEBVTT || echo "FAIL")
+STATUS=$(grep -q WEBVTT "$input_temp.vtt" || echo "FAIL")
 if [ "$STATUS" != "FAIL" ]; then
   cat "$input_temp.vtt"
 fi
