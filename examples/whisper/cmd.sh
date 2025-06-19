@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
-# take input from stdin and print to stdout
-
 set -eou pipefail
 
-BASE_URL=$(echo "$1" | xargs dirname)
+INPUT_URL="$1"
+EXT="${INPUT_URL##*.}"
+BASE_URL=$(dirname "$INPUT_URL")
+
 input_temp=$(mktemp /tmp/whisper-input-XXXXXX)
 output_file="${input_temp}_16khz.wav"
 
@@ -14,16 +15,19 @@ cleanup() {
 
 trap cleanup EXIT
 
-# replace relative *.ts URLs with the absolute URL to them
-cat | sed 's|^\([^#].*\)|'"$BASE_URL"'/\1|' \
-  | ffmpeg -hide_banner -loglevel error -protocol_whitelist https,fd,tls,tcp,pipe -f hls -i - -vn -acodec pcm_s16le -ar 16000 -ac 2 "$output_file" > /dev/null 2>&1
+if [[ "$EXT" == "m3u8" ]]; then
+  # For m3u8, replace relative *.ts URLs with absolute URL and stream with HLS demuxer
+  cat | sed 's|^\([^#].*\)|'"$BASE_URL"'/\1|' | \
+    ffmpeg -hide_banner -loglevel error -protocol_whitelist https,fd,tls,tcp,pipe -f hls -i - -vn -acodec pcm_s16le -ar 16000 -ac 2 "$output_file" > /dev/null 2>&1
+else
+  # For other formats, pass input URL directly to ffmpeg to convert to wav
+  ffmpeg -hide_banner -loglevel error -i "$INPUT_URL" -vn -acodec pcm_s16le -ar 16000 -ac 2 "$output_file" > /dev/null 2>&1
+fi
 
-# select the CUDA device(s) with the most memory available
 best_gpu=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits | \
   awk '{print $1}' | nl -v 0 | sort -k2 -nr | head -n"$WHISPER_PROCESSORS" | awk '{print $1}' | tr '\n' ',' | sed 's/,$/\n/')
 export CUDA_VISIBLE_DEVICES=$best_gpu
 
-# generate the VTT file
 /app/main \
   -t "$WHISPER_THREADS" \
   -p "$WHISPER_PROCESSORS" \
@@ -32,12 +36,9 @@ export CUDA_VISIBLE_DEVICES=$best_gpu
   -f "$output_file" \
   --output-file "$input_temp" > /dev/null 2>&1 || true
 
-# make sure a VTT file was created
 STATUS=$(grep -q WEBVTT "$input_temp.vtt" || echo "FAIL")
 if [ "$STATUS" != "FAIL" ]; then
   cat "$input_temp.vtt"
-fi
-
-if [ "$STATUS" == "FAIL" ]; then
+else
   exit 1
 fi
