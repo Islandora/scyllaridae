@@ -10,7 +10,6 @@ DOMAINS=(
   "sandbox.islandora.ca"
 )
 for DOMAIN in "${DOMAINS[@]}"; do
-  echo $DOMAIN
   CERTS=$(openssl s_client -connect "$DOMAIN:443" -showcerts </dev/null 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p')
   while read -r CERT; do
     if [[ "$CERT" == *"BEGIN CERTIFICATE"* ]]; then
