@@ -22,7 +22,10 @@ RUN apt-get update \
   && chown scyllaridae /app/models
 
 
-ENV WHISPER_PROCESSORS=1 \
+ENV \
+  SKIP_JWT_VERIFY="" \
+  SCYLLARIDAE_YML_PATH="/app/scyllaridae.yml" \
+  WHISPER_PROCESSORS=1 \
   WHISPER_THREADS=4
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
