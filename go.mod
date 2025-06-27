@@ -6,7 +6,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
-	github.com/lestrrat-go/jwx/v3 v3.0.7
+	github.com/lestrrat-go/jwx/v3 v3.0.8
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/text v0.26.0
 	gopkg.in/yaml.v3 v3.0.1
