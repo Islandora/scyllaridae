@@ -9,4 +9,4 @@ cmdByMimeType:
       - "POST"
       - "-F"
       - "datafile=@-"
-      - "http://fits:8080/fits/examine"
+      - ${FITS_URI}
