@@ -20,8 +20,13 @@ Add the microservice to your docker compose, being sure to replace `YOUR-MICROSE
         environment:
             JWKS_URI: https://${DOMAIN}/oauth/discovery/keys
         volumes:
-          # this CA is used in development
-          - ../../certs/rootCA.pem:/app/ca.pem
+          # un-comment one of the volumes below, depending on your ISLE deployment repo
+          # to add the ISLE CA to scyllaridae's trust store
+          # 
+          # isle-site-template
+          # - ./certs/rootCA.pem:/app/ca.pem
+          # isle-dc
+          # - ../../certs/rootCA.pem:/app/ca.pem
         networks:
             default:
                 aliases:
