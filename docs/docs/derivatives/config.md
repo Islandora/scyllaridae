@@ -47,7 +47,11 @@ The symptom is that conversion will fail, and your scyllaridae microservice will
 
 You can resolve this issue by mapping your local CA into the scyllaridae container at the path /app/ca.pem. 
 
-If you are using a dev domain managed using isle-dc, you can run `mkcert -CAROOT` to determine the location of your local CA files.  Copy the `rootCA.pem` file into your `isle-dc/certs directory`.  The bind-mount in the volumes section of the docker-compose snippet above mounts this file into the correct location (`/app/ca.pem`) in the scyllaridae container.
+If you are using a dev domain managed using isle-site-template, your CA file should already be in `certs/rootCA.pem`
+
+If you are using a dev domain managed using isle-dc, you can run `mkcert -CAROOT` to determine the location of your local CA files.  Copy the `rootCA.pem` file into your `isle-dc/certs directory`. 
+
+After you've located your `rootCA.pem` file on your host system, bind mount that file in the volumes section of your scyllaridae service(s) to`/app/ca.pem`.
 
 ## Configure alpaca
 
