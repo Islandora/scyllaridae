@@ -12,5 +12,5 @@ COPY . .
 RUN mkdocs build
 
 # serve the docs via nginx
-FROM nginx:1.29@sha256:dc53c8f25a10f9109190ed5b59bda2d707a3bde0e45857ce9e1efaa32ff9cbc1
+FROM nginx:1.29@sha256:93230cd54060f497430c7a120e2347894846a81b6a5dd2110f7362c5423b4abc
 COPY --from=0 /docs/site /usr/share/nginx/html
