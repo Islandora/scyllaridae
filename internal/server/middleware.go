@@ -41,7 +41,7 @@ func (s *Server) LoggingMiddleware(next http.Handler) http.Handler {
 		}
 
 		auth := ""
-		if s.Config.ForwardAuth {
+		if *s.Config.ForwardAuth {
 			auth = r.Header.Get("Authorization")
 		}
 		message, err := api.DecodeAlpacaMessage(r, auth)

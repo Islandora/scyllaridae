@@ -310,7 +310,7 @@ func createMockJwksServer(t *testing.T, jwks []byte) *httptest.Server {
 
 func createMockSourceServer(t *testing.T, config *scyllaridae.ServerConfig, mimetype, auth, content string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if config.ForwardAuth && r.Header.Get("Authorization") != auth {
+		if *config.ForwardAuth && r.Header.Get("Authorization") != auth {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

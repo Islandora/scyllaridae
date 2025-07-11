@@ -29,7 +29,7 @@ type ServerConfig struct {
 	// Indicates whether the authentication header should be forwarded.
 	//
 	// required: false
-	ForwardAuth bool `yaml:"forwardAuth,omitempty"`
+	ForwardAuth *bool `yaml:"forwardAuth,omitempty"`
 
 	// List of MIME types allowed for processing.
 	//
@@ -119,6 +119,11 @@ func ReadConfig() (*ServerConfig, error) {
 	err = yaml.Unmarshal([]byte(expanded), &c)
 	if err != nil {
 		return nil, err
+	}
+
+	if c.ForwardAuth == nil {
+		fa := true
+		c.ForwardAuth = &fa
 	}
 
 	return &c, nil
@@ -212,7 +217,7 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 	cmd := exec.Command(cmdConfig.Cmd, args...)
 	cmd.Env = os.Environ()
 	// pass the Authorization header as an environment variable to avoid logging it
-	if c.ForwardAuth {
+	if *c.ForwardAuth {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("SCYLLARIDAE_AUTH=%s", message.Authorization))
 	}
 
@@ -301,7 +306,7 @@ func (c *ServerConfig) GetFileStream(r *http.Request, message api.Payload, auth 
 		slog.Error("Error building request to fetch source file contents", "err", err)
 		return nil, http.StatusBadRequest, fmt.Errorf("bad request")
 	}
-	if c.ForwardAuth {
+	if *c.ForwardAuth {
 		req.Header.Set("Authorization", auth)
 	}
 	sourceResp, err := http.DefaultClient.Do(req)
