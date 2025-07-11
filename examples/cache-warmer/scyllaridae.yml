@@ -1,7 +1,0 @@
-allowedMimeTypes:
-  - "*"
-cmdByMimeType:
-  default:
-    cmd: "/app/cmd.sh"
-    args:
-      - "%target"

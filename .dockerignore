@@ -1,8 +1,9 @@
-examples
 scyllaridae
 .git
 .github
 gha-creds-*.json
-ci
-fixtures
 docs
+scyllaridae.complex.yml
+scyllaridae.example.yml
+scyllaridae.yml
+renovate.json5
