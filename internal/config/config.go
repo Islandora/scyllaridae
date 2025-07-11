@@ -21,14 +21,10 @@ import (
 //
 // swagger:model ServerConfig
 type ServerConfig struct {
-	// For stomp subsriber, the queues to subscribe to.
-	//
-	// required: false
-	QueueMiddlewares []QueueMiddleware `yaml:"queueMiddlewares,omitempty"`
-
 	// Indicates whether the authentication header should be forwarded.
 	//
 	// required: false
+	// default: true
 	ForwardAuth *bool `yaml:"forwardAuth,omitempty"`
 
 	// List of MIME types allowed for processing.
@@ -45,15 +41,6 @@ type ServerConfig struct {
 	//
 	// required: false
 	MimeTypeFromDestination bool `yaml:"mimeTypeFromDestination,omitempty"`
-}
-
-type QueueMiddleware struct {
-	QueueName   string `yaml:"queueName"`
-	Url         string `yaml:"url"`
-	Consumers   int    `yaml:"consumers"`
-	ForwardAuth bool   `yaml:"forwardAuth,omitempty"`
-	NoPut       bool   `yaml:"noPut"`
-	PutFile     bool   `yaml:"putFile"`
 }
 
 // Command describes the command and arguments to execute for a specific MIME type.
