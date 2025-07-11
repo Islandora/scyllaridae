@@ -1,9 +1,0 @@
-allowedMimeTypes:
-  - "application/vnd.apple.mpegurl"
-  - "audio/*"
-  - "video/*"
-cmdByMimeType:
-  default:
-    cmd: /app/cmd.sh
-    args:
-      - "%source-uri"

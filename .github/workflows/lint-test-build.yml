@@ -3,10 +3,8 @@ on:
   push:
     paths-ignore:
       - '**/*.md'
-      - 'ci/**'
       - 'docs/**'
       - '.github/workflows/deploy-docs.yml'
-      - '.github/workflows/delete.yml'
       - 'renovate.json5'
     branches:
       - '**'
@@ -22,15 +20,15 @@ permissions:
 jobs:
 
   lint-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: check valid yml
-        run: yq . ./examples/*/scyllaridae.yml
+        run: yq . *.yml
 
       - name: check valid sh
-        run: shellcheck examples/*/*.sh
+        run: shellcheck *.sh
 
       - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:
@@ -53,83 +51,10 @@ jobs:
       - name: Test with the Go CLI
         run: go test -v -race ./...
 
-  build-push-base:
-    needs: [lint-test]
-    uses: ./.github/workflows/build-push.yml
-    with:
-      dockerFile: Dockerfile
-    permissions:
-      contents: read
-      id-token: write
-      packages: write
-    secrets: inherit
-
-  find-images:
-    needs: [build-push-base]
-    name: Find docker images needing built
-    runs-on: ubuntu-latest
-    outputs:
-      dockerFiles: ${{ steps.images.outputs.dockerFiles }}
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - name: Find docker files
-        id: images
-        run: |
-          dockerFiles=$(find examples -name Dockerfile | grep -v -E '(mergepdf|coverpage|ocrpdf)' | jq -c --raw-input --slurp 'split("\n")| .[0:-1]')
-          echo "dockerFiles=$dockerFiles" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_REF: ${{ github.ref }}
-
   build-push:
-    needs: [find-images]
-    strategy:
-      matrix:
-        dockerFile: ${{ fromJson(needs.find-images.outputs.dockerFiles )}}
-    uses: ./.github/workflows/build-push.yml
-    with:
-      dockerFile: ${{ matrix.dockerFile }}
+    needs: [lint-test]
+    uses: lehigh-university-libraries/gha/.github/workflows/build-push-ghcr.yaml@main
     permissions:
       contents: read
-      id-token: write
       packages: write
     secrets: inherit
-
-  build-push-dependencies:
-    needs: [build-push]
-    strategy:
-      matrix:
-        dockerFile: ["examples/coverpage/Dockerfile", "examples/mergepdf/Dockerfile", "examples/ocrpdf/Dockerfile",]
-    uses: ./.github/workflows/build-push.yml
-    with:
-      dockerFile: ${{ matrix.dockerFile }}
-    permissions:
-      contents: read
-      id-token: write
-      packages: write
-    secrets: inherit
-
-  integration-tests:
-    needs: [build-push-dependencies]
-    name: Integration tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - name: Extract branch name as docker tag
-        shell: bash
-        run: |-
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG=$(echo "${GITHUB_REF#refs/tags/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
-          else
-            TAG=$(echo "${GITHUB_REF#refs/heads/}" | sed 's/[^a-zA-Z0-9._-]//g' | awk '{print substr($0, length($0)-120)}')
-          fi
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-        id: extract_tag
-      - name: Run tests
-        id: images
-        run: ./ci/run.sh
-        env:
-          DOCKER_REPOSITORY_BASE: lehighlts/scyllaridae
-          DOCKER_TAG: ${{steps.extract_tag.outputs.tag}}

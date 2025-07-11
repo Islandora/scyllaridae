@@ -75,7 +75,7 @@ func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	auth := ""
-	if s.Config.ForwardAuth {
+	if *s.Config.ForwardAuth {
 		auth = r.Header.Get("Authorization")
 	}
 	cmd := r.Context().Value(cmdKey).(*exec.Cmd)

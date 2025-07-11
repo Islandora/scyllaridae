@@ -1,6 +1,0 @@
-allowedMimeTypes: [
-  "text/html"
-]
-cmdByMimeType:
-  default:
-    cmd: "curl"

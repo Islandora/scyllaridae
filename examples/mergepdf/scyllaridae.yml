@@ -1,9 +1,0 @@
-allowedMimeTypes:
-  - "*"
-forwardAuth: true
-cmdByMimeType:
-  default:
-    cmd: /app/cmd.sh
-    args:
-      - "%canonical"
-      - "%args"

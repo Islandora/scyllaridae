@@ -1,8 +1,0 @@
-allowedMimeTypes:
-  - "application/pdf"
-forwardAuth: true
-cmdByMimeType:
-  default:
-    cmd: "/app/cmd.sh"
-    args:
-      - "%canonical"
