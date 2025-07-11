@@ -20,6 +20,7 @@ jobs:
     uses: lehigh-university-libraries/gha/.github/workflows/build-push-ghcr.yaml@main
     with:
       image: scyllaridae-docs
+      context: docs
     permissions:
       contents: read
       packages: write
