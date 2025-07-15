@@ -98,9 +98,11 @@ func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Send stdout to the ResponseWriter stream
 	cmd.Stdout = w
-	if err := cmd.Run(); err != nil {
-		slog.Error("Error running command", "cmd", cmd.String(), "err", stdErr.String())
+	err = cmd.Run()
+	if err != nil {
+		slog.Error("Error running command", "cmd", cmd.String(), "cmdStdErr", stdErr.String())
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
+	slog.Debug("Command completed", "msgId", message.Object.ID, "cmd", cmd.String(), "cmdStdErr", stdErr.String())
 }

@@ -102,6 +102,8 @@ func ReadConfig() (*ServerConfig, error) {
 
 	expanded := os.ExpandEnv(string(y))
 
+	slog.Debug("scyllaridae yaml set", "yaml", expanded)
+
 	var c ServerConfig
 	err = yaml.Unmarshal([]byte(expanded), &c)
 	if err != nil {
@@ -117,6 +119,8 @@ func ReadConfig() (*ServerConfig, error) {
 }
 
 func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
+	slog.Debug("Building exec command", "msgId", message.Object.ID, "payloadType", message.Type, "target", message.Target)
+
 	mimeType := message.Attachment.Content.SourceMimeType
 	if c.MimeTypeFromDestination {
 		mimeType = message.Attachment.Content.DestinationMimeType
@@ -126,8 +130,11 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 		return nil, fmt.Errorf("undefined mimeType to build command: %s", mimeType)
 	}
 
+	slog.Debug("Mapping mimetype to a command", "msgId", message.Object.ID, "mimeType", mimeType)
+
 	cmdConfig, exists := c.CmdByMimeType[mimeType]
 	if !exists {
+		slog.Debug("Using default command")
 		cmdConfig = c.CmdByMimeType["default"]
 	}
 
@@ -283,11 +290,15 @@ func GetPassedArgs(args string) ([]string, error) {
 
 func (c *ServerConfig) GetFileStream(r *http.Request, message api.Payload, auth string) (io.ReadCloser, int, error) {
 	if r.Method == http.MethodPost {
+		slog.Debug("Streaming body directly to command", "msgId", message.Object.ID)
 		return r.Body, http.StatusOK, nil
 	}
 	if message.Attachment.Content.SourceURI == "" {
+		slog.Debug("No source URI to stream", "msgId", message.Object.ID)
 		return nil, http.StatusOK, nil
 	}
+
+	slog.Debug("Opening SourceURI for streaming", "msgId", message.Object.ID, "SourceURI", message.Attachment.Content.SourceURI)
 	req, err := http.NewRequest("GET", message.Attachment.Content.SourceURI, nil)
 	if err != nil {
 		slog.Error("Error building request to fetch source file contents", "err", err)
@@ -305,6 +316,8 @@ func (c *ServerConfig) GetFileStream(r *http.Request, message api.Payload, auth 
 		slog.Error("SourceURI sent a bad status code", "code", sourceResp.StatusCode, "uri", message.Attachment.Content.SourceURI)
 		return nil, http.StatusFailedDependency, fmt.Errorf("failed dependency")
 	}
+
+	slog.Debug("HTTP request created for source", "msgId", message.Object.ID, "url", req.URL.String())
 
 	return sourceResp.Body, http.StatusOK, nil
 }
