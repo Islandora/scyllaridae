@@ -38,6 +38,8 @@ RUN apk add --no-cache --virtual .gosu-deps \
 WORKDIR /app
 
 ENV \
+  LOG_LEVEL=INFO \
+  PORT=8080 \
   SKIP_JWT_VERIFY="" \
   SCYLLARIDAE_YML_PATH="/app/scyllaridae.yml"
 

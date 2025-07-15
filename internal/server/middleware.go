@@ -44,33 +44,37 @@ func (s *Server) LoggingMiddleware(next http.Handler) http.Handler {
 		if *s.Config.ForwardAuth {
 			auth = r.Header.Get("Authorization")
 		}
+
+		// since building the command involves reading the request body
+		// and we want to build the command here so we can add some context to our log messages
+		// along with the timing information and response status
+		// we're doing the setup here and adding the information in the context
+		// this allows us to read streams needed to process the request only once
 		message, err := api.DecodeAlpacaMessage(r, auth)
 		if err != nil {
 			slog.Error("Error decoding alpaca message", "err", err)
 			http.Error(w, "Internal error", http.StatusInternalServerError)
 			return
 		}
-
 		cmd, err := config.BuildExecCommand(message, s.Config)
 		if err != nil {
 			slog.Error("Error building command", "err", err)
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
-
 		ctx := context.WithValue(r.Context(), cmdKey, cmd)
 		ctx = context.WithValue(ctx, msgKey, message)
 		next.ServeHTTP(statusWriter, r.WithContext(ctx))
 		duration := time.Since(start)
 
-		slog.Info("Incoming request",
-			"method", r.Method,
+		slog.Info(r.Method,
 			"path", r.URL.Path,
 			"status", statusWriter.statusCode,
 			"duration", duration,
 			"client_ip", r.RemoteAddr,
 			"user_agent", r.UserAgent(),
 			"command", cmd.String(),
+			"msgId", message.Object.ID,
 		)
 	})
 }
@@ -80,6 +84,7 @@ func (s *Server) JWTAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		a := r.Header.Get("Authorization")
 		if a == "" || len(a) <= 7 || !strings.EqualFold(a[:7], "bearer ") {
+			slog.Debug("No Authorization header passed")
 			if os.Getenv("SKIP_JWT_VERIFY") != "true" {
 				http.Error(w, "Missing Authorization header", http.StatusBadRequest)
 				return
@@ -87,6 +92,7 @@ func (s *Server) JWTAuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		if os.Getenv("SKIP_JWT_VERIFY") != "true" {
+			slog.Debug("Verifying JWT")
 			tokenString := a[7:]
 			err := s.verifyJWT(tokenString)
 			if err != nil {
@@ -95,6 +101,7 @@ func (s *Server) JWTAuthMiddleware(next http.Handler) http.Handler {
 				return
 			}
 		}
+		slog.Debug("JWT verified or skipped")
 
 		next.ServeHTTP(w, r)
 	})

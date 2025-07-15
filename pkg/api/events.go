@@ -112,6 +112,7 @@ func DecodeAlpacaMessage(r *http.Request, auth string) (Payload, error) {
 		}
 	}
 
+	slog.Debug("Got message", "msgId", p.Object.ID, "payload.attachment", p.Attachment)
 	err := p.getSourceUri(auth)
 	if err != nil {
 		return p, err
@@ -124,6 +125,7 @@ func (p *Payload) getSourceUri(auth string) error {
 	if p.Attachment.Content.SourceURI == "" {
 		return nil
 	}
+	slog.Debug("Fetching Content-Type HTTP header for SourceURI mime type", "msgId", p.Object.ID, "SourceURI", p.Attachment.Content.SourceURI)
 
 	client := &http.Client{}
 
@@ -145,6 +147,8 @@ func (p *Payload) getSourceUri(auth string) error {
 	defer resp.Body.Close()
 
 	p.Attachment.Content.SourceMimeType = resp.Header.Get("Content-Type")
+
+	slog.Debug("Got SourceURI mime type", "msgId", p.Object.ID, "SourceMimeType", p.Attachment.Content.SourceMimeType)
 
 	return nil
 }
