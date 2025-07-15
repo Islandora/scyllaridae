@@ -112,7 +112,7 @@ func DecodeAlpacaMessage(r *http.Request, auth string) (Payload, error) {
 		}
 	}
 
-	slog.Debug("Got message", "msgId", p.Object.ID, "payload", p)
+	slog.Debug("Got message", "msgId", p.Object.ID, "payload.attachment", p.Attachment)
 	err := p.getSourceUri(auth)
 	if err != nil {
 		return p, err
