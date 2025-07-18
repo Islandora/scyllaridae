@@ -54,7 +54,7 @@ RUN apk update && \
 
 COPY . ./
 
-RUN chown -R scyllaridae:nobody /app
+RUN chown -R scyllaridae:nobody /app /tmp
 
 RUN go mod download && \
   go build -o /app/scyllaridae && \
