@@ -1,75 +1,7 @@
 {
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
-    'config:best-practices',
-    ':rebaseStalePrs',
-    'customManagers:dockerfileVersions',
+    'github>lehigh-university-libraries/renovate-config',
+    'github>lehigh-university-libraries/renovate-config:weeklyBump.json5',
   ],
-  ignorePaths: [
-    '**/node_modules/**',
-    '**/bower_components/**',
-    '**/vendor/**',
-    '**/__tests__/**',
-    '**/tests/**',
-    '**/__fixtures__/**',
-  ],
-  packageRules: [
-    {
-      matchDatasources: [
-        'repology',
-      ],
-      versioning: 'loose',
-    },
-    {
-      matchUpdateTypes: [
-        'minor',
-        'patch',
-        'digest',
-      ],
-      groupName: 'all non-major dependencies',
-      schedule: [
-        'after 10pm on Friday',
-      ],
-      matchPackageNames: [
-        '*',
-      ],
-    },
-    {
-      matchUpdateTypes: [
-        'major',
-      ],
-      groupName: 'all major updates',
-      schedule: [
-        'after 10pm on the first day of the month',
-      ],
-      matchPackageNames: [
-        '*',
-      ],
-    },
-    {
-      description: "Don't pin scyllaridae image SHAs",
-      matchPackageNames: [
-        'lehighlts/scyllaridae*',
-      ],
-      pinDigests: false,
-    },
-  ],
-  customManagers: [
-    {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^Dockerfile$/',
-      ],
-      matchStrings: [
-        '#\\s*renovate:\\s*datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\sENV .*?_VERSION="(?<currentValue>.*)"\\s',
-      ],
-    },
-  ],
-  labels: [
-    'dependencies',
-  ],
-  osvVulnerabilityAlerts: true,
-  dependencyDashboardOSVVulnerabilitySummary: 'unresolved',
-  vulnerabilityAlerts: {
-    enabled: true,
-  },
 }
