@@ -1,22 +1,22 @@
-FROM golang:1.24-alpine3.20@sha256:9f98e9893fbc798c710f3432baa1e0ac6127799127c3101d2c263c3a954f0abe
+FROM golang:1.25-alpine3.22@sha256:b6ed3fd0452c0e9bcdef5597f29cc1418f61672e9d3a2f55bf02e7222c014abd
 
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 ARG \
-  # renovate: datasource=repology depName=alpine_3_20/ca-certificates
-  CA_CERTIFICATES_VERSION="20241121-r1" \
-  # renovate: datasource=repology depName=alpine_3_20/dpkg
-  DPKG_VERSION="1.22.6-r1" \
-  # renovate: datasource=repology depName=alpine_3_20/gnupg
-  GNUPG_VERSION="2.4.5-r0" \
-  # renovate: datasource=repology depName=alpine_3_20/curl
-  CURL_VERSION="8.12.1-r0" \
-  # renovate: datasource=repology depName=alpine_3_20/bash
-  BASH_VERSION="5.2.26-r0" \
-  # renovate: datasource=repology depName=alpine_3_20/openssl
-  OPENSSL_VERSION="3.3.4-r0" \
+  # renovate: datasource=repology depName=alpine_3_22/ca-certificates
+  CA_CERTIFICATES_VERSION=20250619-r0 \
+  # renovate: datasource=repology depName=alpine_3_22/dpkg
+  DPKG_VERSION=1.22.15-r0 \
+  # renovate: datasource=repology depName=alpine_3_22/gnupg
+  GNUPG_VERSION=2.4.7-r0 \
+  # renovate: datasource=repology depName=alpine_3_22/curl
+  CURL_VERSION=8.14.1-r1 \
+  # renovate: datasource=repology depName=alpine_3_22/bash
+  BASH_VERSION=5.2.37-r0 \
+  # renovate: datasource=repology depName=alpine_3_22/openssl
+  OPENSSL_VERSION=3.5.3-r1 \
   # renovate: datasource=github-releases depName=gosu packageName=tianon/gosu
-  GOSU_VERSION=1.17
+  GOSU_VERSION=1.19
 
 # install gosu
 RUN apk add --no-cache --virtual .gosu-deps \
