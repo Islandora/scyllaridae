@@ -12,7 +12,7 @@ docker build -t my-microservice:latest .
 
 ## Start
 
-Now, start the docker container. Notice we're passing a `SKIP_JWT_VERIFY` environment variable. That tells scyllaridae to not require any JWT token verification.
+Now, start the docker container. Since no JWKS URI is configured in the `scyllaridae.yml` file, JWT verification will be skipped automatically.
 
 We're also setting the port to `8080`. If that port is already used on your host machine, you can change `PORT` to any available port number.
 
@@ -24,7 +24,6 @@ docker run \
   --name microservice-test
   --env PORT=$PORT \
   --env LOG_LEVEL=DEBUG \
-  --env SKIP_JWT_VERIFY=true \
   -p "$PORT:$PORT" \
   -d \
   my-microservice:latest

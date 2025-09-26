@@ -2,14 +2,14 @@ name: lint-test-build-push
 on:
   push:
     paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '.github/workflows/deploy-docs.yml'
-      - 'renovate.json5'
+      - "**/*.md"
+      - "docs/**"
+      - ".github/workflows/deploy-docs.yml"
+      - "renovate.json5"
     branches:
-      - '**'
+      - "**"
     tags:
-      - '*'
+      - "*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,7 +18,6 @@ concurrency:
 permissions:
   contents: read
 jobs:
-
   lint-test:
     runs-on: ubuntu-24.04
     steps:
@@ -32,13 +31,13 @@ jobs:
 
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
         with:
-          go-version: '>=1.22.2'
+          go-version: ">=1.25.1"
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9 # v8
         with:
           version: latest
-      
+
       - name: Install dependencies
         run: go get .
 

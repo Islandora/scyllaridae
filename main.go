@@ -24,7 +24,7 @@ func main() {
 }
 
 func setupLogger() {
-	logLevel := strings.ToUpper(os.Getenv("LOG_LEVEL"))
+	logLevel := strings.ToUpper(os.Getenv("SCYLLARIDAE_LOG_LEVEL"))
 	if logLevel == "" {
 		logLevel = "INFO"
 	}

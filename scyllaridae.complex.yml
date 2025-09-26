@@ -1,4 +1,9 @@
 # different commands based on mimetype
+
+# Optional: JWKS URI for JWT verification
+# If not provided, JWT verification will be skipped
+# jwksUri: "https://islandora.dev/oauth/discovery/keys"
+
 allowedMimeTypes:
   - "application/pdf"
   - "image/*"

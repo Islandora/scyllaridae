@@ -50,7 +50,6 @@ type Test struct {
 }
 
 func TestMessageHandler_MethodNotAllowed(t *testing.T) {
-	os.Setenv("SKIP_JWT_VERIFY", "true")
 	testConfig := &scyllaridae.ServerConfig{}
 	server := &Server{Config: testConfig}
 
@@ -243,7 +242,6 @@ cmdByMimeType:
 			destinationServer := createMockDestinationServer(t, tt.returnedBody)
 			defer destinationServer.Close()
 
-			os.Setenv("SKIP_JWT_VERIFY", "true")
 			os.Setenv("SCYLLARIDAE_YML", tt.yml)
 			config, err := scyllaridae.ReadConfig()
 
@@ -323,7 +321,6 @@ func createMockSourceServer(t *testing.T, config *scyllaridae.ServerConfig, mime
 }
 
 func TestJwtAuth(t *testing.T) {
-	os.Setenv("SKIP_JWT_VERIFY", "")
 	goodPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal("Error generating RSA key:", err)
@@ -494,12 +491,13 @@ cmdByMimeType:
 
 			jwksServer := createMockJwksServer(t, jwksJSON)
 			defer jwksServer.Close()
-			os.Setenv("JWKS_URI", jwksServer.URL)
 
 			destinationServer := createMockDestinationServer(t, tt.returnedBody)
 			defer destinationServer.Close()
 
-			os.Setenv("SCYLLARIDAE_YML", tt.yml)
+			// Update YAML to include JWKS URI
+			ymlWithJwks := tt.yml + "\njwksUri: " + jwksServer.URL
+			os.Setenv("SCYLLARIDAE_YML", ymlWithJwks)
 			config, err := scyllaridae.ReadConfig()
 
 			sourceServer := createMockSourceServer(t, config, tt.mimetype, tt.authHeader, destinationServer.URL)
@@ -542,6 +540,188 @@ cmdByMimeType:
 				}
 				assert.Equal(t, tt.expectedBody, string(body))
 			}
+		})
+	}
+}
+
+func TestJwtAuthWithYamlConfig(t *testing.T) {
+	goodPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal("Error generating RSA key:", err)
+	}
+	publicKey := &goodPrivateKey.PublicKey
+	kid := fmt.Sprintf("%x", sha1.Sum(publicKey.N.Bytes()))
+
+	jwk := JWK{
+		Kty: "RSA",
+		Kid: kid,
+		Use: "sig",
+		Alg: "RS256",
+		N:   base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes()),
+		E:   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(publicKey.E)).Bytes()),
+	}
+
+	jwks := JWKS{
+		Keys: []JWK{jwk},
+	}
+
+	// Create a valid JWT token
+	token, err := jwt.NewBuilder().
+		Subject("1234567890").
+		Claim("name", "test-user").
+		IssuedAt(time.Now()).
+		Expiration(time.Now().Add(1 * time.Hour)).
+		Build()
+	if err != nil {
+		t.Fatal("Error building JWT:", err)
+	}
+
+	hdr := jws.NewHeaders()
+	err = hdr.Set(jws.KeyIDKey, kid)
+	if err != nil {
+		t.Fatal("Error setting 'kid' header:", err)
+	}
+
+	signedToken, err := jwt.Sign(token,
+		jwt.WithKey(jwa.RS256(), goodPrivateKey, jws.WithProtectedHeaders(hdr)),
+	)
+	if err != nil {
+		t.Fatal("Error signing JWT:", err)
+	}
+
+	jwksJSON, err := json.Marshal(jwks)
+	if err != nil {
+		t.Fatalf("Could not marshal jwks: %v", err)
+	}
+
+	// Create mock JWKS server
+	jwksServer := createMockJwksServer(t, jwksJSON)
+	defer jwksServer.Close()
+
+	tests := []struct {
+		name           string
+		jwksUri        string
+		authHeader     string
+		expectedStatus int
+		expectedBody   string
+		description    string
+	}{
+		{
+			name:           "JWT enabled with valid token",
+			jwksUri:        jwksServer.URL,
+			authHeader:     fmt.Sprintf("bearer %s", signedToken),
+			expectedStatus: http.StatusOK,
+			expectedBody:   "test-content",
+			description:    "Should pass authentication with valid token when jwksUri is set",
+		},
+		{
+			name:           "JWT enabled with missing token",
+			jwksUri:        jwksServer.URL,
+			authHeader:     "",
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   "Missing Authorization header\n",
+			description:    "Should reject request with missing token when jwksUri is set",
+		},
+		{
+			name:           "JWT enabled with invalid token",
+			jwksUri:        jwksServer.URL,
+			authHeader:     "bearer invalid-token",
+			expectedStatus: http.StatusUnauthorized,
+			expectedBody:   "Unauthorized\n",
+			description:    "Should reject request with invalid token when jwksUri is set",
+		},
+		{
+			name:           "JWT disabled with no token",
+			jwksUri:        "",
+			authHeader:     "",
+			expectedStatus: http.StatusOK,
+			expectedBody:   "test-content",
+			description:    "Should allow request without token when jwksUri is empty",
+		},
+		{
+			name:           "JWT disabled with token present",
+			jwksUri:        "",
+			authHeader:     fmt.Sprintf("bearer %s", signedToken),
+			expectedStatus: http.StatusOK,
+			expectedBody:   "test-content",
+			description:    "Should ignore token and allow request when jwksUri is empty",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create destination server that returns test content
+			destinationServer := createMockDestinationServer(t, "test-content")
+			defer destinationServer.Close()
+
+			// Build YAML configuration
+			yml := `
+forwardAuth: false
+allowedMimeTypes:
+  - "text/plain"
+cmdByMimeType:
+  default:
+    cmd: curl
+    args:
+      - "%args"
+`
+			if tt.jwksUri != "" {
+				yml += "jwksUri: " + tt.jwksUri
+			}
+
+			// Set up configuration
+			os.Setenv("SCYLLARIDAE_YML", yml)
+			config, err := scyllaridae.ReadConfig()
+			if err != nil {
+				t.Fatalf("Could not read YML config: %v", err)
+			}
+
+			// Verify configuration was parsed correctly
+			if tt.jwksUri == "" {
+				assert.Empty(t, config.JwksUri, "jwksUri should be empty when not set")
+			} else {
+				assert.Equal(t, tt.jwksUri, config.JwksUri, "jwksUri should match configured value")
+			}
+
+			// Create source server
+			sourceServer := createMockSourceServer(t, config, "text/plain", tt.authHeader, destinationServer.URL)
+			defer sourceServer.Close()
+
+			// Create a Server instance with the test config
+			server := &Server{Config: config}
+			router := server.SetupRouter()
+
+			// Configure and start the main server
+			setupServer := httptest.NewServer(router)
+			defer setupServer.Close()
+
+			// Send request to the main server
+			req, err := http.NewRequest("GET", setupServer.URL, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("X-Islandora-Args", destinationServer.URL)
+			req.Header.Set("Accept", "application/xml")
+			if tt.authHeader != "" {
+				req.Header.Set("Authorization", tt.authHeader)
+			}
+			req.Header.Set("Apix-Ldp-Resource", sourceServer.URL)
+
+			// Execute request
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
+
+			// Verify response
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode, tt.description)
+
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatalf("Unable to read response body: %v", err)
+			}
+			assert.Equal(t, tt.expectedBody, string(body), tt.description)
 		})
 	}
 }

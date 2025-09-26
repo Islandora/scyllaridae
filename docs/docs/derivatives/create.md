@@ -7,14 +7,14 @@ To create your derivative microservice you need to define:
 
 Define the `Dockerfile` to run your microservice.
 
-You must have your Dockerfile use `lehighlts/scyllaridae:main` as the base so your command will get called properly when an event is emitted. Doing this ensures an http service will be running when the Dockerfile starts, and it will handle running your microservice when events are received from alpaca.
+You must have your Dockerfile use `ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae:main` as the base so your command will get called properly when an event is emitted. Doing this ensures an http service will be running when the Dockerfile starts, and it will handle running your microservice when events are received from alpaca.
 
 Your Dockerfile just needs to use the `apk` package manager to install the software your microservice will run (or build from source, or however best to install your dependencies).
 
 ### Example Dockerfile for Crayfits
 
 ```dockerfile
-FROM lehighlts/scyllaridae:main
+FROM ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae:main
 
 RUN apk update && \
     apk add --no-cache curl==8.11.1-r0
@@ -119,7 +119,6 @@ As we noted in [the Islandora Events overview](../events/), alpaca only sends a 
 - `"%file-upload-uri"` - the Drupal URI the derivative will be created as
 - `"%destination-uri" - the URL the derivative will be `PUT` to to create the media/file entities
 - `"%canonical"` - the canonical link to the node
-
 
 ### On stdin/stdout
 

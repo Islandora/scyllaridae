@@ -27,7 +27,7 @@ type Server struct {
 func RunHTTPServer(server *Server) {
 	r := server.SetupRouter()
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("SCYLLARIDAE_PORT")
 	if port == "" {
 		port = "8080"
 	}
@@ -39,9 +39,8 @@ func RunHTTPServer(server *Server) {
 }
 
 func (server *Server) SetupRouter() *mux.Router {
-	if os.Getenv("JWKS_URI") == "" && os.Getenv("SKIP_JWT_VERIFY") != "true" {
-		slog.Error("Need to provide your JWKS URI in the JWKS_URI e.g. JWKS_URI=https://islandora.dev/oauth/discovery/keys")
-		os.Exit(1)
+	if server.Config.JwksUri == "" {
+		slog.Info("No JWKS URI configured, skipping JWT verification")
 	}
 
 	server.KeySets = lru.NewLRU[string, jwk.Set](25, nil, time.Minute*15)
