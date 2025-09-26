@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -82,16 +81,19 @@ func (s *Server) LoggingMiddleware(next http.Handler) http.Handler {
 // JWTAuthMiddleware validates a JWT token and adds claims to the context
 func (s *Server) JWTAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip JWT verification if no JWKS URI is configured
+		skipJwtVerify := s.Config.JwksUri == ""
+
 		a := r.Header.Get("Authorization")
 		if a == "" || len(a) <= 7 || !strings.EqualFold(a[:7], "bearer ") {
 			slog.Debug("No Authorization header passed")
-			if os.Getenv("SKIP_JWT_VERIFY") != "true" {
+			if !skipJwtVerify {
 				http.Error(w, "Missing Authorization header", http.StatusBadRequest)
 				return
 			}
 		}
 
-		if os.Getenv("SKIP_JWT_VERIFY") != "true" {
+		if !skipJwtVerify {
 			slog.Debug("Verifying JWT")
 			tokenString := a[7:]
 			err := s.verifyJWT(tokenString)
@@ -153,7 +155,8 @@ func (s *Server) fetchJWKS() (jwk.Set, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	jwksURI := os.Getenv("JWKS_URI")
+	jwksURI := s.Config.JwksUri
+
 	ks, ok := s.KeySets.Get(jwksURI)
 	if ok {
 		return ks, nil

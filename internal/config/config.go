@@ -27,6 +27,12 @@ type ServerConfig struct {
 	// default: true
 	ForwardAuth *bool `yaml:"forwardAuth,omitempty"`
 
+	// The URI for the JSON Web Key Set (JWKS) endpoint.
+	// If empty, JWT verification will be skipped.
+	//
+	// required: false
+	JwksUri string `yaml:"jwksUri,omitempty"`
+
 	// List of MIME types allowed for processing.
 	//
 	// required: false
