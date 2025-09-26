@@ -38,9 +38,8 @@ RUN apk add --no-cache --virtual .gosu-deps \
 WORKDIR /app
 
 ENV \
-  LOG_LEVEL=INFO \
-  PORT=8080 \
-  SKIP_JWT_VERIFY="" \
+  SCYLLARIDAE_LOG_LEVEL=INFO \
+  SCYLLARIDAE_PORT=8080 \
   SCYLLARIDAE_YML_PATH="/app/scyllaridae.yml"
 
 RUN adduser -S -G nobody scyllaridae
@@ -58,8 +57,7 @@ RUN chown -R scyllaridae:nobody /app /tmp
 
 RUN go mod download && \
   go build -o /app/scyllaridae && \
-  go clean -cache -modcache && \
-  ./ca-certs.sh
+  go clean -cache -modcache
 
 ENTRYPOINT ["/bin/bash"]
 CMD ["/app/docker-entrypoint.sh"]
