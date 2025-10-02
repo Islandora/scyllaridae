@@ -51,12 +51,16 @@ RUN apk update && \
       ca-certificates=="${CA_CERTIFICATES_VERSION}" \
       openssl=="${OPENSSL_VERSION}"
 
+# Copy go mod files first for better caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
 COPY . ./
 
 RUN chown -R scyllaridae:nobody /app /tmp
 
-RUN go mod download && \
-  go build -o /app/scyllaridae && \
+RUN go build -o /app/scyllaridae && \
   go clean -cache -modcache
 
 ENTRYPOINT ["/bin/bash"]

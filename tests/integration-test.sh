@@ -1,5 +1,6 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+
+set -eou pipefail
 
 DOCKER_IMAGE="scyllaridae"
 DOCKER_CONTAINER="$DOCKER_IMAGE-test"
@@ -19,7 +20,7 @@ docker stop "$DOCKER_CONTAINER" 2>/dev/null || true
 docker rm "$DOCKER_CONTAINER" 2>/dev/null || true
 
 # Find available port
-PORT=8082
+PORT=8080
 while lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1; do
 	PORT=$((PORT + 1))
 done
