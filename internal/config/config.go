@@ -64,6 +64,8 @@ type Command struct {
 	Args []string `yaml:"args"`
 }
 
+// IsAllowedMimeType checks if a given MIME type is allowed based on the configured formats.
+// It supports exact matches, wildcard patterns (e.g., "image/*"), and the special "*" value for all types.
 func IsAllowedMimeType(mimetype string, allowedFormats []string) bool {
 	for _, format := range allowedFormats {
 		if format == mimetype {
@@ -87,6 +89,10 @@ func IsAllowedMimeType(mimetype string, allowedFormats []string) bool {
 	return false
 }
 
+// ReadConfig reads and parses the scyllaridae configuration from the environment.
+// It first checks the SCYLLARIDAE_YML environment variable for inline YAML content,
+// then falls back to reading from the file path specified in SCYLLARIDAE_YML_PATH.
+// Environment variables in the YAML content are expanded using os.ExpandEnv.
 func ReadConfig() (*ServerConfig, error) {
 	var (
 		y   []byte
@@ -124,6 +130,9 @@ func ReadConfig() (*ServerConfig, error) {
 	return &c, nil
 }
 
+// BuildExecCommand constructs an exec.Cmd based on the event payload and server configuration.
+// It selects the appropriate command based on MIME type and replaces special placeholder variables
+// in the arguments (e.g., %args, %source-uri, %destination-uri, %canonical).
 func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 	slog.Debug("Building exec command", "msgId", message.Object.ID, "payloadType", message.Type, "target", message.Target)
 
@@ -224,6 +233,9 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 	return cmd, nil
 }
 
+// GetMimeTypeExtension returns the file extension for a given MIME type.
+// It first checks a custom mapping for common MIME types, then falls back to
+// the standard library's mime.ExtensionsByType.
 func GetMimeTypeExtension(mimeType string) (string, error) {
 	// since the std mimetype -> extension conversion returns a list
 	// we need to override the default extension to use
@@ -274,6 +286,9 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 	return strings.TrimPrefix(extensions[len(extensions)-1], "."), nil
 }
 
+// GetPassedArgs parses and validates command-line arguments from a string.
+// It uses shell-style parsing and validates each argument against a whitelist regex
+// to prevent command injection attacks.
 func GetPassedArgs(args string) ([]string, error) {
 	passedArgs, err := shlex.Split(args)
 	if err != nil {
@@ -328,6 +343,8 @@ func (c *ServerConfig) GetFileStream(r *http.Request, message api.Payload, auth 
 	return sourceResp.Body, http.StatusOK, nil
 }
 
+// MimeToPandoc converts a MIME type to its corresponding Pandoc format string.
+// It returns the Pandoc format name if found, otherwise falls back to GetMimeTypeExtension.
 func MimeToPandoc(mimeType string) (string, error) {
 	mapping := map[string]string{
 		"text/x-bibtex":                           "bibtex",

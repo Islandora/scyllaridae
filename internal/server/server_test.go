@@ -67,6 +67,77 @@ func TestMessageHandler_MethodNotAllowed(t *testing.T) {
 	}
 }
 
+func TestBufferingWriter_EarlyFailure(t *testing.T) {
+	// Test that command failures before buffer is flushed result in 500 error
+
+	fa := true
+	testConfig := &scyllaridae.ServerConfig{
+		ForwardAuth:      &fa,
+		AllowedMimeTypes: []string{"*"},
+		CmdByMimeType: map[string]scyllaridae.Command{
+			"default": {
+				// Command that fails immediately without output
+				Cmd:  "sh",
+				Args: []string{"-c", "exit 1"},
+			},
+		},
+	}
+	server := &Server{Config: testConfig}
+
+	mockSource := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer mockSource.Close()
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Apix-Ldp-Resource", mockSource.URL)
+	req.Header.Set("Accept", "text/plain")
+
+	rr := httptest.NewRecorder()
+	router := server.SetupRouter()
+	router.ServeHTTP(rr, req)
+
+	// Command failed before buffer flushed - should get 500 error
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.Contains(t, rr.Body.String(), "Internal error")
+}
+
+func TestBufferingWriter_SmallOutput(t *testing.T) {
+	// Test that small successful output is buffered then flushed
+
+	fa := true
+	testConfig := &scyllaridae.ServerConfig{
+		ForwardAuth:      &fa,
+		AllowedMimeTypes: []string{"*"},
+		CmdByMimeType: map[string]scyllaridae.Command{
+			"default": {
+				Cmd:  "echo",
+				Args: []string{"small output"},
+			},
+		},
+	}
+	server := &Server{Config: testConfig}
+
+	mockSource := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer mockSource.Close()
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Apix-Ldp-Resource", mockSource.URL)
+	req.Header.Set("Accept", "text/plain")
+
+	rr := httptest.NewRecorder()
+	router := server.SetupRouter()
+	router.ServeHTTP(rr, req)
+
+	// Small output buffered and flushed successfully
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Contains(t, rr.Body.String(), "small output")
+}
+
 func TestIntegration(t *testing.T) {
 	tests := []Test{
 		{

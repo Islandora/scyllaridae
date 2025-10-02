@@ -23,12 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
-      - name: check valid yml
-        run: yq . *.yml
-
-      - name: check valid sh
-        run: shellcheck *.sh
-
       - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6
         with:
           go-version: ">=1.25.1"
@@ -38,14 +32,20 @@ jobs:
         with:
           version: latest
 
+      - name: lint
+        run: make lint
+
       - name: Build
         run: make build
 
       - name: Put fixture in place
         run: cp scyllaridae.example.yml scyllaridae.yml
 
-      - name: Test with the Go CLI
+      - name: unit tests
         run: make test
+
+      - name: integration tests
+        run: make integration-test
 
   build-push:
     needs: [lint-test]
