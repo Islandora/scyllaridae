@@ -6,6 +6,7 @@ DOCKER_IMAGE="scyllaridae"
 DOCKER_CONTAINER="$DOCKER_IMAGE-test"
 TEST_DIR="$(pwd)/tests"
 
+# shellcheck disable=SC2317,SC2329
 cleanup() {
 	echo ""
 	echo "Cleaning up..."
