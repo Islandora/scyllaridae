@@ -38,17 +38,14 @@ jobs:
         with:
           version: latest
 
-      - name: Install dependencies
-        run: go get .
-
       - name: Build
-        run: go build -v ./...
+        run: make build
 
       - name: Put fixture in place
         run: cp scyllaridae.example.yml scyllaridae.yml
 
       - name: Test with the Go CLI
-        run: go test -v -race ./...
+        run: make test
 
   build-push:
     needs: [lint-test]
