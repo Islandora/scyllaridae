@@ -16,13 +16,13 @@ cleanup() {
 	fi
 	docker stop "$DOCKER_CONTAINER" 2>/dev/null || true
 	docker rm "$DOCKER_CONTAINER" 2>/dev/null || true
+  rm -f "$TEST_DIR"/*.bin
 }
 
 trap 'cleanup error' ERR
 trap 'cleanup' EXIT
 
 echo "Setting up integration test environment..."
-rm -f "$TEST_DIR"/*.bin
 
 # Create test files of different sizes
 echo "Creating test files..."
@@ -42,8 +42,8 @@ done
 
 echo "Starting test container on port $PORT..."
 docker run -d \
-	-v "$(pwd)/$TEST_DIR/cmd.sh:/app/cmd.sh" \
-	-v "$(pwd)/$TEST_DIR/scyllaridae.yml:/app/scyllaridae.yml" \
+	-v "$TEST_DIR/cmd.sh:/app/cmd.sh" \
+	-v "$TEST_DIR/scyllaridae.yml:/app/scyllaridae.yml" \
 	--name "$DOCKER_CONTAINER" \
 	-p "$PORT:8080" \
 	"$DOCKER_IMAGE:latest" > /dev/null
