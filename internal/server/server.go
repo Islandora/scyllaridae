@@ -24,6 +24,9 @@ type Server struct {
 	KeySets *lru.LRU[string, jwk.Set]
 }
 
+// RunHTTPServer starts the HTTP server and listens on the configured port.
+// The port is determined by the SCYLLARIDAE_PORT environment variable, defaulting to 8080.
+// This function blocks and will panic if the server fails to start.
 func RunHTTPServer(server *Server) {
 	r := server.SetupRouter()
 

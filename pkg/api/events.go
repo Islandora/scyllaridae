@@ -70,7 +70,8 @@ type Content struct {
 	FileUploadURI       string `json:"file_upload_uri" description:"File upload URI for uploading the content"`
 }
 
-// decode the event message sent by Islandora directly from ActiveMQ
+// DecodeEventMessage decodes an event message sent by Islandora directly from ActiveMQ.
+// It parses the JSON message into a Payload structure.
 func DecodeEventMessage(msg []byte) (Payload, error) {
 	var p Payload
 
@@ -81,7 +82,9 @@ func DecodeEventMessage(msg []byte) (Payload, error) {
 	return p, nil
 }
 
-// decode the event message transformed by Alpaca
+// DecodeAlpacaMessage decodes an event message transformed by Alpaca from HTTP headers.
+// It reads the X-Islandora-Event header (base64-encoded JSON) or constructs a Payload from
+// individual HTTP headers (Apix-Ldp-Resource, Accept, Content-Type, X-Islandora-Args).
 func DecodeAlpacaMessage(r *http.Request, auth string) (Payload, error) {
 	p := Payload{}
 
