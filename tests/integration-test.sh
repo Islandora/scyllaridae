@@ -4,7 +4,21 @@ set -eou pipefail
 
 DOCKER_IMAGE="scyllaridae"
 DOCKER_CONTAINER="$DOCKER_IMAGE-test"
-TEST_DIR="./tests"
+TEST_DIR="$(pwd)/tests"
+
+cleanup() {
+	echo ""
+	echo "Cleaning up..."
+	if [ "${1:-}" = "error" ]; then
+		echo "Error occurred, showing container logs:"
+		docker logs "$DOCKER_CONTAINER" 2>&1 || true
+	fi
+	docker stop "$DOCKER_CONTAINER" 2>/dev/null || true
+	docker rm "$DOCKER_CONTAINER" 2>/dev/null || true
+}
+
+trap 'cleanup error' ERR
+trap 'cleanup' EXIT
 
 echo "Setting up integration test environment..."
 rm -f "$TEST_DIR"/*.bin
@@ -55,10 +69,6 @@ for bin_file in "$TEST_DIR"/*.bin; do
 		FAILED=$((FAILED + 1))
 	fi
 done
-
-echo "Cleaning up..."
-docker stop "$DOCKER_CONTAINER" > /dev/null
-docker rm "$DOCKER_CONTAINER" > /dev/null
 
 if [ $FAILED -eq 0 ]; then
 	echo ""
