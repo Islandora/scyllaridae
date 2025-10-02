@@ -44,4 +44,10 @@ test:
 
 docs:
 	docker build -t $(DOCKER_IMAGE)-docs:latest docs
-	docker run -p 8080:80 $(DOCKER_IMAGE)-docs:latest
+	@docker stop $(DOCKER_IMAGE)-docs 2>/dev/null || true
+	@PORT=8080; \
+	while lsof -Pi :$$PORT -sTCP:LISTEN -t >/dev/null 2>&1; do \
+		PORT=$$((PORT + 1)); \
+	done; \
+	echo "Starting documentation server at http://localhost:$$PORT"; \
+	docker run -d --rm --name $(DOCKER_IMAGE)-docs -p $$PORT:80 $(DOCKER_IMAGE)-docs:latest > /dev/null
