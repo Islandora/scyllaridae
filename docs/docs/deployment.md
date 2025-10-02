@@ -245,18 +245,23 @@ cd /opt/scyllaridae
 # Download latest release (replace with actual version and CPU architecture)
 LATEST_VERSION=$(curl -s https://api.github.com/repos/lehigh-university-libraries/scyllaridae/releases/latest | grep tag_name | cut -d '"' -f 4)
 
-# For Linux (amd64)
-curl -L -o scyllaridae.tar.gz "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/${LATEST_VERSION}/scyllaridae-linux-amd64.tar.gz"
+# For Linux (x86_64)
+curl -L -o scyllaridae.tar.gz "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/${LATEST_VERSION}/scyllaridae_Linux_x86_64.tar.gz"
 sudo tar -xzf scyllaridae.tar.gz
 sudo rm scyllaridae.tar.gz
 
-# For macOS (amd64)
-# curl -L -o scyllaridae.tar.gz "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/${LATEST_VERSION}/scyllaridae-darwin-amd64.tar.gz"
+# For Linux (arm64)
+# curl -L -o scyllaridae.tar.gz "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/${LATEST_VERSION}/scyllaridae_Linux_arm64.tar.gz"
+# sudo tar -xzf scyllaridae.tar.gz
+# sudo rm scyllaridae.tar.gz
+
+# For macOS (x86_64)
+# curl -L -o scyllaridae.tar.gz "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/${LATEST_VERSION}/scyllaridae_Darwin_x86_64.tar.gz"
 # sudo tar -xzf scyllaridae.tar.gz
 # sudo rm scyllaridae.tar.gz
 
 # For macOS (arm64)
-# curl -L -o scyllaridae.tar.gz "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/${LATEST_VERSION}/scyllaridae-darwin-arm64.tar.gz"
+# curl -L -o scyllaridae.tar.gz "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/${LATEST_VERSION}/scyllaridae_Darwin_arm64.tar.gz"
 # sudo tar -xzf scyllaridae.tar.gz
 # sudo rm scyllaridae.tar.gz
 
@@ -278,9 +283,13 @@ Set-Location C:\scyllaridae
 $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/lehigh-university-libraries/scyllaridae/releases/latest"
 $version = $latestRelease.tag_name
 
-# For Windows (amd64)
-$downloadUrl = "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/$version/scyllaridae-windows-amd64.zip"
+# For Windows (x86_64)
+$downloadUrl = "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/$version/scyllaridae_Windows_x86_64.zip"
 Invoke-WebRequest -Uri $downloadUrl -OutFile "scyllaridae.zip"
+
+# For Windows (arm64)
+# $downloadUrl = "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/$version/scyllaridae_Windows_arm64.zip"
+# Invoke-WebRequest -Uri $downloadUrl -OutFile "scyllaridae.zip"
 
 # Extract the archive
 Expand-Archive -Path "scyllaridae.zip" -DestinationPath . -Force
@@ -465,14 +474,11 @@ sudo cp /opt/scyllaridae/scyllaridae /opt/scyllaridae/scyllaridae.backup
 LATEST_VERSION=$(curl -s https://api.github.com/repos/lehigh-university-libraries/scyllaridae/releases/latest | grep tag_name | cut -d '"' -f 4)
 
 # Determine platform and architecture
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m)
-if [ "$ARCH" = "x86_64" ]; then
-    ARCH="amd64"
-fi
+OS=$(uname -s)  # Darwin or Linux
+ARCH=$(uname -m)  # x86_64, arm64, etc.
 
 # Download and extract
-curl -L -o /tmp/scyllaridae.tar.gz "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/${LATEST_VERSION}/scyllaridae-${OS}-${ARCH}.tar.gz"
+curl -L -o /tmp/scyllaridae.tar.gz "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/${LATEST_VERSION}/scyllaridae_${OS}_${ARCH}.tar.gz"
 cd /tmp
 tar -xzf scyllaridae.tar.gz
 
@@ -499,7 +505,10 @@ Copy-Item -Path "C:\scyllaridae\scyllaridae.exe" -Destination "C:\scyllaridae\sc
 # Download new version
 $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/lehigh-university-libraries/scyllaridae/releases/latest"
 $version = $latestRelease.tag_name
-$downloadUrl = "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/$version/scyllaridae-windows-amd64.zip"
+
+# Determine architecture (x86_64, arm64, etc.)
+$arch = if ([Environment]::Is64BitOperatingSystem) { "x86_64" } else { "i386" }
+$downloadUrl = "https://github.com/lehigh-university-libraries/scyllaridae/releases/download/$version/scyllaridae_Windows_$arch.zip"
 
 # Download and extract
 Invoke-WebRequest -Uri $downloadUrl -OutFile "$env:TEMP\scyllaridae.zip"
