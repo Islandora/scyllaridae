@@ -44,8 +44,11 @@ jobs:
       - name: Put fixture in place
         run: cp scyllaridae.example.yml scyllaridae.yml
 
-      - name: Test with the Go CLI
+      - name: unit tests
         run: make test
+
+      - name: integration tests
+        run: make integration-test
 
   build-push:
     needs: [lint-test]

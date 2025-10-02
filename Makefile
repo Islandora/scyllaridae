@@ -1,4 +1,4 @@
-.PHONY: build deps lint docker test docs
+.PHONY: build deps run lint docker test docs integration-test
 
 BINARY_NAME=scyllaridae
 
@@ -10,6 +10,20 @@ deps:
 
 build: deps
 	go build -o $(BINARY_NAME) .
+
+run: docker
+	@docker stop $(DOCKER_IMAGE) 2>/dev/null || true
+	@docker rm $(DOCKER_IMAGE) 2>/dev/null || true
+	@PORT=8080; \
+	VOLUMES="-v ./scyllaridae.yml:/app/scyllaridae.yml"; \
+	if [ -f ./cmd.sh ]; then \
+		VOLUMES="$$VOLUMES -v ./cmd.sh:/app/cmd.sh"; \
+	fi; \
+	while lsof -Pi :$$PORT -sTCP:LISTEN -t >/dev/null 2>&1; do \
+		PORT=$$((PORT + 1)); \
+	done; \
+	echo "Starting scyllaridae at http://localhost:$$PORT"; \
+	docker run -d $$VOLUMES --name $(DOCKER_IMAGE) -p $$PORT:8080 $(DOCKER_IMAGE):latest > /dev/null
 
 lint:
 	go fmt ./...
@@ -41,6 +55,9 @@ docker:
 
 test:
 	go test -v -race ./...
+
+integration-test:
+	./tests/integration-test.sh
 
 docs:
 	docker build -t $(DOCKER_IMAGE)-docs:latest docs

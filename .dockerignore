@@ -7,3 +7,8 @@ scyllaridae.complex.yml
 scyllaridae.example.yml
 scyllaridae.yml
 renovate.json5
+Makefile
+Dockerfile
+*.md
+.claude
+tests
