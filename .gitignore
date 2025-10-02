@@ -1,4 +1,5 @@
 scyllaridae
 scyllaridae.yml
+!tests/scyllaridae.yml
 .claude
 tests/*.bin
