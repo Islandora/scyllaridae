@@ -38,7 +38,7 @@ lint:
 
 	@if command -v shellcheck > /dev/null 2>&1; then \
 		echo "Running shellcheck on shell scripts..."; \
-		shellcheck *.sh; \
+		shellcheck **/*.sh; \
 	else \
 		echo "shellcheck not found, skipping shell script validation"; \
 	fi
@@ -56,7 +56,7 @@ docker:
 test:
 	go test -v -race ./...
 
-integration-test:
+integration-test: docker
 	./tests/integration-test.sh
 
 docs:

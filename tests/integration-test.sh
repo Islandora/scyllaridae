@@ -2,6 +2,7 @@
 set -e
 
 DOCKER_IMAGE="scyllaridae"
+DOCKER_CONTAINER="$DOCKER_IMAGE-test"
 TEST_DIR="./tests"
 
 echo "Setting up integration test environment..."
@@ -14,8 +15,8 @@ dd if=/dev/urandom of="$TEST_DIR/exact.bin" bs=1024 count=2048 2>/dev/null  # 2M
 dd if=/dev/urandom of="$TEST_DIR/large.bin" bs=1024 count=3072 2>/dev/null  # 3MB
 
 # Stop and remove any existing test container
-docker stop "$DOCKER_IMAGE-test" 2>/dev/null || true
-docker rm "$DOCKER_IMAGE-test" 2>/dev/null || true
+docker stop "$DOCKER_CONTAINER" 2>/dev/null || true
+docker rm "$DOCKER_CONTAINER" 2>/dev/null || true
 
 # Find available port
 PORT=8082
@@ -27,7 +28,7 @@ echo "Starting test container on port $PORT..."
 docker run -d \
 	-v "$(pwd)/$TEST_DIR/cmd.sh:/app/cmd.sh" \
 	-v "$(pwd)/$TEST_DIR/scyllaridae.yml:/app/scyllaridae.yml" \
-	--name "$DOCKER_IMAGE-test" \
+	--name "$DOCKER_CONTAINER" \
 	-p "$PORT:8080" \
 	"$DOCKER_IMAGE:latest" > /dev/null
 
@@ -55,8 +56,8 @@ for bin_file in "$TEST_DIR"/*.bin; do
 done
 
 echo "Cleaning up..."
-docker stop "$DOCKER_IMAGE-test" > /dev/null
-docker rm "$DOCKER_IMAGE-test" > /dev/null
+docker stop "$DOCKER_CONTAINER" > /dev/null
+docker rm "$DOCKER_CONTAINER" > /dev/null
 
 if [ $FAILED -eq 0 ]; then
 	echo ""
