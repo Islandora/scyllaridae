@@ -218,6 +218,42 @@ cmdByMimeType:
       - "-"
 ```
 
+### Using Bash Wrapper Scripts
+
+If your command doesn't support reading from stdin and writing to stdout, you can use a bash wrapper script:
+
+```yaml
+allowedMimeTypes:
+  - "application/msword"
+  - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+cmdByMimeType:
+  default:
+    cmd: "/app/convert.sh"
+    args: []
+```
+
+Example `/app/convert.sh`:
+
+```bash
+#!/usr/bin/env bash
+set -eou pipefail
+
+# Read stdin to a temp file
+input_temp=$(mktemp /tmp/input-XXXXXX)
+cat > "$input_temp"
+
+# Process the file
+# Redirect stderr/stdout to /dev/null to avoid polluting the output
+libreoffice --headless --convert-to pdf "$input_temp" > /dev/null 2>&1
+
+# Write output to stdout
+output="/app/$(basename "$input_temp").pdf"
+cat "$output"
+
+# Cleanup
+rm "$input_temp" "$output"
+```
+
 ## Configuration Validation
 
 Scyllaridae validates the configuration file on startup. Common validation errors include:

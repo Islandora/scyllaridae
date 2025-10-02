@@ -28,13 +28,15 @@ Now that your software is available in a docker image, you'll need to understand
 
 One very important concept to understand up front is the Islandora/Drupal media/file you will be creating a derivative of will be streamed into your command using `stdin` and your command must print the file output (and no error text or other information) to `stdout`.
 
-The spec is as follows (with the default values shown):
+For the complete configuration specification, see the [Configuration Reference](../configuration.md).
+
+The basic structure is as follows (with the default values shown):
 
 ```yaml
 # boolean
 # Indicates whether the authentication header (i.e. your Drupal JWT) should be forwarded
 # when accessing your source media file
-forwardAuth: false
+forwardAuth: true
 
 # list of strings
 # MIME type(s) allowed for processing.
@@ -103,22 +105,20 @@ cmdByMimeType:
 
 ### Command arguments
 
-There are some special strings you can use in your `.cmdByMimeType[*].args`:
+Scyllaridae provides special variables that can be used in your `.cmdByMimeType[*].args`. These are automatically replaced with values from the incoming event:
 
-- `"%args"` - the args passed in via `X-Islandora-Args`
-- `"%source-mime-ext"` - the source file exension (e.g. pdf)
-- `"%destination-mime-ext"` - the destination file extension (e.g. xlsx)
-- `"%source-mime-pandoc"` - the source file mimetype, converted to what pandoc understands
-- `"%destination-mime-pandoc"` - the destination file mimetype, converted to what pandoc understands
-- `"%source-uri"` - the URL of the file as derivative is being created for
+- `%args` - Arguments passed via `X-Islandora-Args` header
+- `%source-mime-ext` - Source file extension (e.g. `pdf`)
+- `%destination-mime-ext` - Destination file extension (e.g. `jpg`)
+- `%source-mime-pandoc` - Source MIME type in Pandoc format
+- `%destination-mime-pandoc` - Destination MIME type in Pandoc format
+- `%source-uri` - URL of the source file
+- `%file-upload-uri` - Drupal URI where the derivative will be saved
+- `%destination-uri` - URL where the derivative will be PUT
+- `%canonical` - Canonical link to the node
+- `%target` - Target value from the event
 
-#### Not available if using alpaca
-
-As we noted in [the Islandora Events overview](../events/), alpaca only sends a subset of the event attributes to a microservice. If you need access to this parameters in your microservice, you'll need to use [the more complex setup](../../all/events) for your microservice
-
-- `"%file-upload-uri"` - the Drupal URI the derivative will be created as
-- `"%destination-uri" - the URL the derivative will be `PUT` to to create the media/file entities
-- `"%canonical"` - the canonical link to the node
+For the complete list of special variables and their usage, see the [Configuration Reference](../configuration.md#special-argument-variables)
 
 ### On stdin/stdout
 
