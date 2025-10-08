@@ -5,13 +5,39 @@ on:
       - main
     types:
       - closed
+permissions:
+  contents: write
+  actions: write
 jobs:
-  release:
+  bump-release:
     if: github.event.pull_request.merged == true && !contains(github.event.pull_request.title, 'skip-release')
-    uses: lehigh-university-libraries/gha/.github/workflows/bump-release.yaml@main
-    with:
-      workflow_file: goreleaser.yml
-    permissions:
-      contents: write
-      actions: write
-    secrets: inherit
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4
+        with:
+          fetch-depth: 0
+
+      - name: install autotag binary
+        run: |
+          gh release download "$TAG" --repo "$REPO" --pattern "$BINARY"
+          echo "$SHA256  $BINARY" | shasum -a 256 -c
+
+          chmod +x "$BINARY"
+          sudo mv "$BINARY" /usr/bin/autotag
+        env:
+          REPO: autotag-dev/autotag
+          BINARY: autotag_linux_amd64
+          TAG: v1.4.1
+          SHA256: 7b34c34316b8dd57b43ca0b08454ba57baf6472bef4e5ea46215b6ef5cd96146
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump git tag and create GitHub Release
+        run: |-
+          TAG=$(autotag)
+          git tag "$TAG" || echo continue
+          git push origin "$TAG"
+          gh release create "$TAG" --title "$TAG" --generate-notes
+          gh workflow run goreleaser.yml --ref "$TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

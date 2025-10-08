@@ -14,7 +14,7 @@ Any command that takes a file as input and prints a result as output can use scy
 ## Security
 
 scyllaridae uses JWTs to handle authentication like the rest of the Islandora.
-JWT verification is disabled by default, which essentially allows unauthenticated requests to be processed by scyllaridea.
+JWT verification is disabled by default, which essentially allows unauthenticated requests to be processed by scyllaridae.
 To enable JWT verification, in your `scyllaridae.yml` set `jwksUri` to the JWKS URI for your Islandora site, which can be provided by the [drupal/islandora_jwks](https://www.drupal.org/project/islandora_jwks) module.
 
 ## Development

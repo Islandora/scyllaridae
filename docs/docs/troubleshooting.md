@@ -188,7 +188,7 @@ jwksUri: "https://example.com/keys" # Quote URLs
 2. **Install missing dependencies in Dockerfile:**
 
 ```dockerfile
-  FROM ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae:main
+  FROM islandora/scyllaridae:main
   RUN apk add --no-cache your-required-package
 ```
 
@@ -451,7 +451,7 @@ environment:
 2. **Verify base image:**
 
 ```dockerfile
-  FROM ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae:main  # Ensure correct base image
+  FROM islandora/scyllaridae:main  # Ensure correct base image
 ```
 
 3. **Test container interactively:**

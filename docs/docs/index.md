@@ -6,7 +6,7 @@ Any command that takes a file as input and prints a result as output can use scy
 
 This service reads a file, pipes the file's stream as `stdin` to a command, and returns the `stdout` from that command as as an HTTP response.
 
-Both `GET` and `POST` requests are supported by any scyllaridea service.
+Both `GET` and `POST` requests are supported by any scyllaridae service.
 
 `GET` supports Islandora's alpaca/event spec, which sends the URL of a file as an HTTP header `Apix-Ldp-Resource` and prints the result. e.g. to create a VTT file from an audio file:
 

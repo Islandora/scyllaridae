@@ -16,16 +16,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-push:
-    uses: lehigh-university-libraries/gha/.github/workflows/build-push-ghcr.yaml@main
-    with:
-      image: scyllaridae-docs
-      context: docs
-    permissions:
-      contents: read
-      packages: write
-    secrets: inherit
-
   deploy:
     needs: [build-push]
     runs-on: ubuntu-24.04
@@ -34,9 +24,9 @@ jobs:
 
     - name: cp site
       run: |
-        docker run -d --rm --name docs ghcr.io/lehigh-university-libraries/scyllaridae-docs:main
-        docker cp docs:/usr/share/nginx/html ./docs/site
-        docker stop docs
+        make docs
+        docker cp scyllaridae-docs:/usr/share/nginx/html ./docs/site
+        docker stop scyllaridae-docs
 
     - name: Setup Pages
       uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5

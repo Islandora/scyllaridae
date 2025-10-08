@@ -16,7 +16,7 @@ Add the microservice to your docker compose, being sure to replace `YOUR-MICROSE
 ```
     YOUR-MICROSERVICE-dev: &YOUR-MICROSERVICE
         <<: [*dev, *common]
-        image: ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae-YOUR-MICROSERVICE:main
+        image: islandora/scyllaridae-YOUR-MICROSERVICE:main
         volumes:
           # un-comment one of the volumes below, depending on your ISLE deployment repo
           # to add the ISLE CA to scyllaridae's trust store
