@@ -1,4 +1,4 @@
-module github.com/lehigh-university-libraries/scyllaridae
+module github.com/islandora/scyllaridae
 
 go 1.25.1
 

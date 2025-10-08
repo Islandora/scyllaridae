@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
+	scyllaridae "github.com/islandora/scyllaridae/internal/config"
 	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jws"
 	"github.com/lestrrat-go/jwx/v3/jwt"

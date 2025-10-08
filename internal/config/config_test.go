@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
+	"github.com/islandora/scyllaridae/pkg/api"
 	"github.com/stretchr/testify/assert"
 )
 

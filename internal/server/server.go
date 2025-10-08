@@ -13,8 +13,8 @@ import (
 	"github.com/gorilla/mux"
 
 	lru "github.com/hashicorp/golang-lru/v2/expirable"
-	scyllaridae "github.com/lehigh-university-libraries/scyllaridae/internal/config"
-	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
+	scyllaridae "github.com/islandora/scyllaridae/internal/config"
+	"github.com/islandora/scyllaridae/pkg/api"
 	"github.com/lestrrat-go/jwx/v3/jwk"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"

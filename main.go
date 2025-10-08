@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lehigh-university-libraries/scyllaridae/internal/config"
-	"github.com/lehigh-university-libraries/scyllaridae/internal/server"
+	"github.com/islandora/scyllaridae/internal/config"
+	"github.com/islandora/scyllaridae/internal/server"
 )
 
 func main() {

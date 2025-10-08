@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/google/shlex"
-	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
+	"github.com/islandora/scyllaridae/pkg/api"
 	yaml "gopkg.in/yaml.v3"
 )
 

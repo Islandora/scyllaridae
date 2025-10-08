@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lehigh-university-libraries/scyllaridae/internal/config"
-	"github.com/lehigh-university-libraries/scyllaridae/pkg/api"
+	"github.com/islandora/scyllaridae/internal/config"
+	"github.com/islandora/scyllaridae/pkg/api"
 
 	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jwk"
