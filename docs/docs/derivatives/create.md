@@ -7,14 +7,14 @@ To create your derivative microservice you need to define:
 
 Define the `Dockerfile` to run your microservice.
 
-You must have your Dockerfile use `ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae:main` as the base so your command will get called properly when an event is emitted. Doing this ensures an http service will be running when the Dockerfile starts, and it will handle running your microservice when events are received from alpaca.
+You must have your Dockerfile use `islandora/scyllaridae:main` as the base so your command will get called properly when an event is emitted. Doing this ensures an http service will be running when the Dockerfile starts, and it will handle running your microservice when events are received from alpaca.
 
 Your Dockerfile just needs to use the `apk` package manager to install the software your microservice will run (or build from source, or however best to install your dependencies).
 
 ### Example Dockerfile for Crayfits
 
 ```dockerfile
-FROM ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae:main
+FROM islandora/scyllaridae:main
 
 RUN apk update && \
     apk add --no-cache curl==8.11.1-r0

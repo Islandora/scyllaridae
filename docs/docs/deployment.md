@@ -18,7 +18,7 @@ docker run -d \
   --name my-microservice \
   -p 8080:8080 \
   -v $(pwd)/scyllaridae.yml:/app/scyllaridae.yml:ro \
-  ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae:main
+  islandora/scyllaridae:main
 ```
 
 ### Environment Variables
@@ -33,7 +33,7 @@ docker run -d \
   -e SCYLLARIDAE_LOG_LEVEL=INFO \
   -e SCYLLARIDAE_YML_PATH=/app/scyllaridae.yml \
   -v $(pwd)/scyllaridae.yml:/app/scyllaridae.yml:ro \
-  ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae:main
+  islandora/scyllaridae:main
 ```
 
 ### Using Docker Compose
@@ -43,7 +43,7 @@ Create a `docker-compose.yml` for your microservice:
 ```yaml
 services:
   microservice:
-    image: ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae:main
+    image: islandora/scyllaridae:main
     ports:
       - "8080:8080"
     environment:
@@ -77,7 +77,7 @@ Add your microservice to an existing ISLE deployment:
 services:
   my-microservice-dev: &my-microservice
     <<: [*dev, *common]
-    image: ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae-my-microservice:main
+    image: islandora/scyllaridae-my-microservice:main
     volumes:
       # Add CA certificate for development
       - ./certs/rootCA.pem:/app/ca.pem:ro
@@ -137,7 +137,7 @@ spec:
     spec:
       containers:
         - name: scyllaridae
-          image: ghcr.io/lehigh-university-libraries/lehighlts/scyllaridae-my-microservice:latest
+          image: islandora/scyllaridae-my-microservice:latest
           ports:
             - containerPort: 8080
           env:
