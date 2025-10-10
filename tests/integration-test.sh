@@ -79,6 +79,22 @@ sleep 2
 echo "Running integration tests..."
 FAILED=0
 
+# Test with invalid JWT if we're in GitHub Actions
+if [ -n "$GITHUB_TOKEN" ]; then
+	echo "Testing: invalid JWT authentication"
+	HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+		--data-binary "@$TEST_DIR/small.bin" \
+		-H "Authorization: Bearer invalid.jwt.token" \
+		"http://localhost:$PORT")
+
+	if [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "403" ]; then
+		echo "✓ Invalid JWT correctly rejected (HTTP $HTTP_CODE)"
+	else
+		echo "✗ Invalid JWT test FAILED (expected 401/403, got HTTP $HTTP_CODE)"
+		FAILED=$((FAILED + 1))
+	fi
+fi
+
 for bin_file in "$TEST_DIR"/*.bin; do
 	filename=$(basename "$bin_file")
 	name="${filename%.bin}"
