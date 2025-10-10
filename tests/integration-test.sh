@@ -99,7 +99,7 @@ if [ -n "$GITHUB_TOKEN" ]; then
 	curl -s --data-binary "@$TEST_DIR/small.bin" \
 		-H "Authorization: Bearer $GITHUB_TOKEN" \
 		"http://localhost:$PORT" > /dev/null 2>&1
-	if docker logs "$DOCKER_CONTAINER" 2>&1 | tail -1 | grep -q "SCYLLARIDAE_AUTH=present"; then
+	if docker logs "$DOCKER_CONTAINER" 2>&1 | grep -q "SCYLLARIDAE_AUTH=present"; then
 		echo "✓ forwardAuth=true: SCYLLARIDAE_AUTH correctly passed to cmd"
 	else
 		echo "✗ forwardAuth=true test FAILED: SCYLLARIDAE_AUTH not present"
@@ -156,7 +156,7 @@ if [ -n "$GITHUB_TOKEN" ]; then
 	curl -s --data-binary "@$TEST_DIR/small.bin" \
 		-H "Authorization: Bearer $GITHUB_TOKEN" \
 		"http://localhost:$PORT" > /dev/null 2>&1
-	if docker logs "$DOCKER_CONTAINER" 2>&1 | tail -1 | grep -q "SCYLLARIDAE_AUTH=absent"; then
+	if docker logs "$DOCKER_CONTAINER" 2>&1 | grep -q "SCYLLARIDAE_AUTH=absent"; then
 		echo "✓ forwardAuth=false: SCYLLARIDAE_AUTH correctly NOT passed to cmd"
 	else
 		echo "✗ forwardAuth=false test FAILED: SCYLLARIDAE_AUTH was present"
