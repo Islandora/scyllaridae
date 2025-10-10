@@ -5,6 +5,7 @@ set -eou pipefail
 DOCKER_IMAGE="scyllaridae"
 DOCKER_CONTAINER="$DOCKER_IMAGE-test"
 TEST_DIR="$(pwd)/tests"
+GITHUB_TOKEN=""
 
 # shellcheck disable=SC2317,SC2329
 cleanup() {
@@ -21,6 +22,30 @@ cleanup() {
 
 trap 'cleanup error' ERR
 trap 'cleanup' EXIT
+
+CONFIG_FILE="$TEST_DIR/scyllaridae.yml"
+
+# Fetch GitHub OIDC token if running in GitHub Actions
+if [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+	echo "Detected GitHub Actions environment, fetching OIDC token..."
+	GITHUB_TOKEN=$(curl -s \
+		-H "Accept: application/json; api-version=2.0" \
+		-H "Content-Type: application/json" -d "{}" \
+		-H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+		"$ACTIONS_ID_TOKEN_REQUEST_URL" | grep -o '"value":"[^"]*"' | cut -d'"' -f4)
+
+	if [ -z "$GITHUB_TOKEN" ]; then
+		echo "Failed to fetch GitHub OIDC token"
+		exit 1
+	fi
+
+	echo "Successfully fetched GitHub OIDC token"
+	# Add buffer to avoid iat issues
+	sleep 5
+
+	# Use GitHub-specific config with JWKS URI
+	CONFIG_FILE="$TEST_DIR/scyllaridae.github.yml"
+fi
 
 echo "Setting up integration test environment..."
 
@@ -43,7 +68,7 @@ done
 echo "Starting test container on port $PORT..."
 docker run -d \
 	-v "$TEST_DIR/cmd.sh:/app/cmd.sh" \
-	-v "$TEST_DIR/scyllaridae.yml:/app/scyllaridae.yml" \
+	-v "$CONFIG_FILE:/app/scyllaridae.yml" \
 	--name "$DOCKER_CONTAINER" \
 	-p "$PORT:8080" \
 	"$DOCKER_IMAGE:latest" > /dev/null
@@ -59,7 +84,13 @@ for bin_file in "$TEST_DIR"/*.bin; do
 	name="${filename%.bin}"
 
 	echo "Testing: $name"
-	curl -s --data-binary "@$bin_file" "http://localhost:$PORT" > "$TEST_DIR/$name-result.bin"
+	if [ -n "$GITHUB_TOKEN" ]; then
+		curl -s --data-binary "@$bin_file" \
+			-H "Authorization: Bearer $GITHUB_TOKEN" \
+			"http://localhost:$PORT" > "$TEST_DIR/$name-result.bin"
+	else
+		curl -s --data-binary "@$bin_file" "http://localhost:$PORT" > "$TEST_DIR/$name-result.bin"
+	fi
 	ORIGINAL=$(md5sum "$bin_file" | cut -d' ' -f1)
 	RESULT=$(md5sum "$TEST_DIR/$name-result.bin" | cut -d' ' -f1)
 
