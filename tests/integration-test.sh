@@ -93,6 +93,18 @@ if [ -n "$GITHUB_TOKEN" ]; then
 		echo "✗ Invalid JWT test FAILED (expected 401/403, got HTTP $HTTP_CODE)"
 		FAILED=$((FAILED + 1))
 	fi
+
+	# Test forwardAuth: true - SCYLLARIDAE_AUTH should be present
+	echo "Testing: forwardAuth=true (SCYLLARIDAE_AUTH should be present)"
+	curl -s --data-binary "@$TEST_DIR/small.bin" \
+		-H "Authorization: Bearer $GITHUB_TOKEN" \
+		"http://localhost:$PORT" > /dev/null 2>&1
+	if docker logs "$DOCKER_CONTAINER" 2>&1 | tail -1 | grep -q "SCYLLARIDAE_AUTH=present"; then
+		echo "✓ forwardAuth=true: SCYLLARIDAE_AUTH correctly passed to cmd"
+	else
+		echo "✗ forwardAuth=true test FAILED: SCYLLARIDAE_AUTH not present"
+		FAILED=$((FAILED + 1))
+	fi
 fi
 
 for bin_file in "$TEST_DIR"/*.bin; do
@@ -117,6 +129,40 @@ for bin_file in "$TEST_DIR"/*.bin; do
 		FAILED=$((FAILED + 1))
 	fi
 done
+
+# Test forwardAuth: false if in GitHub Actions
+if [ -n "$GITHUB_TOKEN" ]; then
+	echo ""
+	echo "Testing forwardAuth=false configuration..."
+
+	# Stop existing container
+	docker stop "$DOCKER_CONTAINER" 2>/dev/null || true
+	docker rm "$DOCKER_CONTAINER" 2>/dev/null || true
+
+	# Start container with forwardAuth: false config
+	echo "Starting test container with forwardAuth=false on port $PORT..."
+	docker run -d \
+		-v "$TEST_DIR/cmd.sh:/app/cmd.sh" \
+		-v "$TEST_DIR/scyllaridae.github-noforward.yml:/app/scyllaridae.yml" \
+		--name "$DOCKER_CONTAINER" \
+		-p "$PORT:8080" \
+		"$DOCKER_IMAGE:latest" > /dev/null
+
+	echo "Waiting for container to be ready..."
+	sleep 2
+
+	# Test that SCYLLARIDAE_AUTH is NOT present when forwardAuth: false
+	echo "Testing: forwardAuth=false (SCYLLARIDAE_AUTH should be absent)"
+	curl -s --data-binary "@$TEST_DIR/small.bin" \
+		-H "Authorization: Bearer $GITHUB_TOKEN" \
+		"http://localhost:$PORT" > /dev/null 2>&1
+	if docker logs "$DOCKER_CONTAINER" 2>&1 | tail -1 | grep -q "SCYLLARIDAE_AUTH=absent"; then
+		echo "✓ forwardAuth=false: SCYLLARIDAE_AUTH correctly NOT passed to cmd"
+	else
+		echo "✗ forwardAuth=false test FAILED: SCYLLARIDAE_AUTH was present"
+		FAILED=$((FAILED + 1))
+	fi
+fi
 
 if [ $FAILED -eq 0 ]; then
 	echo ""

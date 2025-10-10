@@ -1,6 +1,6 @@
-# GitHub Actions OIDC configuration for integration tests
+# GitHub Actions OIDC configuration for integration tests (forwardAuth: false)
 jwksUri: "https://token.actions.githubusercontent.com/.well-known/jwks"
-forwardAuth: true
+forwardAuth: false
 
 allowedMimeTypes:
   - "*"
