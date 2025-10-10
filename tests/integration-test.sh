@@ -67,6 +67,7 @@ done
 
 echo "Starting test container on port $PORT..."
 docker run -d \
+	-e SCYLLARIDAE_LOG_LEVEL=DEBUG \
 	-v "$TEST_DIR/cmd.sh:/app/cmd.sh" \
 	-v "$CONFIG_FILE:/app/scyllaridae.yml" \
 	--name "$DOCKER_CONTAINER" \
@@ -142,6 +143,7 @@ if [ -n "$GITHUB_TOKEN" ]; then
 	# Start container with forwardAuth: false config
 	echo "Starting test container with forwardAuth=false on port $PORT..."
 	docker run -d \
+		-e SCYLLARIDAE_LOG_LEVEL=DEBUG \
 		-v "$TEST_DIR/cmd.sh:/app/cmd.sh" \
 		-v "$TEST_DIR/scyllaridae.github-noforward.yml:/app/scyllaridae.yml" \
 		--name "$DOCKER_CONTAINER" \
