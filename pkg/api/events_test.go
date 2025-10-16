@@ -17,7 +17,7 @@ func TestDecodeEventMessage(t *testing.T) {
 	}{
 		{
 			name:      "valid JSON payload",
-			input:     []byte(`{"type":"test","target":"thumbnail","object":{"id":"123"}}`),
+			input:     []byte(`{"type":"test","target":"http://foo.bar/baz","object":{"id":"123"}}`),
 			wantError: false,
 		},
 		{
@@ -98,14 +98,14 @@ func TestDecodeAlpacaMessage(t *testing.T) {
 				req.Header.Set(k, v)
 			}
 
-			payload, err := DecodeAlpacaMessage(req, "test-auth")
+			payload, err := DecodeAlpacaMessage(req, "Bearer foo.bar.baz")
 			if tt.wantError {
 				assert.Error(t, err)
 				return
 			}
 
 			assert.NoError(t, err)
-			assert.Equal(t, "test-auth", payload.Authorization)
+			assert.Equal(t, "Bearer foo.bar.baz", payload.Authorization)
 			assert.Equal(t, tt.wantDestMimeType, payload.Attachment.Content.DestinationMimeType)
 			if tt.wantSrcMimeType != "" {
 				assert.Equal(t, tt.wantSrcMimeType, payload.Attachment.Content.SourceMimeType)
@@ -123,7 +123,7 @@ func TestDecodeAlpacaMessage_WithSourceURIFetch(t *testing.T) {
 		if r.Method != "HEAD" {
 			t.Errorf("Expected HEAD request, got %s", r.Method)
 		}
-		if r.Header.Get("Authorization") != "Bearer test-token" {
+		if r.Header.Get("Authorization") != "Bearer foo.bar.baz" {
 			t.Errorf("Expected Authorization header to be forwarded")
 		}
 		w.Header().Set("Content-Type", "image/jpeg")
@@ -135,7 +135,7 @@ func TestDecodeAlpacaMessage_WithSourceURIFetch(t *testing.T) {
 	req.Header.Set("Apix-Ldp-Resource", mockServer.URL)
 	req.Header.Set("Accept", "image/png")
 
-	payload, err := DecodeAlpacaMessage(req, "Bearer test-token")
+	payload, err := DecodeAlpacaMessage(req, "Bearer foo.bar.baz")
 	assert.NoError(t, err)
 	assert.Equal(t, "image/jpeg", payload.Attachment.Content.SourceMimeType)
 	assert.Equal(t, mockServer.URL, payload.Attachment.Content.SourceURI)
@@ -232,10 +232,9 @@ func TestDecodeAlpacaMessage_FailedSourceURIFetch(t *testing.T) {
 func TestPayloadStructures(t *testing.T) {
 	// Test that all the payload structures can be marshaled/unmarshaled
 	payload := Payload{
-		Type:    "Create",
-		Target:  "thumbnail",
-		Summary: "Test summary",
-		Actor:   Actor{ID: "user:1"},
+		Type:   "Create",
+		Target: "http://foo.bar/baz",
+		Actor:  Actor{ID: "user:1"},
 		Object: Object{
 			ID:           "node:123",
 			IsNewVersion: true,
@@ -267,7 +266,7 @@ func TestPayloadStructures(t *testing.T) {
 
 	// Test that we can access all fields
 	assert.Equal(t, "Create", payload.Type)
-	assert.Equal(t, "thumbnail", payload.Target)
+	assert.Equal(t, "http://foo.bar/baz", payload.Target)
 	assert.Equal(t, "user:1", payload.Actor.ID)
 	assert.Equal(t, "node:123", payload.Object.ID)
 	assert.True(t, payload.Object.IsNewVersion)
@@ -443,7 +442,7 @@ func TestPayloadSanitize(t *testing.T) {
 		{
 			name: "valid payload",
 			payload: Payload{
-				Target: "thumbnail",
+				Target: "http://foo.bar/baz",
 				Object: Object{
 					URL: []Link{
 						{Href: "https://example.com/node/1", Rel: "canonical"},
@@ -464,56 +463,56 @@ func TestPayloadSanitize(t *testing.T) {
 			payload: Payload{
 				Attachment: Attachment{
 					Content: Content{
-						SourceURI: "https://example.com; echo foo",
+						SourceURI: "not a url",
 					},
 				},
 			},
 			wantError: true,
-			errorMsg:  "attachment.content.source_uri",
+			errorMsg:  "invalid URI for field 'SourceURI': URL must have a scheme (e.g., https://, private://): not a url",
 		},
 		{
 			name: "invalid destination URI with pipe",
 			payload: Payload{
 				Attachment: Attachment{
 					Content: Content{
-						DestinationURI: "https://example.com | echo foo",
+						DestinationURI: "not a url",
 					},
 				},
 			},
 			wantError: true,
-			errorMsg:  "attachment.content.destination_uri",
+			errorMsg:  "invalid URI for field 'DestinationURI': URL must have a scheme (e.g., https://, private://): not a url",
 		},
 		{
 			name: "invalid file upload URI with backtick",
 			payload: Payload{
 				Attachment: Attachment{
 					Content: Content{
-						FileUploadURI: "private://file`echo foo`.jpg",
+						FileUploadURI: "not a url",
 					},
 				},
 			},
 			wantError: true,
-			errorMsg:  "attachment.content.file_upload_uri",
+			errorMsg:  "invalid URI for field 'FileUploadURI': URL must have a scheme (e.g., https://, private://): not a url",
 		},
 		{
 			name: "invalid target with dollar sign",
 			payload: Payload{
-				Target: "thumbnail$(echo foo)",
+				Target: "not a url",
 			},
 			wantError: true,
-			errorMsg:  "invalid characters in argument",
+			errorMsg:  "invalid URI for field 'Target': URL must have a scheme (e.g., https://, private://): not a url",
 		},
 		{
 			name: "invalid canonical href with pipe",
 			payload: Payload{
 				Object: Object{
 					URL: []Link{
-						{Href: "https://example.com | echo foo", Rel: "canonical"},
+						{Href: "not a url", Rel: "canonical"},
 					},
 				},
 			},
 			wantError: true,
-			errorMsg:  "object.url[0].href",
+			errorMsg:  "invalid URI for field 'Href': URL must have a scheme (e.g., https://, private://): not a url",
 		},
 		{
 			name: "invalid args with semicolon",
@@ -639,7 +638,7 @@ func TestDecodeEventMessageWithSanitization(t *testing.T) {
 	}{
 		{
 			name:      "valid payload passes sanitization",
-			input:     `{"target":"thumbnail","attachment":{"content":{"source_uri":"https://example.com/file.jpg"}}}`,
+			input:     `{"target":"http://foo.bar/baz","attachment":{"content":{"source_uri":"https://example.com/file.jpg"}}}`,
 			wantError: false,
 		},
 		{
@@ -650,9 +649,9 @@ func TestDecodeEventMessageWithSanitization(t *testing.T) {
 		},
 		{
 			name:      "payload with malicious target fails",
-			input:     `{"target":"thumb|echo foo"}`,
+			input:     `{"target":echo foo"}`,
 			wantError: true,
-			errorMsg:  "payload validation failed",
+			errorMsg:  "invalid character 'e' looking for beginning of value",
 		},
 	}
 

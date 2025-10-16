@@ -140,34 +140,60 @@ func validateField(value, validationType string) error {
 	}
 }
 
-// validateStruct recursively validates all fields in a struct based on their validate tags.
-func validateStruct(v reflect.Value) error {
+func (p *Payload) Sanitize() error {
+	return sanitizeAndValidateStruct(reflect.ValueOf(p))
+}
+
+func sanitizeAndValidateStruct(v reflect.Value) error {
+	// We need to be able to modify the fields, so we need a pointer.
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	if v.Kind() != reflect.Struct {
+		return nil // Or return an error if you expect only structs
+	}
+
 	t := v.Type()
 
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		fieldType := t.Field(i)
 
-		// Handle different field types
+		// We need to be able to set the value of the field.
+		if !field.CanSet() {
+			continue
+		}
+
 		switch field.Kind() {
 		case reflect.String:
-			// Check for validate tag
 			if validateTag := fieldType.Tag.Get("validate"); validateTag != "" {
-				if err := validateField(field.String(), validateTag); err != nil {
-					return err
+				originalValue := field.String()
+				if originalValue == "" {
+					continue
 				}
+
+				if validateTag == "uri" {
+					normalized, err := normalizeURL(originalValue)
+					if err != nil {
+						return fmt.Errorf("invalid URI for field '%s': %w", fieldType.Name, err)
+					}
+					field.SetString(normalized)
+				}
+				if err := validateField(originalValue, validateTag); err != nil {
+					return fmt.Errorf("validation failed for field '%s': %w", fieldType.Name, err)
+				}
+
 			}
 		case reflect.Struct:
-			// Recursively validate nested structs
-			if err := validateStruct(field); err != nil {
+			if err := sanitizeAndValidateStruct(field.Addr()); err != nil {
 				return err
 			}
 		case reflect.Slice:
-			// Validate each element in slice
 			for j := 0; j < field.Len(); j++ {
 				elem := field.Index(j)
 				if elem.Kind() == reflect.Struct {
-					if err := validateStruct(elem); err != nil {
+					if err := sanitizeAndValidateStruct(elem.Addr()); err != nil {
 						return err
 					}
 				}
@@ -176,47 +202,6 @@ func validateStruct(v reflect.Value) error {
 	}
 
 	return nil
-}
-
-// Sanitize validates and normalizes all user-controlled fields in the Payload to prevent shell injection.
-// It uses reflection to find fields with validate tags, validates them, and normalizes URLs.
-func (p *Payload) Sanitize() error {
-	// First validate and normalize URIs
-	if p.Attachment.Content.SourceURI != "" {
-		normalized, err := normalizeURL(p.Attachment.Content.SourceURI)
-		if err != nil {
-			return fmt.Errorf("invalid attachment.content.source_uri: %w", err)
-		}
-		p.Attachment.Content.SourceURI = normalized
-	}
-
-	if p.Attachment.Content.DestinationURI != "" {
-		normalized, err := normalizeURL(p.Attachment.Content.DestinationURI)
-		if err != nil {
-			return fmt.Errorf("invalid attachment.content.destination_uri: %w", err)
-		}
-		p.Attachment.Content.DestinationURI = normalized
-	}
-
-	if p.Attachment.Content.FileUploadURI != "" {
-		normalized, err := normalizeURL(p.Attachment.Content.FileUploadURI)
-		if err != nil {
-			return fmt.Errorf("invalid attachment.content.file_upload_uri: %w", err)
-		}
-		p.Attachment.Content.FileUploadURI = normalized
-	}
-
-	for i := range p.Object.URL {
-		if p.Object.URL[i].Href != "" {
-			normalized, err := normalizeURL(p.Object.URL[i].Href)
-			if err != nil {
-				return fmt.Errorf("invalid object.url[%d].href: %w", i, err)
-			}
-			p.Object.URL[i].Href = normalized
-		}
-	}
-
-	return validateStruct(reflect.ValueOf(p).Elem())
 }
 
 // normalizeURL parses and normalizes a URL, ensuring it has a scheme and is properly escaped.
@@ -336,9 +321,9 @@ func isValidAuthHeader(authHeader string) error {
 		return nil
 	}
 
-	const bearerPrefix = "earer "
+	const bearerPrefix = "bearer "
 
-	if len(authHeader) <= 7 || !strings.EqualFold(authHeader[:7], "bearer ") {
+	if len(authHeader) <= 7 || !strings.EqualFold(authHeader[:7], bearerPrefix) {
 		return fmt.Errorf("invalid authorization header: no bearer")
 	}
 
