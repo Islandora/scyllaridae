@@ -277,3 +277,396 @@ func TestPayloadStructures(t *testing.T) {
 	assert.Equal(t, "image/jpeg", payload.Attachment.Content.SourceMimeType)
 	assert.Equal(t, "Bearer token123", payload.Authorization)
 }
+
+func TestSanitizeShellArg(t *testing.T) {
+	tests := []struct {
+		name      string
+		arg       string
+		wantError bool
+	}{
+		{
+			name:      "valid URL",
+			arg:       "https://example.com/file.jpg",
+			wantError: false,
+		},
+		{
+			name:      "valid URL with query params",
+			arg:       "https://example.com/file?id=123&format=json",
+			wantError: false, // & is valid in URLs
+		},
+		{
+			name:      "valid URL with encoded query",
+			arg:       "https://example.com/node/1",
+			wantError: false,
+		},
+		{
+			name:      "valid file path",
+			arg:       "private://2024-03/thumbnail.jpg",
+			wantError: false,
+		},
+		{
+			name:      "empty string",
+			arg:       "",
+			wantError: false,
+		},
+		{
+			name:      "command injection with semicolon",
+			arg:       "https://example.com; echo foo",
+			wantError: true,
+		},
+		{
+			name:      "command injection with pipe",
+			arg:       "https://example.com | echo foo",
+			wantError: true,
+		},
+		{
+			name:      "command injection with ampersand",
+			arg:       "https://example.com & echo foo",
+			wantError: true,
+		},
+		{
+			name:      "command injection with backticks",
+			arg:       "https://example.com`echo foo`",
+			wantError: true,
+		},
+		{
+			name:      "command injection with dollar sign",
+			arg:       "https://example.com$(echo foo)",
+			wantError: true,
+		},
+		{
+			name:      "command injection with backslash",
+			arg:       "https://example.com\\necho foo",
+			wantError: true,
+		},
+		{
+			name:      "command injection with redirect",
+			arg:       "https://example.com > /tmp/test",
+			wantError: true,
+		},
+		{
+			name:      "command injection with redirect input",
+			arg:       "https://example.com < /tmp/test",
+			wantError: true,
+		},
+		{
+			name:      "command injection with newline",
+			arg:       "https://example.com\necho foo",
+			wantError: true,
+		},
+		{
+			name:      "command injection with exclamation",
+			arg:       "https://example.com!malicious",
+			wantError: false, // ! is valid in URLs (though unusual)
+		},
+		{
+			name:      "command injection with braces",
+			arg:       "https://example.com{malicious}",
+			wantError: true,
+		},
+		{
+			name:      "valid with brackets",
+			arg:       "https://example.com/path[123]",
+			wantError: false,
+		},
+		{
+			name:      "valid with parentheses",
+			arg:       "https://example.com/path(123)",
+			wantError: false,
+		},
+		{
+			name:      "tilde path without scheme",
+			arg:       "~/path/to/file.txt",
+			wantError: true, // No scheme
+		},
+		{
+			name:      "valid with plus and equals",
+			arg:       "https://example.com/path+test=value",
+			wantError: false,
+		},
+		{
+			name:      "valid with hash",
+			arg:       "https://example.com/page#section",
+			wantError: false,
+		},
+		{
+			name:      "valid private:// URI",
+			arg:       "private://2024-03/file.jpg",
+			wantError: false,
+		},
+		{
+			name:      "valid public:// URI",
+			arg:       "public://documents/report.pdf",
+			wantError: false,
+		},
+		{
+			name:      "valid FTP URL",
+			arg:       "ftp://ftp.example.com/file.zip",
+			wantError: false,
+		},
+		{
+			name:      "valid file:// URL",
+			arg:       "file:///tmp/local-file.txt",
+			wantError: false,
+		},
+		{
+			name:      "URL without scheme",
+			arg:       "example.com/file.jpg",
+			wantError: true, // Missing scheme
+		},
+		{
+			name:      "relative path without scheme",
+			arg:       "/path/to/file.jpg",
+			wantError: true, // Missing scheme
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := SanitizeShellArg(tt.arg)
+			if tt.wantError {
+				assert.Error(t, err, "Expected error for: %s", tt.arg)
+			} else {
+				assert.NoError(t, err, "Expected no error for: %s", tt.arg)
+			}
+		})
+	}
+}
+
+func TestPayloadSanitize(t *testing.T) {
+	tests := []struct {
+		name      string
+		payload   Payload
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name: "valid payload",
+			payload: Payload{
+				Target: "thumbnail",
+				Object: Object{
+					URL: []Link{
+						{Href: "https://example.com/node/1", Rel: "canonical"},
+					},
+				},
+				Attachment: Attachment{
+					Content: Content{
+						SourceURI:      "https://example.com/source.jpg",
+						DestinationURI: "https://example.com/dest.jpg",
+						FileUploadURI:  "private://file.jpg",
+					},
+				},
+			},
+			wantError: false,
+		},
+		{
+			name: "invalid source URI with semicolon",
+			payload: Payload{
+				Attachment: Attachment{
+					Content: Content{
+						SourceURI: "https://example.com; echo foo",
+					},
+				},
+			},
+			wantError: true,
+			errorMsg:  "attachment.content.source_uri",
+		},
+		{
+			name: "invalid destination URI with pipe",
+			payload: Payload{
+				Attachment: Attachment{
+					Content: Content{
+						DestinationURI: "https://example.com | echo foo",
+					},
+				},
+			},
+			wantError: true,
+			errorMsg:  "attachment.content.destination_uri",
+		},
+		{
+			name: "invalid file upload URI with backtick",
+			payload: Payload{
+				Attachment: Attachment{
+					Content: Content{
+						FileUploadURI: "private://file`echo foo`.jpg",
+					},
+				},
+			},
+			wantError: true,
+			errorMsg:  "attachment.content.file_upload_uri",
+		},
+		{
+			name: "invalid target with dollar sign",
+			payload: Payload{
+				Target: "thumbnail$(echo foo)",
+			},
+			wantError: true,
+			errorMsg:  "invalid characters in argument",
+		},
+		{
+			name: "invalid canonical href with pipe",
+			payload: Payload{
+				Object: Object{
+					URL: []Link{
+						{Href: "https://example.com | echo foo", Rel: "canonical"},
+					},
+				},
+			},
+			wantError: true,
+			errorMsg:  "object.url[0].href",
+		},
+		{
+			name: "invalid args with semicolon",
+			payload: Payload{
+				Attachment: Attachment{
+					Content: Content{
+						Args: "-quality 80; echo foo",
+					},
+				},
+			},
+			wantError: true,
+			errorMsg:  "invalid characters in argument",
+		},
+		{
+			name: "valid args",
+			payload: Payload{
+				Attachment: Attachment{
+					Content: Content{
+						Args: "-quality 80",
+					},
+				},
+			},
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.payload.Sanitize()
+			if tt.wantError {
+				assert.Error(t, err)
+				if tt.errorMsg != "" {
+					assert.Contains(t, err.Error(), tt.errorMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestSanitizeCmdArg(t *testing.T) {
+	tests := []struct {
+		name      string
+		arg       string
+		wantError bool
+	}{
+		{
+			name:      "valid command arg with space",
+			arg:       "-quality 80",
+			wantError: false,
+		},
+		{
+			name:      "valid command arg with equals",
+			arg:       "-resize=50",
+			wantError: false,
+		},
+		{
+			name:      "valid command arg simple flag",
+			arg:       "-verbose",
+			wantError: false,
+		},
+		{
+			name:      "empty string",
+			arg:       "",
+			wantError: false,
+		},
+		{
+			name:      "invalid with question mark",
+			arg:       "-arg?value",
+			wantError: true,
+		},
+		{
+			name:      "invalid with hash",
+			arg:       "-arg#value",
+			wantError: true,
+		},
+		{
+			name:      "invalid with percent (URL encoding)",
+			arg:       "-arg%20value",
+			wantError: true,
+		},
+		{
+			name:      "invalid with brackets",
+			arg:       "-arg[0]",
+			wantError: true,
+		},
+		{
+			name:      "command injection with semicolon",
+			arg:       "-arg; echo foo",
+			wantError: true,
+		},
+		{
+			name:      "command injection with pipe",
+			arg:       "-arg | echo foo",
+			wantError: true,
+		},
+		{
+			name:      "command injection with dollar",
+			arg:       "-arg$(echo foo)",
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := sanitizeCmdArg(tt.arg)
+			if tt.wantError {
+				assert.Error(t, err, "Expected error for: %s", tt.arg)
+			} else {
+				assert.NoError(t, err, "Expected no error for: %s", tt.arg)
+			}
+		})
+	}
+}
+
+func TestDecodeEventMessageWithSanitization(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantError bool
+		errorMsg  string
+	}{
+		{
+			name:      "valid payload passes sanitization",
+			input:     `{"target":"thumbnail","attachment":{"content":{"source_uri":"https://example.com/file.jpg"}}}`,
+			wantError: false,
+		},
+		{
+			name:      "payload with malicious source_uri fails",
+			input:     `{"attachment":{"content":{"source_uri":"https://example.com; echo foo"}}}`,
+			wantError: true,
+			errorMsg:  "payload validation failed",
+		},
+		{
+			name:      "payload with malicious target fails",
+			input:     `{"target":"thumb|echo foo"}`,
+			wantError: true,
+			errorMsg:  "payload validation failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := DecodeEventMessage([]byte(tt.input))
+			if tt.wantError {
+				assert.Error(t, err)
+				if tt.errorMsg != "" {
+					assert.Contains(t, err.Error(), tt.errorMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
