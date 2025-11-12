@@ -62,6 +62,14 @@ type Command struct {
 	//
 	// required: false
 	Args []string `yaml:"args"`
+
+	// Allow insecure arguments from X-Islandora-Args header without escaping.
+	// When false (default), arguments are validated against a whitelist regex.
+	// When true, arguments are passed through without validation (DANGEROUS).
+	//
+	// required: false
+	// default: false
+	AllowInsecureArgs bool `yaml:"allowInsecureArgs,omitempty"`
 }
 
 // IsAllowedMimeType checks if a given MIME type is allowed based on the configured formats.
@@ -159,7 +167,7 @@ func BuildExecCommand(message api.Payload, c *ServerConfig) (*exec.Cmd, error) {
 		// replace it with the args passed by the event
 		if a == "%args" {
 			if message.Attachment.Content.Args != "" {
-				passedArgs, err := GetPassedArgs(message.Attachment.Content.Args)
+				passedArgs, err := GetPassedArgs(message.Attachment.Content.Args, cmdConfig.AllowInsecureArgs)
 				if err != nil {
 					return nil, fmt.Errorf("could not parse args: %v", err)
 				}
@@ -288,11 +296,16 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 
 // GetPassedArgs parses and validates command-line arguments from a string.
 // It uses shell-style parsing and validates each argument against a whitelist regex
-// to prevent command injection attacks.
-func GetPassedArgs(args string) ([]string, error) {
+// to prevent command injection attacks, unless allowInsecure is true.
+func GetPassedArgs(args string, allowInsecure bool) ([]string, error) {
 	passedArgs, err := shlex.Split(args)
 	if err != nil {
 		return nil, fmt.Errorf("error splitting args %s: %v", args, err)
+	}
+
+	// Skip validation if insecure args are allowed
+	if allowInsecure {
+		return passedArgs, nil
 	}
 
 	// make sure args are OK

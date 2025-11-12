@@ -219,6 +219,52 @@ func TestBuildExecCommand(t *testing.T) {
 			},
 			wantError: true,
 		},
+		{
+			name: "secure args reject dangerous input",
+			config: &ServerConfig{
+				AllowedMimeTypes: []string{"*"},
+				CmdByMimeType: map[string]Command{
+					"default": {
+						Cmd:               "convert",
+						Args:              []string{"-", "%args", "jpg:-"},
+						AllowInsecureArgs: false,
+					},
+				},
+			},
+			payload: api.Payload{
+				Attachment: api.Attachment{
+					Content: api.Content{
+						SourceMimeType: "image/png",
+						Args:           "-quality 80; rm -rf /",
+					},
+				},
+			},
+			wantError: true,
+		},
+		{
+			name: "insecure args allow special characters",
+			config: &ServerConfig{
+				AllowedMimeTypes: []string{"*"},
+				CmdByMimeType: map[string]Command{
+					"default": {
+						Cmd:               "bash",
+						Args:              []string{"-c", "%args"},
+						AllowInsecureArgs: true,
+					},
+				},
+			},
+			payload: api.Payload{
+				Attachment: api.Attachment{
+					Content: api.Content{
+						SourceMimeType: "text/plain",
+						Args:           "echo 'hello $USER' | grep hello",
+					},
+				},
+			},
+			wantCmd:   "bash",
+			wantArgs:  []string{"-c", "echo", "hello $USER", "|", "grep", "hello"},
+			wantError: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -261,10 +307,60 @@ func TestBadCmdArgs(t *testing.T) {
 		"\"any`thing\"",
 	}
 	for _, payload := range payloads {
-		_, err := GetPassedArgs(payload)
+		_, err := GetPassedArgs(payload, false)
 		assert.Error(t, err)
 	}
 
+}
+
+func TestAllowInsecureArgs(t *testing.T) {
+	tests := []struct {
+		name          string
+		args          string
+		allowInsecure bool
+		wantError     bool
+		wantArgs      []string
+	}{
+		{
+			name:          "secure args with safe input",
+			args:          "-quality 80 -resize 100x100",
+			allowInsecure: false,
+			wantError:     false,
+			wantArgs:      []string{"-quality", "80", "-resize", "100x100"},
+		},
+		{
+			name:          "secure args with dangerous input",
+			args:          "-quality 80; rm -rf /",
+			allowInsecure: false,
+			wantError:     true,
+		},
+		{
+			name:          "insecure args with dangerous input",
+			args:          "-quality 80; rm -rf /",
+			allowInsecure: true,
+			wantError:     false,
+			wantArgs:      []string{"-quality", "80;", "rm", "-rf", "/"},
+		},
+		{
+			name:          "insecure args with special characters",
+			args:          "-filter 'foo$bar' --output /path/to/file*",
+			allowInsecure: true,
+			wantError:     false,
+			wantArgs:      []string{"-filter", "foo$bar", "--output", "/path/to/file*"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GetPassedArgs(tt.args, tt.allowInsecure)
+			if tt.wantError {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantArgs, got)
+		})
+	}
 }
 
 func TestMimeToPandoc(t *testing.T) {
