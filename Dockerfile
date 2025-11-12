@@ -4,7 +4,7 @@ SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 ARG \
   # renovate: datasource=repology depName=alpine_3_22/ca-certificates
-  CA_CERTIFICATES_VERSION=20250619-r0 \
+  CA_CERTIFICATES_VERSION=20250911-r0 \
   # renovate: datasource=repology depName=alpine_3_22/dpkg
   DPKG_VERSION=1.22.15-r0 \
   # renovate: datasource=repology depName=alpine_3_22/gnupg
