@@ -13,18 +13,6 @@
       versioning: 'loose',
     },
     {
-      matchDatasources: [
-        'github-tags',
-      ],
-      matchFileNames: [
-        '.github/workflows/**',
-      ],
-      matchUpdateTypes: [
-        'major',
-      ],
-      groupName: 'github-actions-major-updates',
-    },
-    {
       matchUpdateTypes: [
         'major',
       ],
@@ -45,6 +33,13 @@
         '* 12 * * 3',
       ],
     },
+    {
+      "matchDepTypes": [
+        "action"
+      ],
+      "groupName": "github-actions",
+      "commitMessagePrefix": "[skip-release] "
+    }
   ],
   customManagers: [
     {
@@ -54,7 +49,7 @@
         '/(^|/|\\.)Dockerfile$/',
       ],
       matchStrings: [
-        '([ ]+)?# renovate: datasource=(?<datasource>[a-z-\\.]+?) depName=(?<depName>.+?)(?: packageName=(?<packageName>.+?))?(?: versioning=(?<versioning>[a-z-]+?))? (?:ENV|ARG)? .+?_VERSION=(?<currentValue>.+?)(\\s|$)',
+        "([ ]+)?# renovate: datasource=(?<datasource>[a-z-\\.]+?) depName=(?<depName>.+?)(?: packageName=(?<packageName>.+?))?(?: versioning=(?<versioning>[a-z-]+?))?\\s(?:ENV|ARG)? .+?_VERSION=(?<currentValue>.+?)(\\s|$)"
       ],
       versioningTemplate: '{{#if versioning}}{{{versioning}}}{{else}}loose{{/if}}',
     }
