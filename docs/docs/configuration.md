@@ -114,6 +114,27 @@ cmdByMimeType:
     args: []
 ```
 
+#### Command Security Options
+
+Each command can optionally specify `allowInsecureArgs` to control how arguments from the `X-Islandora-Args` header are validated:
+
+```yaml
+cmdByMimeType:
+  default:
+    cmd: "bash"
+    args:
+      - "-c"
+      - "%args"
+    allowInsecureArgs: true  # DANGEROUS: Disables argument validation
+```
+
+**⚠️ Security Warning**: When `allowInsecureArgs: false` (the default), arguments from `X-Islandora-Args` are validated against a whitelist regex (`^[a-zA-Z0-9._\-:\/@ =]+$`) to prevent command injection attacks. Setting `allowInsecureArgs: true` disables this validation and allows any characters, which can be dangerous if the header comes from untrusted sources.
+
+Only enable `allowInsecureArgs: true` if:
+- You have strict authentication/authorization controls in place
+- You trust all sources that can set the `X-Islandora-Args` header
+- You need to pass special shell characters (`;`, `|`, `$`, `*`, etc.) to your commands
+
 #### Command Selection
 
 Commands are selected using this priority:
