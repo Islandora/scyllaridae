@@ -55,14 +55,25 @@ func (s *Server) LoggingMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "Internal error", http.StatusInternalServerError)
 			return
 		}
-		cmd, err := config.BuildExecCommand(message, s.Config)
-		if err != nil {
-			slog.Error("Error building command", "err", err)
-			http.Error(w, "Bad request", http.StatusBadRequest)
-			return
+
+		var ctx context.Context
+		cmdStr := ""
+
+		if s.Config.CustomHandler != nil {
+			// Custom handler mode: skip command building, just pass the message
+			ctx = context.WithValue(r.Context(), msgKey, message)
+		} else {
+			cmd, err := config.BuildExecCommand(message, s.Config)
+			if err != nil {
+				slog.Error("Error building command", "err", err)
+				http.Error(w, "Bad request", http.StatusBadRequest)
+				return
+			}
+			ctx = context.WithValue(r.Context(), cmdKey, cmd)
+			ctx = context.WithValue(ctx, msgKey, message)
+			cmdStr = cmd.String()
 		}
-		ctx := context.WithValue(r.Context(), cmdKey, cmd)
-		ctx = context.WithValue(ctx, msgKey, message)
+
 		next.ServeHTTP(statusWriter, r.WithContext(ctx))
 		duration := time.Since(start)
 
@@ -72,7 +83,7 @@ func (s *Server) LoggingMiddleware(next http.Handler) http.Handler {
 			"duration", duration,
 			"client_ip", r.RemoteAddr,
 			"user_agent", r.UserAgent(),
-			"command", cmd.String(),
+			"command", cmdStr,
 			"msgId", message.Object.ID,
 		)
 	})

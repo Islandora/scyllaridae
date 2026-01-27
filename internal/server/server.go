@@ -134,6 +134,32 @@ func (s *Server) MessageHandler(w http.ResponseWriter, r *http.Request) {
 	if *s.Config.ForwardAuth {
 		auth = r.Header.Get("Authorization")
 	}
+
+	// Custom handler path: bypass command execution entirely
+	if s.Config.CustomHandler != nil {
+		message := r.Context().Value(msgKey).(api.Payload)
+		statusCode, body, contentType, err := s.Config.CustomHandler.Handle(message, auth)
+		if err != nil {
+			slog.Error("Custom handler error", "err", err, "msgId", message.Object.ID)
+			if statusCode == 0 {
+				statusCode = http.StatusInternalServerError
+			}
+			http.Error(w, err.Error(), statusCode)
+			return
+		}
+		if contentType != "" {
+			w.Header().Set("Content-Type", contentType)
+		}
+		if statusCode == 0 {
+			statusCode = http.StatusOK
+		}
+		w.WriteHeader(statusCode)
+		if body != nil {
+			_, _ = w.Write(body)
+		}
+		return
+	}
+
 	cmd := r.Context().Value(cmdKey).(*exec.Cmd)
 	message := r.Context().Value(msgKey).(api.Payload)
 

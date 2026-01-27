@@ -47,6 +47,10 @@ type ServerConfig struct {
 	//
 	// required: false
 	MimeTypeFromDestination bool `yaml:"mimeTypeFromDestination,omitempty"`
+
+	// CustomHandler allows services to bypass the command-execution pipeline
+	// and handle messages with custom Go logic. Set programmatically only.
+	CustomHandler api.MessageHandler `yaml:"-"`
 }
 
 // Command describes the command and arguments to execute for a specific MIME type.
