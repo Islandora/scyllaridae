@@ -134,6 +134,43 @@ cmdByMimeType:
 	}
 }
 
+func TestReadConfigFromPath(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "scyllaridae.yml")
+	yml := `allowedMimeTypes:
+  - "*"
+cmdByMimeType:
+  default:
+    cmd: "cat"`
+	if err := os.WriteFile(configPath, []byte(yml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	config, err := ReadConfigFromPath(configPath)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"*"}, config.AllowedMimeTypes)
+	assert.Equal(t, "cat", config.CmdByMimeType["default"].Cmd)
+}
+
+func TestReadConfigFromPathExpandsBaseDir(t *testing.T) {
+	t.Setenv("SCYLLARIDAE_BASE_DIR", "/previous/base/dir")
+
+	configDir := t.TempDir()
+	configPath := filepath.Join(configDir, "scyllaridae.yml")
+	yml := `allowedMimeTypes:
+  - "*"
+cmdByMimeType:
+  default:
+    cmd: "${SCYLLARIDAE_BASE_DIR}/bin/cat"`
+	if err := os.WriteFile(configPath, []byte(yml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	config, err := ReadConfigFromPath(configPath)
+	assert.NoError(t, err)
+	assert.Equal(t, filepath.Join(configDir, "bin", "cat"), config.CmdByMimeType["default"].Cmd)
+	assert.Equal(t, "/previous/base/dir", os.Getenv("SCYLLARIDAE_BASE_DIR"))
+}
+
 func TestBuildExecCommand(t *testing.T) {
 	tests := []struct {
 		name      string
