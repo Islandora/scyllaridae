@@ -55,6 +55,7 @@ func run(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) int
 	}
 
 	if err := runCLI(opts, cfg, stdin, stdout, stderr); err != nil {
+		_, _ = fmt.Fprintln(stderr, err)
 		slog.Error("CLI execution failed", "err", err)
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) {
@@ -109,6 +110,9 @@ func runCLI(opts cliOptions, cfg *config.ServerConfig, stdin io.Reader, stdout i
 	if err != nil {
 		return fmt.Errorf("could not parse --message payload: %w", err)
 	}
+	if err := validateCLIMessage(message); err != nil {
+		return err
+	}
 
 	cmd, err := config.BuildExecCommand(message, cfg)
 	if err != nil {
@@ -138,6 +142,14 @@ func runCLI(opts cliOptions, cfg *config.ServerConfig, stdin io.Reader, stdout i
 
 	if _, err := fmt.Fprintln(stdout, outputPath); err != nil {
 		return fmt.Errorf("could not write output path: %w", err)
+	}
+
+	return nil
+}
+
+func validateCLIMessage(message api.Payload) error {
+	if strings.TrimSpace(message.Attachment.Content.SourceMimeType) == "" {
+		return fmt.Errorf("attachment.content.source_mimetype is required in CLI mode")
 	}
 
 	return nil

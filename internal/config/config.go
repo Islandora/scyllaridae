@@ -286,9 +286,12 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 		"application/vnd.ms-excel":      "xls",
 		"application/vnd.ms-powerpoint": "ppt",
 
+		"image/jpeg":    "jpg",
+		"image/pjpeg":   "jpg",
+		"image/jp2":     "jp2",
+		"image/png":     "png",
 		"image/svg+xml": "svg",
 		"image/webp":    "webp",
-		"image/jp2":     "jp2",
 		"image/bmp":     "bmp",
 
 		"video/mp4":                     "mp4",
@@ -312,7 +315,12 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 		"audio/midi":        "mid",
 		"audio/x-wav":       "wav",
 
+		"text/plain":    "txt",
+		"text/html":     "html",
+		"text/csv":      "csv",
+		"text/vnd.hocr+html": "hocr",
 		"text/markdown": "md",
+		"application/pdf": "pdf",
 	}
 	cleanMimeType := strings.TrimSpace(strings.ToLower(mimeType))
 	if ext, ok := mimeToExtension[cleanMimeType]; ok {

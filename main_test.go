@@ -102,6 +102,31 @@ func TestRunCLIRequiresMessage(t *testing.T) {
 	}
 }
 
+func TestRunCLIRequiresSourceMimeType(t *testing.T) {
+	t.Setenv("SCYLLARIDAE_YML", "")
+	t.Setenv("SCYLLARIDAE_YML_PATH", "")
+
+	configPath := writeTestConfig(t)
+	message := encodeTestMessage(t, `{"type":"test","object":{"id":"789"},"attachment":{"content":{}}}`)
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	exitCode := run(
+		[]string{"--yml", configPath, "--message", message},
+		bytes.NewBufferString("stdin payload"),
+		&stdout,
+		&stderr,
+	)
+
+	if exitCode != 1 {
+		t.Fatalf("expected exit code 1, got %d", exitCode)
+	}
+	if !strings.Contains(stderr.String(), "attachment.content.source_mimetype is required in CLI mode") {
+		t.Fatalf("expected missing source_mimetype error, got %q", stderr.String())
+	}
+}
+
 func writeTestConfig(t *testing.T) string {
 	t.Helper()
 

@@ -257,6 +257,21 @@ func TestBuildExecCommand(t *testing.T) {
 			wantError: true,
 		},
 		{
+			name: "missing source mime type",
+			config: &ServerConfig{
+				AllowedMimeTypes: []string{"*"},
+				CmdByMimeType: map[string]Command{
+					"default": {Cmd: "echo", Args: []string{"%source-mime-ext"}},
+				},
+			},
+			payload: api.Payload{
+				Attachment: api.Attachment{
+					Content: api.Content{},
+				},
+			},
+			wantError: true,
+		},
+		{
 			name: "secure args reject dangerous input",
 			config: &ServerConfig{
 				AllowedMimeTypes: []string{"*"},
