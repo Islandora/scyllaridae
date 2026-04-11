@@ -1,4 +1,4 @@
-FROM python:3.14-alpine3.22@sha256:b0d9cd5ed77285b2563c86ca10b53578249ca1a08d14e5b69b7970884a9fb539
+FROM python:3.14-alpine3.22@sha256:17a4e595ce2b9193166da00f2e80e3c07ed66be79822d451ffedc29ab8a2e1b4
 
 ARG \
   # renovate: datasource=repology depName=alpine_3_22/cairo
