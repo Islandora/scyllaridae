@@ -9,13 +9,17 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/google/shlex"
 	"github.com/islandora/scyllaridae/pkg/api"
 	yaml "gopkg.in/yaml.v3"
 )
+
+var configEnvMu sync.Mutex
 
 // ServerConfig defines server-specific configurations.
 //
@@ -102,22 +106,35 @@ func IsAllowedMimeType(mimetype string, allowedFormats []string) bool {
 // then falls back to reading from the file path specified in SCYLLARIDAE_YML_PATH.
 // Environment variables in the YAML content are expanded using os.ExpandEnv.
 func ReadConfig() (*ServerConfig, error) {
-	var (
-		y   []byte
-		err error
-	)
 	yml := os.Getenv("SCYLLARIDAE_YML")
 	if yml != "" {
-		y = []byte(yml)
-	} else {
-		yp := os.Getenv("SCYLLARIDAE_YML_PATH")
-		if yp == "" {
-			return nil, errors.New("need to specify the path to scyllaridae.yml with the environment variable SCYLLARIDAE_YML_PATH")
-		}
-		y, err = os.ReadFile(yp)
-		if err != nil {
-			return nil, err
-		}
+		return ReadConfigFromBytes([]byte(yml))
+	}
+
+	yp := os.Getenv("SCYLLARIDAE_YML_PATH")
+	if yp == "" {
+		return nil, errors.New("need to specify the path to scyllaridae.yml with the environment variable SCYLLARIDAE_YML_PATH")
+	}
+
+	return ReadConfigFromPath(yp)
+}
+
+func ReadConfigFromPath(path string) (*ServerConfig, error) {
+	y, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return readConfigFromBytesWithBaseDir(y, filepath.Dir(path))
+}
+
+func ReadConfigFromBytes(y []byte) (*ServerConfig, error) {
+	return readConfigFromBytesWithBaseDir(y, "")
+}
+
+func readConfigFromBytesWithBaseDir(y []byte, baseDir string) (*ServerConfig, error) {
+	if baseDir != "" {
+		defer setConfigBaseDir(baseDir)()
 	}
 
 	expanded := os.ExpandEnv(string(y))
@@ -125,7 +142,7 @@ func ReadConfig() (*ServerConfig, error) {
 	slog.Debug("scyllaridae yaml set", "yaml", expanded)
 
 	var c ServerConfig
-	err = yaml.Unmarshal([]byte(expanded), &c)
+	err := yaml.Unmarshal([]byte(expanded), &c)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +153,22 @@ func ReadConfig() (*ServerConfig, error) {
 	}
 
 	return &c, nil
+}
+
+func setConfigBaseDir(baseDir string) func() {
+	configEnvMu.Lock()
+
+	previous, hadPrevious := os.LookupEnv("SCYLLARIDAE_BASE_DIR")
+	_ = os.Setenv("SCYLLARIDAE_BASE_DIR", baseDir)
+
+	return func() {
+		if hadPrevious {
+			_ = os.Setenv("SCYLLARIDAE_BASE_DIR", previous)
+		} else {
+			_ = os.Unsetenv("SCYLLARIDAE_BASE_DIR")
+		}
+		configEnvMu.Unlock()
+	}
 }
 
 // BuildExecCommand constructs an exec.Cmd based on the event payload and server configuration.
@@ -253,9 +286,12 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 		"application/vnd.ms-excel":      "xls",
 		"application/vnd.ms-powerpoint": "ppt",
 
+		"image/jpeg":    "jpg",
+		"image/pjpeg":   "jpg",
+		"image/jp2":     "jp2",
+		"image/png":     "png",
 		"image/svg+xml": "svg",
 		"image/webp":    "webp",
-		"image/jp2":     "jp2",
 		"image/bmp":     "bmp",
 
 		"video/mp4":                     "mp4",
@@ -279,7 +315,12 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 		"audio/midi":        "mid",
 		"audio/x-wav":       "wav",
 
+		"text/plain":    "txt",
+		"text/html":     "html",
+		"text/csv":      "csv",
+		"text/vnd.hocr+html": "hocr",
 		"text/markdown": "md",
+		"application/pdf": "pdf",
 	}
 	cleanMimeType := strings.TrimSpace(strings.ToLower(mimeType))
 	if ext, ok := mimeToExtension[cleanMimeType]; ok {
