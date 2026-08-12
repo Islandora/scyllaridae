@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine3.22@sha256:be93003ee861b3b91b6ebcb22678524947e0cd786c2df3f32af520006b1e54f5
+FROM golang:1.26-alpine3.22@sha256:727cfc3c40be55cd1bc9a4a059406b28a059857e3be752aa9d09531e12c20c56
 
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
@@ -10,11 +10,11 @@ ARG \
   # renovate: datasource=repology depName=alpine_3_22/gnupg
   GNUPG_VERSION=2.4.9-r0 \
   # renovate: datasource=repology depName=alpine_3_22/curl
-  CURL_VERSION=8.14.1-r2 \
+  CURL_VERSION=8.14.1-r3 \
   # renovate: datasource=repology depName=alpine_3_22/bash
   BASH_VERSION=5.2.37-r0 \
   # renovate: datasource=repology depName=alpine_3_22/openssl
-  OPENSSL_VERSION=3.5.6-r0 \
+  OPENSSL_VERSION=3.5.7-r0 \
   # renovate: datasource=github-releases depName=gosu packageName=tianon/gosu
   GOSU_VERSION=1.19
 
