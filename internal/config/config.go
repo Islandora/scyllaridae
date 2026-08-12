@@ -382,6 +382,7 @@ func MimeToPandoc(mimeType string) (string, error) {
 		"application/x-ipynb+json":                "ipynb",
 		"application/jats+xml":                    "jats",
 		"text/x-jira":                             "jira",
+		"image/jpeg":                              "jpg",
 		"application/json":                        "json",
 		"application/x-latex":                     "latex",
 		"text/markdown":                           "markdown",
