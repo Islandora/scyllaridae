@@ -10,10 +10,10 @@ import (
 
 	"github.com/islandora/scyllaridae/internal/config"
 	"github.com/islandora/scyllaridae/pkg/api"
-
-	"github.com/lestrrat-go/jwx/v3/jwa"
-	"github.com/lestrrat-go/jwx/v3/jwk"
-	"github.com/lestrrat-go/jwx/v3/jwt"
+	"github.com/jwx-go/jwkfetch/v4"
+	"github.com/lestrrat-go/jwx/v4/jwa"
+	"github.com/lestrrat-go/jwx/v4/jwk"
+	"github.com/lestrrat-go/jwx/v4/jwt"
 )
 
 type contextKey string
@@ -162,7 +162,7 @@ func (s *Server) fetchJWKS() (jwk.Set, error) {
 		return ks, nil
 	}
 
-	ks, err = jwk.Fetch(ctx, jwksURI)
+	ks, err = jwkfetch.NewClient().Fetch(ctx, jwksURI)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch jwks: %v", err)
 	}

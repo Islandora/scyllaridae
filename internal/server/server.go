@@ -15,7 +15,7 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2/expirable"
 	scyllaridae "github.com/islandora/scyllaridae/internal/config"
 	"github.com/islandora/scyllaridae/pkg/api"
-	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v4/jwk"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
