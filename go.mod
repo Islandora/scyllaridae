@@ -7,6 +7,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/lestrrat-go/jwx/v3 v3.2.0
+	github.com/lestrrat-go/jwx/v4 v4.4.0
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/text v0.41.0
 	gopkg.in/yaml.v3 v3.0.1
