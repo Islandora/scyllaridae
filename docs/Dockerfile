@@ -1,4 +1,4 @@
-FROM python:3.14-alpine3.22@sha256:3a70fbae6ca02053139fe18c1041d4396c82b5c6e740d6fe1c24e7d90c22ac43
+FROM python:3.14-alpine3.22@sha256:6b91e66ab2a880ce9ca5a1b91c70f45963ff71ff68268df056336e1a657d5efd
 
 ARG \
   # renovate: datasource=repology depName=alpine_3_22/cairo
@@ -16,5 +16,5 @@ COPY . .
 RUN mkdocs build
 
 # serve the docs via nginx
-FROM nginx:1.30@sha256:55d1fb0944aafb8534b253e486c6cf57d3e0c785c4f6a7b3e9f02c5a080fb2ce
+FROM nginx:1.31@sha256:8541484afbc9c8a5a8a99b379568ebbc957f658583ec9448fc43104229c03cf8
 COPY --from=0 /docs/site /usr/share/nginx/html

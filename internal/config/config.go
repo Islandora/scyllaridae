@@ -254,6 +254,7 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 		"application/vnd.ms-powerpoint": "ppt",
 
 		"image/svg+xml": "svg",
+		"image/jpeg":    "jpg",
 		"image/webp":    "webp",
 		"image/jp2":     "jp2",
 		"image/bmp":     "bmp",
@@ -268,6 +269,7 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 		"video/x-m4v":                   "m4v",
 		"video/x-msvideo":               "avi",
 		"video/ogg":                     "ogg",
+		"video/webm":                    "webm",
 
 		"audio/ogg":         "ogg",
 		"audio/webm":        "webm",
@@ -280,6 +282,7 @@ func GetMimeTypeExtension(mimeType string) (string, error) {
 		"audio/x-wav":       "wav",
 
 		"text/markdown": "md",
+		"text/html":     "html",
 	}
 	cleanMimeType := strings.TrimSpace(strings.ToLower(mimeType))
 	if ext, ok := mimeToExtension[cleanMimeType]; ok {
@@ -382,6 +385,7 @@ func MimeToPandoc(mimeType string) (string, error) {
 		"application/x-ipynb+json":                "ipynb",
 		"application/jats+xml":                    "jats",
 		"text/x-jira":                             "jira",
+		"image/jpeg":                              "jpg",
 		"application/json":                        "json",
 		"application/x-latex":                     "latex",
 		"text/markdown":                           "markdown",
