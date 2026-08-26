@@ -14,7 +14,7 @@ ARG \
   # renovate: datasource=repology depName=alpine_3_24/bash
   BASH_VERSION=5.3.9-r1 \
   # renovate: datasource=repology depName=alpine_3_24/openssl
-  OPENSSL_VERSION=3.5.7-r0 \
+  OPENSSL_VERSION=3.5.8-r0 \
   # renovate: datasource=github-releases depName=gosu packageName=tianon/gosu
   GOSU_VERSION=1.19
 
