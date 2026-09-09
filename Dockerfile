@@ -10,7 +10,7 @@ ARG \
   # renovate: datasource=repology depName=alpine_3_24/gnupg
   GNUPG_VERSION=2.4.9-r1 \
   # renovate: datasource=repology depName=alpine_3_24/curl
-  CURL_VERSION=8.21.0-r0 \
+  CURL_VERSION=8.22.0-r0 \
   # renovate: datasource=repology depName=alpine_3_24/bash
   BASH_VERSION=5.3.9-r1 \
   # renovate: datasource=repology depName=alpine_3_24/openssl
