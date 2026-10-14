@@ -9,7 +9,7 @@ require (
 	github.com/jwx-go/jwkfetch/v4 v4.0.4
 	github.com/lestrrat-go/jwx/v4 v4.5.0
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/text v0.42.0
+	golang.org/x/text v0.43.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
